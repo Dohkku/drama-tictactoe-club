@@ -294,19 +294,24 @@ func _do_move(index: int, is_player: bool) -> void:
 
 
 func _handle_game_over() -> void:
+	var result: String
 	if logic.winner != 0:
 		var winner_str = logic.piece_to_string(logic.winner)
 		EventBus.game_won.emit(winner_str)
 		if logic.winner == player_piece:
 			_update_status("¡Ganaste!")
-			EventBus.match_ended.emit("win")
+			result = "win"
 		else:
 			_update_status("Perdiste...")
-			EventBus.match_ended.emit("lose")
+			result = "lose"
 	else:
 		_update_status("¡Empate!")
 		EventBus.game_draw.emit()
-		EventBus.match_ended.emit("draw")
+		result = "draw"
+
+	# Wait for last piece animation to fully settle before signaling match end
+	await get_tree().create_timer(0.8).timeout
+	EventBus.match_ended.emit(result)
 
 
 func _do_ai_turn() -> void:
