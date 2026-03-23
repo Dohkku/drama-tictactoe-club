@@ -1,0 +1,68 @@
+# Match 01 — Akira's in-game reactions
+
+@reactions match_01
+
+@on center_taken_by_player
+[board_disable]
+[override_next_style dramatic]
+[set_emotion opponent angry]
+[pose akira leaning_forward]
+akira "surprised" -> player: ¿¡El centro!?
+[shake 0.5 0.2]
+[pose akira tense]
+akira "angry": ¡No creas que eso cambia nada!
+[pose akira idle]
+[board_enable]
+@end_on
+
+@on player_near_win
+[board_disable]
+[set_emotion opponent surprised]
+[override_next_style nervous]
+[pose akira tense]
+akira "sweating": (No... tengo que bloquear!)
+[pose akira idle]
+[board_enable]
+@end_on
+
+@on opponent_near_win
+[board_disable]
+[pose akira confident]
+akira "confident" -> player: ¿Ves eso? Jaque.
+player "nervous": ...!
+[pose akira idle]
+[board_enable]
+@end_on
+
+@on player_wins
+[board_disable]
+[set_emotion player happy]
+[flash white 0.3]
+[pose akira defeated]
+akira "shocked": Imposible...!
+[look_at akira away]
+akira "shocked": ...
+player "happy": Lo... lo logré!
+[board_enable]
+@end_on
+
+@on opponent_wins
+[board_disable]
+[set_emotion opponent confident]
+[pose akira excited]
+akira "triumphant" -> player: ¡Ja! Como era de esperarse!
+player "": ...
+[pose akira idle]
+[board_enable]
+@end_on
+
+@on draw
+[board_disable]
+[pose akira arms_crossed]
+akira "surprised": Hmm... no está mal para un novato.
+player "": La próxima vez ganaré.
+[pose akira idle]
+[board_enable]
+@end_on
+
+@end

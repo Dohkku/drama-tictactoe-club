@@ -1,0 +1,30 @@
+; Engine configuration file.
+
+[application]
+
+config/name="Drama Tic Tac Toe Club"
+config/features=PackedStringArray("4.6")
+run/main_scene="res://main.tscn"
+
+[autoload]
+
+EventBus="*res://autoloads/event_bus.gd"
+GameState="*res://autoloads/game_state.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/resizable=true
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"

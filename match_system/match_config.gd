@@ -1,0 +1,13 @@
+class_name MatchConfig
+extends Resource
+
+## Configuration for a single match in the tournament.
+
+@export var match_id: String = ""
+@export var opponent_id: String = ""          # character_id registered in CinematicStage
+@export var ai_difficulty: float = 0.5
+@export var game_rules_preset: String = "standard"  # "standard", "rotating_3", "big_board"
+@export var intro_script: String = ""         # path to .dscn cutscene
+@export var reactions_script: String = ""     # path to .dscn reactions
+@export var player_style: String = "slam"
+@export var opponent_style: String = "gentle"
