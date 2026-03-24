@@ -125,7 +125,7 @@ func _start_game() -> void:
 
 func _create_all_pieces() -> void:
 	var cell_size = _get_cell_size()
-	var piece_size = cell_size * 0.75
+	var piece_size = cell_size * 0.85
 
 	var player_count = game_rules.get_pieces_for(player_piece)
 	for i in range(player_count):
@@ -157,14 +157,13 @@ func _make_piece_node(piece_type: int, is_player: bool, sz: Vector2) -> Control:
 
 func _position_hand_pieces(animate: bool = true) -> void:
 	var grid_rect = _get_grid_rect_in_layer()
-	var cell_size = _get_cell_size()
-	# Hand pieces are smaller — scale to fit available margins
-	var piece_size = cell_size * 0.55
+	# Size pieces to fit in the reserved 50px hand areas
+	var hand_h := 42.0
+	var piece_size = Vector2(hand_h, hand_h)
 	var gap = 4.0
 
-	# Player hand: below the grid
-	var player_y = grid_rect.position.y + grid_rect.size.y + gap
-	# Clamp so pieces don't go off-screen
+	# Player hand: centered in PlayerHandArea below the grid
+	var player_y = grid_rect.position.y + grid_rect.size.y + (50.0 - hand_h) / 2.0
 	var max_y = size.y - piece_size.y - 2.0
 	player_y = min(player_y, max_y)
 	var player_available: Array[Control] = []
@@ -177,8 +176,8 @@ func _position_hand_pieces(animate: bool = true) -> void:
 		var target_pos = Vector2(player_start_x + i * (piece_size.x + gap), player_y)
 		_move_piece_to_hand(p, target_pos, piece_size, animate)
 
-	# Opponent hand: above the grid
-	var opponent_y = grid_rect.position.y - piece_size.y - gap
+	# Opponent hand: centered in OpponentHandArea above the grid
+	var opponent_y = grid_rect.position.y - 50.0 + (50.0 - hand_h) / 2.0
 	opponent_y = max(opponent_y, 2.0)
 	var opponent_available: Array[Control] = []
 	for p in opponent_pieces:

@@ -99,7 +99,7 @@ func hide_dialogue() -> void:
 
 
 func _type_text(my_id: int) -> void:
-	var total_chars := _processed.plain_length
+	var total_chars: int = _processed.get("plain_length", 0)
 	var triggers: Array = _processed.triggers
 	var waits: Array = _processed.waits
 
