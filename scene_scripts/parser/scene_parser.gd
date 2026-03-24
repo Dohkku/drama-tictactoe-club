@@ -33,12 +33,39 @@ static func parse(text: String) -> Dictionary:
 	var is_reaction_mode := false
 	var current_event := ""
 	var current_cmds: Array = []
+	var in_choose := false
+	var choose_options: Array = []
 
 	for raw_line in text.split("\n"):
 		var line = raw_line.strip_edges()
 
 		# Skip blanks and comments
 		if line.is_empty() or line.begins_with("#"):
+			continue
+
+		# --- Choose block ---
+		if in_choose:
+			if line == "[end_choose]":
+				in_choose = false
+				var cmd = {"type": "choose", "options": choose_options.duplicate()}
+				if is_reaction_mode and current_event != "":
+					current_cmds.append(cmd)
+				elif not is_reaction_mode:
+					result.commands.append(cmd)
+				choose_options.clear()
+				continue
+			elif line.begins_with(">"):
+				var opt_text = line.substr(1).strip_edges()
+				var arrow = opt_text.find("->")
+				if arrow >= 0:
+					var t = opt_text.substr(0, arrow).strip_edges()
+					var f = opt_text.substr(arrow + 2).strip_edges()
+					choose_options.append({"text": t, "flag": f})
+				continue
+
+		if line == "[choose]":
+			in_choose = true
+			choose_options.clear()
 			continue
 
 		# --- Directives ---
@@ -142,7 +169,7 @@ static func _parse_bracket(content: String) -> Dictionary:
 		"music":
 			return {"type": "music", "track": _s(parts, 1)}
 		"sfx":
-			return {"type": "sff", "sound": _s(parts, 1)}
+			return {"type": "sfx", "sound": _s(parts, 1)}
 		"stop_music":
 			return {"type": "stop_music"}
 		# --- New commands ---

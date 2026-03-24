@@ -11,3 +11,4 @@ extends Resource
 @export var reactions_script: String = ""     # path to .dscn reactions
 @export var player_style: String = "slam"
 @export var opponent_style: String = "gentle"
+@export var turns_per_visit: int = 1  # For simultaneous: how many player turns per visit

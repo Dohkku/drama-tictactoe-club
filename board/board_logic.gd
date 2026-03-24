@@ -96,6 +96,28 @@ func reset() -> void:
 	move_history_o.clear()
 
 
+func get_state() -> Dictionary:
+	return {
+		"cells": cells.duplicate(),
+		"current_turn": current_turn,
+		"game_over": game_over,
+		"winner": winner,
+		"move_count": move_count,
+		"move_history_x": move_history_x.duplicate(),
+		"move_history_o": move_history_o.duplicate(),
+	}
+
+
+func load_state(state: Dictionary) -> void:
+	cells.assign(state.cells)
+	current_turn = state.current_turn
+	game_over = state.game_over
+	winner = state.winner
+	move_count = state.move_count
+	move_history_x.assign(state.move_history_x)
+	move_history_o.assign(state.move_history_o)
+
+
 func piece_to_string(piece: int) -> String:
 	match piece:
 		Piece.X: return "X"

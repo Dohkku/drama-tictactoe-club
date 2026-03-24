@@ -12,6 +12,7 @@ signal specific_pattern(pattern_name: String)
 # === Cinematic events ===
 signal dialogue_started(speaker: String, text: String)
 signal dialogue_finished()
+signal dialogue_trigger(trigger_name: String)
 signal character_entered(character_id: String)
 signal character_exited(character_id: String)
 signal scene_script_finished(script_id: String)
@@ -20,6 +21,10 @@ signal scene_script_finished(script_id: String)
 signal match_started(match_config: Resource)
 signal match_ended(result: String)
 signal tournament_progressed(match_index: int)
+signal before_ai_move()
+signal pre_move_complete()
+signal sim_board_rotate(opponent_id: String, match_index: int, total: int)
+signal choice_made(flag: String)
 
 # === UI / Layout ===
 signal transition_requested(transition_type: String)

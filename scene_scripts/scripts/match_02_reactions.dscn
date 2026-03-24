@@ -3,6 +3,15 @@
 
 @reactions match_02
 
+@on before_opponent_move
+[pose mei thinking]
+[look_at mei away]
+mei "analytical": ...
+[wait 0.2]
+[look_at mei player]
+[pose mei idle]
+@end_on
+
 @on center_taken_by_player
 [board_disable]
 [pose mei thinking]

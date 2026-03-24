@@ -21,3 +21,12 @@ extends Resource
 
 ## Default look direction ("left", "right", "center", "away")
 @export var default_look: String = "center"
+
+## Voice — used by DialogueAudio for per-character typing beeps
+@export var voice_pitch: float = 220.0
+@export var voice_variation: float = 30.0
+@export var voice_waveform: String = "sine"  # "sine", "square", "triangle"
+
+## Dialogue style — per-character dialogue box appearance
+@export var dialogue_bg_color: Color = Color(0.1, 0.1, 0.15, 0.9)
+@export var dialogue_border_color: Color = Color(0.3, 0.3, 0.4, 1.0)

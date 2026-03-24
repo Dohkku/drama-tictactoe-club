@@ -28,6 +28,9 @@ var _next_move_style_override: Resource = null
 var player_abilities: Array = []
 var opponent_abilities: Array = []
 var _skip_turn_switch: bool = false
+var pre_move_hook_enabled: bool = false
+var external_input_control: bool = false
+var auto_ai_enabled: bool = true
 
 var player_color: Color = Color(0.2, 0.6, 1.0)
 var opponent_color: Color = Color(1.0, 0.3, 0.3)
@@ -74,7 +77,7 @@ func _create_cells() -> void:
 		var cell = Control.new()
 		cell.set_script(CellScript)
 		cell.cell_index = i
-		cell.custom_minimum_size = Vector2(80, 80)
+		cell.custom_minimum_size = Vector2(10, 10)  # Tiny minimum; actual size from container
 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		cell.cell_clicked.connect(_on_cell_clicked)
@@ -122,7 +125,7 @@ func _start_game() -> void:
 
 func _create_all_pieces() -> void:
 	var cell_size = _get_cell_size()
-	var piece_size = cell_size * 0.85
+	var piece_size = cell_size * 0.75
 
 	var player_count = game_rules.get_pieces_for(player_piece)
 	for i in range(player_count):
@@ -155,30 +158,36 @@ func _make_piece_node(piece_type: int, is_player: bool, sz: Vector2) -> Control:
 func _position_hand_pieces(animate: bool = true) -> void:
 	var grid_rect = _get_grid_rect_in_layer()
 	var cell_size = _get_cell_size()
-	var piece_size = cell_size * 0.85
+	# Hand pieces are smaller — scale to fit available margins
+	var piece_size = cell_size * 0.55
+	var gap = 4.0
 
 	# Player hand: below the grid
-	var player_y = grid_rect.position.y + grid_rect.size.y + 15.0
+	var player_y = grid_rect.position.y + grid_rect.size.y + gap
+	# Clamp so pieces don't go off-screen
+	var max_y = size.y - piece_size.y - 2.0
+	player_y = min(player_y, max_y)
 	var player_available: Array[Control] = []
 	for p in player_pieces:
 		if is_instance_valid(p) and p not in cell_to_piece.values():
 			player_available.append(p)
-	var player_start_x = grid_rect.position.x + (grid_rect.size.x - player_available.size() * (piece_size.x + 8)) / 2.0
+	var player_start_x = grid_rect.position.x + (grid_rect.size.x - player_available.size() * (piece_size.x + gap)) / 2.0
 	for i in range(player_available.size()):
 		var p = player_available[i]
-		var target_pos = Vector2(player_start_x + i * (piece_size.x + 8), player_y)
+		var target_pos = Vector2(player_start_x + i * (piece_size.x + gap), player_y)
 		_move_piece_to_hand(p, target_pos, piece_size, animate)
 
 	# Opponent hand: above the grid
-	var opponent_y = grid_rect.position.y - piece_size.y - 15.0
+	var opponent_y = grid_rect.position.y - piece_size.y - gap
+	opponent_y = max(opponent_y, 2.0)
 	var opponent_available: Array[Control] = []
 	for p in opponent_pieces:
 		if is_instance_valid(p) and p not in cell_to_piece.values():
 			opponent_available.append(p)
-	var opponent_start_x = grid_rect.position.x + (grid_rect.size.x - opponent_available.size() * (piece_size.x + 8)) / 2.0
+	var opponent_start_x = grid_rect.position.x + (grid_rect.size.x - opponent_available.size() * (piece_size.x + gap)) / 2.0
 	for i in range(opponent_available.size()):
 		var p = opponent_available[i]
-		var target_pos = Vector2(opponent_start_x + i * (piece_size.x + 8), opponent_y)
+		var target_pos = Vector2(opponent_start_x + i * (piece_size.x + gap), opponent_y)
 		_move_piece_to_hand(p, target_pos, piece_size, animate)
 
 
@@ -200,7 +209,7 @@ func _on_cell_clicked(index: int) -> void:
 
 	await _do_move(index, true)
 
-	if not logic.game_over and logic.current_turn == ai_piece:
+	if auto_ai_enabled and not logic.game_over and logic.current_turn == ai_piece:
 		await _do_ai_turn()
 
 
@@ -287,7 +296,7 @@ func _do_move(index: int, is_player: bool) -> void:
 		_update_status("¡Turno extra!")
 	else:
 		EventBus.turn_changed.emit(logic.piece_to_string(logic.current_turn))
-		if not is_player:
+		if not is_player and not external_input_control:
 			input_enabled = true
 			_update_input_state()
 			_update_status("Tu turno — X")
@@ -314,9 +323,19 @@ func _handle_game_over() -> void:
 	EventBus.match_ended.emit(result)
 
 
+func trigger_ai_turn() -> void:
+	## Public method for external controllers (e.g., simultaneous match manager)
+	if logic.game_over or logic.current_turn != ai_piece:
+		return
+	await _do_ai_turn()
+
+
 func _do_ai_turn() -> void:
 	_update_status("Oponente pensando...")
-	await get_tree().create_timer(0.6).timeout
+	if pre_move_hook_enabled:
+		EventBus.before_ai_move.emit()
+		await EventBus.pre_move_complete
+	await get_tree().create_timer(0.4).timeout
 	var move = ai.choose_move(logic)
 	if move >= 0:
 		await _do_move(move, false)
@@ -337,6 +356,8 @@ func _get_cell_size() -> Vector2:
 	return cells[0].size
 
 func _on_resized() -> void:
+	if size.x < 10 or size.y < 10:
+		return  # Board collapsed (fullscreen cinematic)
 	await get_tree().process_frame
 	_position_hand_pieces(false)  # Snap on resize, don't animate
 	for cell_idx in cell_to_piece:
@@ -426,6 +447,68 @@ func _update_input_state() -> void:
 func _update_status(text: String) -> void:
 	if status_label:
 		status_label.text = text
+
+func save_board_state() -> Dictionary:
+	var placed = {}
+	for cell_idx in cell_to_piece:
+		var p = cell_to_piece[cell_idx]
+		placed[cell_idx] = {"type": p.piece_type, "is_player": p.character_id == "player"}
+	return {
+		"logic": logic.get_state(),
+		"placed_pieces": placed,
+		"player_next": _player_next,
+		"opponent_next": _opponent_next,
+	}
+
+
+func load_board_state(state: Dictionary) -> void:
+	# Clear visual pieces
+	for p in player_pieces:
+		if is_instance_valid(p): p.queue_free()
+	for p in opponent_pieces:
+		if is_instance_valid(p): p.queue_free()
+	player_pieces.clear()
+	opponent_pieces.clear()
+	cell_to_piece.clear()
+
+	# Clear all cell visual states
+	for c in cells:
+		c.clear()
+
+	# Restore logic state
+	logic.load_state(state.logic)
+	_player_next = state.player_next
+	_opponent_next = state.opponent_next
+
+	# Recreate piece nodes
+	_create_all_pieces()
+	await get_tree().process_frame
+
+	# Place pieces on cells without animation
+	for cell_idx in state.placed_pieces:
+		var info = state.placed_pieces[cell_idx]
+		var piece_node: Control = null
+		var arr = player_pieces if info.is_player else opponent_pieces
+		for p in arr:
+			if p not in cell_to_piece.values():
+				piece_node = p
+				break
+		if piece_node:
+			cell_to_piece[cell_idx] = piece_node
+			cells[cell_idx].set_occupied(true)
+			var target = _get_cell_pos_in_layer(cell_idx)
+			var cs = _get_cell_size()
+			var ps = cs * 0.85
+			piece_node.position = target + (cs - ps) / 2.0
+			piece_node.size = ps
+			piece_node.pivot_offset = ps / 2.0
+
+	_position_hand_pieces(false)
+	_animating = false
+	input_enabled = false
+	_update_input_state()
+	_update_status("Tu turno — X" if logic.current_turn == player_piece else "Oponente pensando...")
+
 
 func _on_input_toggle(enabled: bool) -> void:
 	input_enabled = enabled

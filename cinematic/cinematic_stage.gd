@@ -74,6 +74,7 @@ func enter_character(character_id: String, position_name: String = "center", ent
 		from_dir = "left" if pos_fraction < 0.5 else "right"
 
 	await char_slot.enter_character(data, from_dir)
+	_reposition_all()  # Adapt sizes if needed for multiple characters
 	EventBus.character_entered.emit(character_id)
 
 
@@ -92,6 +93,7 @@ func exit_character(character_id: String, direction: String = "") -> void:
 	characters_on_stage.erase(character_id)
 	_character_positions.erase(character_id)
 	_character_depth.erase(character_id)
+	_reposition_all()  # Re-adapt sizes after removal
 	EventBus.character_exited.emit(character_id)
 
 
@@ -276,19 +278,32 @@ func _calc_slot_size() -> Vector2:
 	# Height-based sizing: aspect ratio is ALWAYS preserved
 	var h = layer_size.y * CHAR_HEIGHT_RATIO
 	var w = h * CHAR_ASPECT
+
+	# Scale down if too many characters for available width
+	var char_count = max(1, characters_on_stage.size())
+	var max_w = layer_size.x / max(char_count, 2.0) * 0.85
+	if w > max_w:
+		w = max_w
+		h = w / CHAR_ASPECT
+
 	return Vector2(w, h)
 
 
-func _on_layer_resized() -> void:
+func _reposition_all() -> void:
+	var count = characters_on_stage.size()
 	for id in characters_on_stage:
 		var slot = characters_on_stage[id]
 		var pos_name = _character_positions.get(id, "center")
 		var fraction = POSITIONS.get(pos_name, 0.5)
-
-		# Recalculate position and size (preserving aspect ratio)
+		# Auto-center when only one character on stage
+		if count == 1:
+			fraction = 0.5
 		_apply_slot_position(slot, fraction)
-
-		# Reapply depth scale (don't reset it)
 		var depth = _character_depth.get(id, 1.0)
 		if depth != 1.0:
 			slot.scale = Vector2(depth, depth)
+
+
+func _on_layer_resized() -> void:
+	if not _camera_active:
+		_reposition_all()

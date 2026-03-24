@@ -58,11 +58,16 @@ func set_emotion(new_emotion: String) -> void:
 func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, all_pieces: Array) -> void:
 	pivot_offset = size / 2.0
 
-	# Rotation during travel
+	# Rotation + scale pulse during travel (makes spinning visible even for symmetric shapes)
 	if style.move_rotation != 0.0:
 		var spin = create_tween()
 		spin.tween_property(self, "rotation_degrees", style.move_rotation, style.move_duration)
 		spin.tween_property(self, "rotation_degrees", 0.0, 0.15)
+		# Scale pulse so spinning is visible on circles and crosses
+		var loops = max(1, int(style.move_duration / 0.18))
+		var pulse = create_tween().set_loops(loops)
+		pulse.tween_property(self, "scale", Vector2(1.25, 1.25), 0.09).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(self, "scale", Vector2(0.8, 0.8), 0.09).set_trans(Tween.TRANS_SINE)
 
 	# Move + resize to target
 	var move_tween = create_tween().set_ease(style.move_ease).set_trans(style.move_trans).set_parallel(true)
@@ -70,6 +75,7 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 	move_tween.tween_property(self, "size", target_size, style.move_duration)
 	await move_tween.finished
 
+	scale = Vector2.ONE
 	pivot_offset = size / 2.0
 
 	# Landing effects

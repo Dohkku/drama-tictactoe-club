@@ -17,6 +17,7 @@ func setup(stage: Control, board: Control, dialogue_box: Control) -> void:
 	_stage = stage
 	_board = board
 	_dialogue_box = dialogue_box
+	EventBus.dialogue_trigger.connect(_handle_dialogue_trigger)
 
 
 func load_reactions(reactions_dict: Dictionary) -> void:
@@ -66,6 +67,8 @@ func _run(commands: Array) -> void:
 		match cmd.type:
 			"dialogue":
 				await _cmd_dialogue(cmd)
+			"choose":
+				await _cmd_choose(cmd)
 			"enter":
 				await _stage.enter_character(cmd.character, cmd.get("position", "center"), cmd.get("enter_from", ""))
 			"exit":
@@ -162,13 +165,14 @@ func _cmd_dialogue(cmd: Dictionary) -> void:
 	# Show dialogue
 	var color = _stage.get_character_color(char_id)
 	var display_name = _get_display_name(char_id)
+	var char_data = _stage.get_character_data(char_id)
 
 	# Add target indicator to dialogue if directed
 	if target != "":
 		var target_name = _get_display_name(target)
-		_dialogue_box.show_dialogue("%s → %s" % [display_name, target_name], text, color)
+		_dialogue_box.show_dialogue("%s → %s" % [display_name, target_name], text, color, char_data)
 	else:
-		_dialogue_box.show_dialogue(display_name, text, color)
+		_dialogue_box.show_dialogue(display_name, text, color, char_data)
 
 	await EventBus.dialogue_finished
 
@@ -176,6 +180,13 @@ func _cmd_dialogue(cmd: Dictionary) -> void:
 		_stage.set_character_speaking(char_id, false)
 		if target != "":
 			_stage.set_talk_target(char_id, "")
+
+
+func _cmd_choose(cmd: Dictionary) -> void:
+	var color = _stage.get_character_color("player")
+	_dialogue_box.show_choices(cmd.options, color)
+	var chosen_flag = await EventBus.choice_made
+	GameState.set_flag(chosen_flag, true)
 
 
 func _cmd_set_style(cmd: Dictionary) -> void:
@@ -231,3 +242,10 @@ static func _resolve_color(name: String) -> Color:
 	if name.begins_with("#"):
 		return Color.html(name)
 	return Color.WHITE
+
+
+func _handle_dialogue_trigger(trigger_name: String) -> void:
+	match trigger_name:
+		"ai_move":
+			if _board:
+				_board.trigger_ai_turn()  # Fire and forget, don't await
