@@ -4,6 +4,14 @@ extends Resource
 @export var character_id: String = ""
 @export var display_name: String = ""
 @export var color: Color = Color.WHITE
+
+## Base portrait image (fallback if no specific expression image is found)
+@export var portrait_image: Texture2D = null
+
+## Map of expression names to specific portrait images
+## { "happy": Texture2D, "angry": Texture2D, ... }
+@export var expression_images: Dictionary = {}
+
 @export var expressions: Dictionary = {}  # {expression_name: Color}
 @export var piece_type: String = "O"
 

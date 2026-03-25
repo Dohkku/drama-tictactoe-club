@@ -9,32 +9,5 @@ display_name = "Mei"
 color = Color(0.6, 0.3, 0.9, 1)
 expressions = {
 "analytical": Color(0.5, 0.25, 0.95, 1),
-"calm": Color(0.55, 0.35, 0.85, 1),
-"focused": Color(0.45, 0.2, 1, 1),
-"neutral": Color(0.6, 0.3, 0.9, 1),
-"respect": Color(0.65, 0.5, 0.9, 1),
-"surprised": Color(0.7, 0.45, 0.95, 1)
+"neutral": Color(0.6, 0.3, 0.9, 1)
 }
-poses = {
-"arms_crossed": {
-"energy": 0.2,
-"openness": 0.1
-},
-"idle": {
-"energy": 0.2,
-"openness": 0.4
-},
-"leaning_forward": {
-"energy": 0.4,
-"openness": 0.5
-},
-"surprised": {
-"energy": 0.5,
-"openness": 0.7
-},
-"thinking": {
-"energy": 0.3,
-"openness": 0.3
-}
-}
-voice_pitch = 280.0

@@ -33,8 +33,10 @@ func has_reaction(event_name: String) -> bool:
 	return _reactions.has(event_name)
 
 
-func execute(commands: Array) -> void:
-	await _run(commands)
+func execute(data: Dictionary) -> void:
+	if data.get("background") != "" and data.get("background") != null:
+		_stage.set_background(data.background)
+	await _run(data.commands)
 
 
 func trigger_reaction(event_name: String) -> void:
@@ -135,6 +137,8 @@ func _run(commands: Array) -> void:
 			"camera_reset":
 				_stage.camera_reset(cmd.get("duration", 0.4))
 				await _stage.get_tree().create_timer(cmd.get("duration", 0.4)).timeout
+			"background":
+				_stage.set_background(cmd.source)
 
 	_running = false
 

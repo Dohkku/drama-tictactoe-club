@@ -17,7 +17,7 @@ const ENTER_DURATION := 0.5
 const EXIT_DURATION := 0.4
 const EXPRESSION_FADE_DURATION := 0.15
 
-@onready var portrait_rect: ColorRect = %PortraitRect
+@onready var portrait_rect: TextureRect = %PortraitRect
 @onready var name_label: Label = %NameLabel
 @onready var expression_label: Label = %ExpressionLabel
 
@@ -243,7 +243,28 @@ func _apply_expression(expr_name: String) -> void:
 	current_expression = expr_name
 	expression_label.text = expr_name
 
-	if character_data and character_data.expressions.has(expr_name):
-		portrait_rect.color = character_data.expressions[expr_name]
-	elif character_data:
-		portrait_rect.color = character_data.color
+	if character_data == null:
+		return
+
+	# 1. Try to find a specific image for this expression
+	var img = character_data.expression_images.get(expr_name)
+	if img == null:
+		# 2. Fallback to base portrait image
+		img = character_data.portrait_image
+
+	if img != null:
+		portrait_rect.texture = img
+		portrait_rect.modulate = Color.WHITE # Clear any previous tinting
+	else:
+		# 3. Last fallback: Generate a solid color texture from the character color
+		var color = character_data.expressions.get(expr_name, character_data.color)
+		_set_solid_color_fallback(color)
+
+
+func _set_solid_color_fallback(color: Color) -> void:
+	# Create a tiny 1x1 image and scale it to fill
+	var img = Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	img.fill(color)
+	var tex = ImageTexture.create_from_image(img)
+	portrait_rect.texture = tex
+	portrait_rect.modulate = Color.WHITE

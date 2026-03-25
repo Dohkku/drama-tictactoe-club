@@ -25,7 +25,7 @@ var _character_depth: Dictionary = {}       # character_id -> float (1.0 = norma
 var _camera_active: bool = false            # True during close_up/pull_back to avoid resize conflicts
 var camera_effects: Node = null
 
-@onready var background: ColorRect = %Background
+@onready var background: Control = %Background
 @onready var character_layer: Control = %CharacterLayer
 
 
@@ -36,6 +36,9 @@ func _ready() -> void:
 	camera_effects.setup(self)
 
 	character_layer.resized.connect(_on_layer_resized)
+	
+	# Initial default background
+	background.set_background(Color(0.12, 0.1, 0.18))
 
 
 func register_character(data: Resource) -> void:
@@ -232,8 +235,8 @@ func camera_reset(duration: float = 0.4) -> void:
 
 # --- Stage management ---
 
-func set_background_color(color: Color) -> void:
-	background.color = color
+func set_background(source: Variant) -> void:
+	background.set_background(source)
 
 
 func clear_stage() -> void:

@@ -196,6 +196,8 @@ static func _parse_bracket(content: String) -> Dictionary:
 			return {"type": "pull_back", "character": _s(parts, 1), "zoom": _f(parts, 2, 0.8), "duration": _f(parts, 3, 0.5)}
 		"camera_reset":
 			return {"type": "camera_reset", "duration": _f(parts, 1, 0.4)}
+		"background":
+			return {"type": "background", "source": _s(parts, 1, "")}
 
 	push_warning("SceneParser: unknown command [%s]" % content)
 	return {}

@@ -72,7 +72,7 @@ func _play_event(event: Dictionary) -> void:
 func _play_cutscene(script_path: String) -> void:
 	_runner.clear_reactions()
 	var data = SceneParserScript.parse_file(script_path)
-	await _runner.execute(data.commands)
+	await _runner.execute(data)
 
 
 # ==== Regular Match ====
@@ -92,7 +92,7 @@ func _play_match(config: Resource) -> void:
 
 	if config.intro_script != "":
 		var data = SceneParserScript.parse_file(config.intro_script)
-		await _runner.execute(data.commands)
+		await _runner.execute(data)
 
 	var result = await EventBus.match_ended
 
@@ -140,7 +140,7 @@ func _play_simultaneous(configs: Array) -> void:
 		if config.intro_script != "":
 			_runner.clear_reactions()
 			var data = SceneParserScript.parse_file(config.intro_script)
-			await _runner.execute(data.commands)
+			await _runner.execute(data)
 
 		boards[i].state = _board.save_board_state()
 
