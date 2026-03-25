@@ -2,6 +2,8 @@ extends HSplitContainer
 
 const CharacterDataScript = preload("res://characters/character_data.gd")
 
+signal characters_changed()
+
 var characters: Array[Resource] = []
 var _selected_index: int = -1
 var _updating_ui: bool = false
@@ -129,6 +131,7 @@ func _on_add_pressed() -> void:
 	_selected_index = characters.size() - 1
 	character_list.select(_selected_index)
 	_populate_form()
+	characters_changed.emit()
 
 
 func _on_delete_pressed() -> void:
@@ -143,6 +146,7 @@ func _on_delete_pressed() -> void:
 	else:
 		_clear_form()
 		_set_form_enabled(false)
+	characters_changed.emit()
 
 
 func _on_character_selected(index: int) -> void:
@@ -234,6 +238,8 @@ func _on_field_changed(value: String, field: String) -> void:
 	if ch == null:
 		return
 	ch.set(field, value)
+	if field == "character_id":
+		characters_changed.emit()
 
 
 func _on_name_changed(value: String) -> void:
@@ -245,6 +251,7 @@ func _on_name_changed(value: String) -> void:
 	ch.display_name = value
 	_refresh_list()
 	_update_preview()
+	characters_changed.emit()
 
 
 func _on_color_changed(color: Color) -> void:

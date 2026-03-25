@@ -13,7 +13,9 @@ const TournamentEventScript = preload("res://data/tournament_event.gd")
 @onready var character_editor: HSplitContainer = %CharacterEditor
 @onready var tournament_editor = %TournamentEditor
 @onready var scene_editor = %SceneEditor
+@onready var top_bar_hbox: HBoxContainer = $Background/VBoxContainer/TopBar/HBox
 
+var play_button: Button = null
 var current_project: Resource = null
 const SAVE_PATH := "user://current_project.tres"
 
@@ -23,14 +25,62 @@ func _ready() -> void:
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
 	load_dialog.file_selected.connect(_on_load_file_selected)
+	
+	if character_editor:
+		character_editor.characters_changed.connect(_on_characters_changed)
+	
+	_setup_play_button()
 
-	# Initialize with a new project
-	current_project = ProjectDataScript.new()
+	# Initialize with existing project or default
+	if ResourceLoader.exists(SAVE_PATH):
+		_on_load_file_selected(SAVE_PATH)
+	else:
+		var default_res = load("res://data/resources/default_project.tres")
+		if default_res:
+			current_project = default_res
+			_apply_data()
+	
 	_update_title()
+
+
+func _setup_play_button() -> void:
+	play_button = Button.new()
+	play_button.text = "¡JUGAR!"
+	play_button.custom_minimum_size = Vector2(100, 0)
+	
+	# Reuse styles from save button if possible, or create a distinct "Play" style
+	var style_normal = save_button.get_theme_stylebox("normal").duplicate()
+	style_normal.bg_color = Color(0.2, 0.6, 0.3)
+	play_button.add_theme_stylebox_override("normal", style_normal)
+	
+	var style_hover = save_button.get_theme_stylebox("hover").duplicate()
+	style_hover.bg_color = Color(0.3, 0.7, 0.4)
+	play_button.add_theme_stylebox_override("hover", style_hover)
+	
+	play_button.add_theme_color_override("font_color", Color.WHITE)
+	play_button.add_theme_font_size_override("font_size", 16)
+	
+	# Insert after spacer
+	top_bar_hbox.add_child(play_button)
+	top_bar_hbox.move_child(play_button, save_button.get_index())
+	
+	play_button.pressed.connect(_on_play_pressed)
+
+
+func _on_play_pressed() -> void:
+	_on_save_pressed()
+	# Short delay to show the "saved" flash before switching
+	await get_tree().create_timer(0.3).timeout
+	get_tree().change_scene_to_file("res://main.tscn")
 
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://ui/main_menu.tscn")
+
+
+func _on_characters_changed() -> void:
+	if tournament_editor and character_editor:
+		tournament_editor.set_available_characters(character_editor.get_characters())
 
 
 func _on_save_pressed() -> void:
@@ -94,6 +144,9 @@ func _apply_data() -> void:
 
 	# Apply tournament events
 	if tournament_editor:
+		if character_editor:
+			tournament_editor.set_available_characters(character_editor.get_characters())
+		
 		var event_dicts: Array = []
 		for i in range(current_project.events.size()):
 			var te = current_project.events[i]

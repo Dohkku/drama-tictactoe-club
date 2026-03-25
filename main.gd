@@ -59,8 +59,13 @@ func _ready() -> void:
 	_setup_runner()
 	var loaded := _load_project_data()
 	if not loaded:
-		_register_characters()
-		_setup_tournament()
+		# Fallback to default project resource
+		var default_res = load("res://data/resources/default_project.tres")
+		if default_res:
+			_apply_project_data(default_res)
+		else:
+			push_error("Main: Failed to load default_project.tres")
+
 	_connect_events()
 	_update_layout()
 	get_tree().get_root().size_changed.connect(_update_layout)
@@ -71,6 +76,42 @@ func _ready() -> void:
 
 	await get_tree().create_timer(0.5).timeout
 	await match_manager.start()
+
+
+func _apply_project_data(project_data: ProjectDataScript) -> void:
+	# Register characters from project data
+	for character in project_data.characters:
+		if character is CharacterDataScript:
+			cinematic_stage.register_character(character)
+
+	# Set up tournament from project data events
+	match_manager = MatchManagerScript.new()
+	match_manager.setup(runner, board, cinematic_stage)
+
+	# Sort events by order_index before processing
+	var sorted_events: Array[Resource] = project_data.events.duplicate()
+	sorted_events.sort_custom(func(a, b): return a.order_index < b.order_index)
+
+	for event in sorted_events:
+		if not (event is TournamentEventScript):
+			continue
+
+		match event.event_type:
+			"match":
+				if event.match_config != null:
+					match_manager.add_match(event.match_config)
+			"cutscene":
+				if event.cutscene_script_path != "":
+					match_manager.add_cutscene(event.cutscene_script_path)
+			"simultaneous":
+				if event.simultaneous_configs.size() > 0:
+					match_manager.add_simultaneous(event.simultaneous_configs)
+
+	_log_debug("Project '%s': %d chars, %d events" % [
+		project_data.project_name,
+		project_data.characters.size(),
+		match_manager.get_event_count()
+	])
 
 
 func _log_debug(text: String) -> void:
@@ -179,132 +220,9 @@ func _load_project_data() -> bool:
 	return true
 
 
-func _register_characters() -> void:
-	# Akira — aggressive, flashy, club champion
-	var akira = CharacterDataScript.new()
-	akira.character_id = "akira"
-	akira.display_name = "Akira"
-	akira.color = Color(0.9, 0.2, 0.2)
-	akira.default_style = "spinning"
-	akira.default_pose = "idle"
-	akira.default_look = "center"
-	akira.expressions = {
-		"neutral": Color(0.9, 0.2, 0.2),
-		"smirk": Color(0.95, 0.3, 0.15),
-		"confident": Color(1.0, 0.4, 0.1),
-		"angry": Color(0.8, 0.1, 0.1),
-		"surprised": Color(1.0, 0.5, 0.3),
-		"intense": Color(0.7, 0.05, 0.05),
-		"sweating": Color(0.8, 0.4, 0.4),
-		"shocked": Color(1.0, 0.6, 0.5),
-		"triumphant": Color(1.0, 0.25, 0.0),
-	}
-	akira.poses = {
-		"idle": {"energy": 0.3, "openness": 0.5},
-		"confident": {"energy": 0.5, "openness": 0.8},
-		"arms_crossed": {"energy": 0.4, "openness": 0.2},
-		"leaning_forward": {"energy": 0.7, "openness": 0.6},
-		"excited": {"energy": 0.9, "openness": 0.9},
-		"tense": {"energy": 0.8, "openness": 0.1},
-		"defeated": {"energy": 0.1, "openness": 0.3},
-	}
-	akira.voice_pitch = 180.0
-	akira.voice_waveform = "square"
-	cinematic_stage.register_character(akira)
-
-	# Mei — calm, analytical, club vice-president
-	var mei = CharacterDataScript.new()
-	mei.character_id = "mei"
-	mei.display_name = "Mei"
-	mei.color = Color(0.6, 0.3, 0.9)
-	mei.default_style = "gentle"
-	mei.default_pose = "idle"
-	mei.default_look = "center"
-	mei.expressions = {
-		"neutral": Color(0.6, 0.3, 0.9),
-		"calm": Color(0.55, 0.35, 0.85),
-		"analytical": Color(0.5, 0.25, 0.95),
-		"focused": Color(0.45, 0.2, 1.0),
-		"surprised": Color(0.7, 0.45, 0.95),
-		"respect": Color(0.65, 0.5, 0.9),
-	}
-	mei.poses = {
-		"idle": {"energy": 0.2, "openness": 0.4},
-		"thinking": {"energy": 0.3, "openness": 0.3},
-		"arms_crossed": {"energy": 0.2, "openness": 0.1},
-		"leaning_forward": {"energy": 0.4, "openness": 0.5},
-		"surprised": {"energy": 0.5, "openness": 0.7},
-	}
-	mei.voice_pitch = 280.0
-	mei.voice_waveform = "sine"
-	cinematic_stage.register_character(mei)
-
-	# Player
-	var player = CharacterDataScript.new()
-	player.character_id = "player"
-	player.display_name = "Tú"
-	player.color = Color(0.2, 0.5, 1.0)
-	player.default_style = "slam"
-	player.expressions = {
-		"neutral": Color(0.2, 0.5, 1.0),
-		"determined": Color(0.1, 0.4, 1.0),
-		"nervous": Color(0.4, 0.5, 0.8),
-		"happy": Color(0.3, 0.7, 1.0),
-	}
-	player.voice_pitch = 220.0
-	player.voice_waveform = "triangle"
-	cinematic_stage.register_character(player)
-
-
 func _setup_runner() -> void:
 	runner = SceneRunnerScript.new()
 	runner.setup(cinematic_stage, board, dialogue_box)
-
-
-func _setup_tournament() -> void:
-	match_manager = MatchManagerScript.new()
-	match_manager.setup(runner, board, cinematic_stage)
-
-	# Prologue cutscene — pure dialogue with player choice
-	match_manager.add_cutscene("res://scene_scripts/scripts/prologue.dscn")
-
-	# Match 1: vs Akira — regular match with mid-match cutscene demo
-	var m1 = MatchConfigScript.new()
-	m1.match_id = "match_01"
-	m1.opponent_id = "akira"
-	m1.ai_difficulty = 0.3
-	m1.game_rules_preset = "standard"
-	m1.intro_script = "res://scene_scripts/scripts/match_01_intro.dscn"
-	m1.reactions_script = "res://scene_scripts/scripts/match_01_reactions.dscn"
-	m1.player_style = "slam"
-	m1.opponent_style = "spinning"
-	match_manager.add_match(m1)
-
-	# Simultaneous match: vs Akira AND Mei at the same time (round-robin)
-	var sim_akira = MatchConfigScript.new()
-	sim_akira.match_id = "sim_akira"
-	sim_akira.opponent_id = "akira"
-	sim_akira.ai_difficulty = 0.4
-	sim_akira.game_rules_preset = "standard"
-	sim_akira.intro_script = "res://scene_scripts/scripts/sim_intro.dscn"
-	sim_akira.reactions_script = "res://scene_scripts/scripts/match_01_reactions.dscn"
-	sim_akira.player_style = "slam"
-	sim_akira.opponent_style = "spinning"
-	sim_akira.turns_per_visit = 2  # Two quick moves before rotating
-
-	var sim_mei = MatchConfigScript.new()
-	sim_mei.match_id = "sim_mei"
-	sim_mei.opponent_id = "mei"
-	sim_mei.ai_difficulty = 0.5
-	sim_mei.game_rules_preset = "standard"
-	sim_mei.intro_script = "res://scene_scripts/scripts/sim_intro_mei.dscn"
-	sim_mei.reactions_script = "res://scene_scripts/scripts/match_02_reactions.dscn"
-	sim_mei.player_style = "slam"
-	sim_mei.opponent_style = "gentle"
-
-	match_manager.add_simultaneous([sim_akira, sim_mei])
-
-	_log_debug("Tournament: %d events" % match_manager.get_event_count())
 
 
 func _connect_events() -> void:
