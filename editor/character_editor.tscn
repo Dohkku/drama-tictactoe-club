@@ -450,12 +450,13 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PortraitRect" type="ColorRect" parent="RightPanel/PreviewPanel/PreviewVBox/PreviewSlot/VBoxContainer"]
+[node name="PortraitRect" type="TextureRect" parent="RightPanel/PreviewPanel/PreviewVBox/PreviewSlot/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 5.0
-color = Color(0.3, 0.3, 0.35, 1)
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ExpressionLabel" type="Label" parent="RightPanel/PreviewPanel/PreviewVBox/PreviewSlot/VBoxContainer/PortraitRect"]
 unique_name_in_owner = true

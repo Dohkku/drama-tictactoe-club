@@ -26,3 +26,7 @@ desktop.ini
 
 # Test/debug output
 test_output.txt
+
+# Linux dev files
+bin/
+*.log
