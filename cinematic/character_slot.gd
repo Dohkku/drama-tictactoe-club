@@ -1,0 +1,249 @@
+extends Control
+
+signal entrance_finished()
+signal exit_finished()
+
+var character_data: Resource = null
+var current_expression: String = "neutral"
+var is_speaking: bool = false
+var _base_position: Vector2 = Vector2.ZERO
+
+# --- Rich state ---
+var body_state: String = "idle"
+var look_target: String = ""       # character_id, "left", "right", "away", ""
+var talk_target: String = ""       # character_id being addressed
+
+const ENTER_DURATION := 0.5
+const EXIT_DURATION := 0.4
+const EXPRESSION_FADE_DURATION := 0.15
+
+@onready var portrait_rect: ColorRect = %PortraitRect
+@onready var name_label: Label = %NameLabel
+@onready var expression_label: Label = %ExpressionLabel
+
+var _state_label: Label
+var _look_indicator: Label
+var _body_tween: Tween = null
+
+
+func _ready() -> void:
+	modulate.a = 0.0
+	visible = false
+	resized.connect(_update_pivot)
+	_update_pivot()
+
+	# Debug state label (shows body pose)
+	_state_label = Label.new()
+	_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_state_label.add_theme_font_size_override("font_size", 10)
+	_state_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.4))
+	$VBoxContainer.add_child(_state_label)
+
+	# Look direction indicator
+	_look_indicator = Label.new()
+	_look_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_look_indicator.add_theme_font_size_override("font_size", 10)
+	_look_indicator.add_theme_color_override("font_color", Color(1, 1, 0.5, 0.4))
+	$VBoxContainer.add_child(_look_indicator)
+
+	_update_state_display()
+
+
+func _update_pivot() -> void:
+	pivot_offset = size / 2.0
+
+
+func enter_character(data: Resource, from_direction: String = "right") -> void:
+	character_data = data
+	visible = true
+	_apply_expression("neutral")
+	name_label.text = data.display_name
+
+	# Apply defaults from character data
+	if data.get("default_pose"):
+		set_body_state(data.default_pose)
+	if data.get("default_look"):
+		set_look_direction(data.default_look)
+
+	# Slide in from off-screen
+	var offset := 300.0 if from_direction == "right" else -300.0
+	var target_pos := position
+	position.x += offset
+	modulate.a = 0.0
+
+	var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(self, "position", target_pos, ENTER_DURATION)
+	tween.parallel().tween_property(self, "modulate:a", 1.0, ENTER_DURATION * 0.6)
+	await tween.finished
+	_base_position = position
+	entrance_finished.emit()
+
+
+func exit_character(to_direction: String = "right") -> void:
+	_stop_body_tween()
+	var offset := 300.0 if to_direction == "right" else -300.0
+	var target_pos := position
+	target_pos.x += offset
+
+	var tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(self, "position", target_pos, EXIT_DURATION)
+	tween.parallel().tween_property(self, "modulate:a", 0.0, EXIT_DURATION)
+	await tween.finished
+
+	character_data = null
+	visible = false
+	position = _base_position
+	body_state = "idle"
+	look_target = ""
+	talk_target = ""
+	exit_finished.emit()
+
+
+func set_expression(expr_name: String) -> void:
+	if expr_name == current_expression:
+		return
+	var tween := create_tween()
+	tween.tween_property(portrait_rect, "modulate:a", 0.7, EXPRESSION_FADE_DURATION)
+	tween.tween_callback(_apply_expression.bind(expr_name))
+	tween.tween_property(portrait_rect, "modulate:a", 1.0, EXPRESSION_FADE_DURATION)
+
+
+func set_speaking(speaking: bool) -> void:
+	is_speaking = speaking
+	var target_scale := Vector2(1.05, 1.05) if speaking else Vector2.ONE
+	var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(self, "scale", target_scale, 0.15)
+
+
+# --- Rich state methods ---
+
+func set_body_state(new_state: String) -> void:
+	if body_state == new_state:
+		return
+	body_state = new_state
+	_stop_body_tween()
+	_apply_body_state()
+	_update_state_display()
+
+
+func set_look_direction(target: String) -> void:
+	look_target = target
+	_apply_look_direction()
+	_update_state_display()
+
+
+func set_talk_to(target: String) -> void:
+	talk_target = target
+	_update_state_display()
+
+
+func set_focus(focused: bool) -> void:
+	## Highlight this character (dim others should be handled by stage)
+	var target_mod = 1.0 if focused else 0.5
+	var tween = create_tween().set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate:a", target_mod, 0.2)
+
+
+# --- Visual state application ---
+
+func _apply_body_state() -> void:
+	# Reset to base first
+	portrait_rect.rotation = 0.0
+	portrait_rect.scale = Vector2.ONE
+	portrait_rect.pivot_offset = portrait_rect.size / 2.0
+
+	match body_state:
+		"idle":
+			pass
+		"thinking":
+			# Slight tilt
+			var tween = create_tween()
+			tween.tween_property(portrait_rect, "rotation", deg_to_rad(-5.0), 0.3)
+		"arms_crossed":
+			# Narrower stance
+			portrait_rect.scale = Vector2(0.9, 1.0)
+		"leaning_forward":
+			# Bigger = closer
+			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(portrait_rect, "scale", Vector2(1.08, 1.08), 0.3)
+		"leaning_back":
+			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(portrait_rect, "scale", Vector2(0.92, 0.92), 0.3)
+		"excited":
+			# Bouncing loop
+			_body_tween = create_tween().set_loops()
+			_body_tween.tween_property(portrait_rect, "position:y", portrait_rect.position.y - 6.0, 0.2).set_ease(Tween.EASE_OUT)
+			_body_tween.tween_property(portrait_rect, "position:y", portrait_rect.position.y, 0.2).set_ease(Tween.EASE_IN)
+		"tense":
+			# Rapid micro-vibration loop
+			var orig = portrait_rect.position
+			_body_tween = create_tween().set_loops()
+			_body_tween.tween_property(portrait_rect, "position", orig + Vector2(2, 0), 0.05)
+			_body_tween.tween_property(portrait_rect, "position", orig + Vector2(-2, 0), 0.05)
+			_body_tween.tween_property(portrait_rect, "position", orig, 0.05)
+		"confident":
+			# Slightly wider and taller
+			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(portrait_rect, "scale", Vector2(1.05, 1.05), 0.3)
+		"defeated":
+			# Shrink and tilt
+			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(portrait_rect, "scale", Vector2(0.85, 0.95), 0.4)
+			tween.parallel().tween_property(portrait_rect, "rotation", deg_to_rad(3.0), 0.4)
+
+
+func _apply_look_direction() -> void:
+	# Slight rotation toward the look target direction
+	var angle := 0.0
+	match look_target:
+		"left":
+			angle = deg_to_rad(-4.0)
+		"right":
+			angle = deg_to_rad(4.0)
+		"away":
+			angle = deg_to_rad(8.0)
+		"center", "":
+			angle = 0.0
+		_:
+			# It's a character_id — resolve direction from stage
+			# We just store it; stage resolves the actual direction
+			pass
+
+	if angle != 0.0:
+		var tween = create_tween().set_ease(Tween.EASE_OUT)
+		tween.tween_property(self, "rotation", angle, 0.25)
+	elif rotation != 0.0:
+		var tween = create_tween().set_ease(Tween.EASE_OUT)
+		tween.tween_property(self, "rotation", 0.0, 0.25)
+
+
+func _stop_body_tween() -> void:
+	if _body_tween and _body_tween.is_valid():
+		_body_tween.kill()
+		_body_tween = null
+		# Reset portrait position/scale
+		portrait_rect.position = Vector2.ZERO
+		portrait_rect.scale = Vector2.ONE
+		portrait_rect.rotation = 0.0
+
+
+func _update_state_display() -> void:
+	if _state_label:
+		_state_label.text = "[%s]" % body_state if body_state != "idle" else ""
+	if _look_indicator:
+		var parts: Array[String] = []
+		if look_target != "" and look_target != "center":
+			parts.append("eyes → %s" % look_target)
+		if talk_target != "":
+			parts.append("to: %s" % talk_target)
+		_look_indicator.text = " | ".join(parts)
+
+
+func _apply_expression(expr_name: String) -> void:
+	current_expression = expr_name
+	expression_label.text = expr_name
+
+	if character_data and character_data.expressions.has(expr_name):
+		portrait_rect.color = character_data.expressions[expr_name]
+	elif character_data:
+		portrait_rect.color = character_data.color
