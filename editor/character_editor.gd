@@ -1,5 +1,7 @@
 extends HSplitContainer
 
+const CharacterDataScript = preload("res://characters/character_data.gd")
+
 var characters: Array[Resource] = []
 var _selected_index: int = -1
 var _updating_ui: bool = false
@@ -111,14 +113,14 @@ func _set_form_enabled(enabled: bool) -> void:
 func _refresh_list() -> void:
 	character_list.clear()
 	for ch in characters:
-		var label_text := ch.display_name if ch.display_name != "" else "(sin nombre)"
+		var label_text: String = ch.get("display_name") if ch.get("display_name") != "" else "(sin nombre)"
 		character_list.add_item(label_text)
 	if _selected_index >= 0 and _selected_index < character_list.item_count:
 		character_list.select(_selected_index)
 
 
 func _on_add_pressed() -> void:
-	var new_char := CharacterData.new()
+	var new_char := CharacterDataScript.new()
 	new_char.character_id = "char_%d" % (characters.size() + 1)
 	new_char.display_name = "Personaje %d" % (characters.size() + 1)
 	new_char.color = Color(randf_range(0.3, 1.0), randf_range(0.3, 1.0), randf_range(0.3, 1.0))
@@ -156,7 +158,7 @@ func _populate_form() -> void:
 	_updating_ui = true
 	_set_form_enabled(true)
 
-	var ch: CharacterData = characters[_selected_index]
+	var ch: Resource = characters[_selected_index]
 
 	id_edit.text = ch.character_id
 	name_edit.text = ch.display_name
@@ -219,7 +221,7 @@ func _clear_form() -> void:
 
 # --- Field change handlers ---
 
-func _get_current() -> CharacterData:
+func _get_current() -> Resource:
 	if _selected_index < 0 or _selected_index >= characters.size():
 		return null
 	return characters[_selected_index]
@@ -324,7 +326,7 @@ func _on_dialogue_border_changed(color: Color) -> void:
 
 # --- Expressions ---
 
-func _rebuild_expression_list(ch: CharacterData) -> void:
+func _rebuild_expression_list(ch: Resource) -> void:
 	_clear_children(expression_list_container)
 	for expr_name in ch.expressions.keys():
 		var expr_color: Color = ch.expressions[expr_name]
@@ -421,7 +423,7 @@ func _sync_expressions_from_ui() -> void:
 
 # --- Poses ---
 
-func _rebuild_pose_list(ch: CharacterData) -> void:
+func _rebuild_pose_list(ch: Resource) -> void:
 	_clear_children(pose_list_container)
 	for pose_name in ch.poses.keys():
 		var pose_data: Dictionary = ch.poses[pose_name]
@@ -594,7 +596,7 @@ func get_characters() -> Array:
 func set_characters(chars: Array) -> void:
 	characters.clear()
 	for ch in chars:
-		if ch is CharacterData:
+		if ch is CharacterDataScript:
 			characters.append(ch)
 	_refresh_list()
 	if characters.size() > 0:

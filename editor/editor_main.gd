@@ -1,5 +1,6 @@
 extends Control
 
+const ProjectDataScript = preload("res://data/project_data.gd")
 const MatchConfigScript = preload("res://match_system/match_config.gd")
 const TournamentEventScript = preload("res://data/tournament_event.gd")
 
@@ -13,7 +14,7 @@ const TournamentEventScript = preload("res://data/tournament_event.gd")
 @onready var tournament_editor = %TournamentEditor
 @onready var scene_editor = %SceneEditor
 
-var current_project: ProjectData = null
+var current_project: Resource = null
 const SAVE_PATH := "user://current_project.tres"
 
 
@@ -24,7 +25,7 @@ func _ready() -> void:
 	load_dialog.file_selected.connect(_on_load_file_selected)
 
 	# Initialize with a new project
-	current_project = ProjectData.new()
+	current_project = ProjectDataScript.new()
 	_update_title()
 
 
@@ -53,7 +54,7 @@ func _on_load_file_selected(path: String) -> void:
 		return
 
 	var loaded := ResourceLoader.load(path)
-	if loaded is ProjectData:
+	if loaded is ProjectDataScript:
 		current_project = loaded
 		_apply_data()
 		_update_title()
@@ -64,11 +65,11 @@ func _on_load_file_selected(path: String) -> void:
 
 func _collect_data() -> void:
 	if current_project == null:
-		current_project = ProjectData.new()
+		current_project = ProjectDataScript.new()
 
 	# Collect characters
 	if character_editor:
-		var chars := character_editor.get_characters()
+		var chars: Array = character_editor.get_characters()
 		current_project.characters.clear()
 		for ch in chars:
 			current_project.characters.append(ch)
