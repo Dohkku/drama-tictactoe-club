@@ -1,0 +1,12 @@
+# Simultaneous Match Intro — Mei's board
+# Brief intro for round-robin format
+
+@scene sim_mei_intro
+
+[split]
+[enter mei left left]
+[pose mei thinking]
+mei "analytical" -> player: Interesante formato. Dividir tu concentración es una desventaja.
+mei "calm": Aprovéchala bien.
+[exit mei left]
+@end

@@ -46,11 +46,20 @@ akira "intense" -> player: ¡Tu primera partida es contra mí!
 
 [camera_reset 0.3]
 [look_at player right]
-player "nervous": (No hay vuelta atrás...)
-player "determined": Acepto.
 
+[choose]
+> Acepto el reto -> accepted_challenge
+> Necesito pensarlo... -> hesitated
+[end_choose]
+
+[if flag accepted_challenge]
 [pose akira excited]
 akira "confident": ¡Ja! Me gusta tu actitud.
+[else]
+akira "surprised": ¿Pensarlo? Aquí no se piensa, ¡se juega!
+[pose akira leaning_forward]
+akira "intense" -> player: No tienes opción, novato.
+[end_if]
 
 [exit mei left]
 [pose akira idle]

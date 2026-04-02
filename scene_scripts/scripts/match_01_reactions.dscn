@@ -2,6 +2,26 @@
 
 @reactions match_01
 
+@on before_opponent_move
+[if flag akira_first_taunt_done]
+[pose akira thinking]
+akira "focused": Veamos...
+[wait 0.3]
+[pose akira idle]
+[else]
+[set_flag akira_first_taunt_done]
+# Mid-match cutscene: interrupt the game, go fullscreen, then back
+[fullscreen]
+[enter akira center right]
+[close_up akira 1.3 0.4]
+[pose akira arms_crossed]
+akira "intense" -> player: ¡Ahora verás de lo que soy capaz!
+akira "confident": No te confíes por haber movido primero...
+[camera_reset 0.3]
+[split]
+[end_if]
+@end_on
+
 @on center_taken_by_player
 [board_disable]
 [override_next_style dramatic]
