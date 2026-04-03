@@ -1,65 +1,67 @@
-# Finale — After the simultaneous round
-
 @scene finale
 
 [fullscreen]
+[title_card El Último Tablero | Fin]
+
 [wait 0.5]
 
-[enter mei center_left left]
-[enter akira center_right right]
-[look_at mei player]
-[look_at akira player]
+[enter sora center_left left]
+[enter ryu center_right right]
+[look_at sora player]
+[look_at ryu player]
 
-[pose mei idle]
-[pose akira arms_crossed]
+[pose sora idle]
+[pose ryu arms_crossed]
 
-mei "calm" -> player: Bueno... el torneo ha terminado.
-
-[if flag player_wins]
-[pose akira defeated]
-akira "surprised": No puedo creerlo... Has sobrevivido a todo.
-[pose mei thinking]
-mei "respect" -> player: Impresionante. De verdad.
-[else]
-akira "smirk": No estuvo mal, novato. Para ser tu primer día.
-mei "calm": Has mostrado potencial.
-[end_if]
+ryu "neutral" -> player: Se acabó. La prueba ha terminado.
 
 [wait 0.3]
 
-[pose akira idle]
-[look_at akira mei]
-akira "neutral" -> mei: Oye, Mei...
+[pose ryu idle]
+[look_at ryu sora]
+ryu "neutral" -> sora: ¿Qué opinas?
 
-[look_at mei akira]
-mei "calm" -> akira: ¿Qué?
+[look_at sora ryu]
+[pose sora thinking]
+sora "calm" -> ryu: Creo que ya lo sabes.
 
-[look_at akira player]
-[pose akira excited]
-akira "confident" -> player: Bienvenido al Club de Tres en Raya.
+[look_at ryu player]
+[look_at sora player]
+
+[pose sora excited]
+sora "happy" -> player: ¡Bienvenido al club! ¡Oficialmente!
 
 [shake 0.3 0.15]
-player "determined": ¡Gracias!
+player "happy": ¡Gracias!
 
-mei "calm": A partir de ahora, las cosas se ponen interesantes.
+[pose ryu idle]
+ryu "neutral" -> player: No me des las gracias. Te lo has ganado.
 
-[close_up akira 1.3 0.4]
-[pose akira leaning_forward]
-akira "intense" -> player: La próxima vez... no seré tan blando.
+[wait 0.3]
 
-[camera_reset 0.3]
-
-[close_up mei 1.2 0.3]
-mei "analytical" -> player: Y yo tendré nuevas estrategias.
-
-[camera_reset 0.3]
-
-player "determined": (Este club... va a ser increíble.)
+[close_up ryu 1.2 0.3]
+[look_at ryu away]
+ryu "cold": ...Y sobre por qué creé este club...
 
 [wait 0.5]
 
-[exit akira right]
-[exit mei left]
+[look_at ryu player]
+ryu "neutral" -> player: Algún día te lo contaré. Cuando estés listo.
+
+[camera_reset 0.3]
+
+[pose sora happy]
+sora "happy" -> player: ¡La próxima vez habrá más rivales! ¡Y más apuestas!
+
+[pose ryu arms_crossed]
+ryu "neutral": Y más tableros.
+
+player "determined": (El Último Tablero... esto es solo el principio.)
 
 [wait 1.0]
+
+[exit ryu right]
+[exit sora left]
+
+[wait 1.5]
 @end

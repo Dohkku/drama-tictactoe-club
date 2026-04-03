@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CharacterData" format=3]
+
+[ext_resource type="Script" path="res://characters/character_data.gd" id="1_sora1"]
+
+[resource]
+script = ExtResource("1_sora1")
+character_id = "sora"
+display_name = "Sora"
+color = Color(1.0, 0.6, 0.15, 1)
+expressions = {
+"happy": Color(1.0, 0.7, 0.2, 1),
+"nervous": Color(0.9, 0.5, 0.1, 1),
+"neutral": Color(1.0, 0.6, 0.15, 1),
+"serious": Color(0.85, 0.45, 0.1, 1),
+"thinking": Color(0.9, 0.55, 0.15, 1)
+}
+default_style = "slam"
+default_pose = "idle"
+voice_pitch = 320.0
+voice_variation = 50.0
+voice_waveform = "sine"
+dialogue_bg_color = Color(0.14, 0.1, 0.05, 0.92)
+dialogue_border_color = Color(1.0, 0.6, 0.15, 1)

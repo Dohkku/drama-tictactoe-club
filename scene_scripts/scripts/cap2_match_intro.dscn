@@ -1,0 +1,18 @@
+@scene cap2_match_intro
+
+[board_disable]
+
+[enter sora left left]
+[look_at sora player]
+[pose sora excited]
+
+sora "happy" -> player: ¡Mismas reglas, diferente energía!
+
+[pose sora thinking]
+sora "serious": Consejo: no intentes predecirme. Ni yo sé lo que voy a hacer.
+
+player "determined": (Eso es exactamente lo que me preocupa...)
+
+[pose sora idle]
+[board_enable]
+@end

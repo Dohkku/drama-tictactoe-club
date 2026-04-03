@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CharacterData" format=3]
+
+[ext_resource type="Script" path="res://characters/character_data.gd" id="1_ryu01"]
+
+[resource]
+script = ExtResource("1_ryu01")
+character_id = "ryu"
+display_name = "Ryu"
+color = Color(0.15, 0.2, 0.45, 1)
+expressions = {
+"cold": Color(0.1, 0.15, 0.4, 1),
+"intense": Color(0.3, 0.15, 0.5, 1),
+"neutral": Color(0.15, 0.2, 0.45, 1),
+"surprised": Color(0.2, 0.3, 0.55, 1)
+}
+default_style = "gentle"
+default_pose = "arms_crossed"
+voice_pitch = 140.0
+voice_variation = 15.0
+voice_waveform = "triangle"
+dialogue_bg_color = Color(0.06, 0.07, 0.14, 0.92)
+dialogue_border_color = Color(0.15, 0.2, 0.45, 1)

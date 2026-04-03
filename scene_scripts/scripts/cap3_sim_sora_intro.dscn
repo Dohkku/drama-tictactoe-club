@@ -1,0 +1,9 @@
+@scene cap3_sim_sora_intro
+
+[split]
+[enter sora left left]
+[pose sora excited]
+sora "happy" -> player: ¡Que gane el mejor! O sea, yo.
+[pose sora idle]
+[exit sora left]
+@end

@@ -70,7 +70,9 @@ func _play_event(event: Dictionary) -> void:
 
 	_current += 1
 	if _current < _events.size():
-		await _stage.get_tree().create_timer(1.0).timeout
+		_stage.clear_stage()
+		_dialogue_box.hide_dialogue()
+		await _stage.get_tree().create_timer(0.8).timeout
 		await _play_event(_events[_current])
 	else:
 		EventBus.scene_script_finished.emit("tournament_complete")
@@ -396,9 +398,9 @@ func _configure_board_visuals(config: Resource) -> void:
 
 func _configure_board(config: Resource) -> void:
 	var board_cfg = _resolve_board_config(config)
-	_configure_board_visuals(config)
 	await _board.full_reset(board_cfg.get_rules())
 	_board.apply_board_config(board_cfg)
+	_configure_board_visuals(config)  # Character colors override config defaults
 
 
 func _resolve_board_config(config: Resource) -> Resource:

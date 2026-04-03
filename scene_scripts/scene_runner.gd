@@ -160,6 +160,8 @@ func _run(commands: Array) -> void:
 				_cmd_sfx(cmd)
 			"stop_music":
 				_cmd_stop_music()
+			"title_card":
+				await _stage.show_title_card(cmd.get("title", ""), cmd.get("subtitle", ""))
 
 	_running = false
 

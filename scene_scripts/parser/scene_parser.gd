@@ -202,6 +202,13 @@ static func _parse_bracket(content: String) -> Dictionary:
 			return {"type": "camera_snap", "character": _s(parts, 1), "zoom": _f(parts, 2, 1.4)}
 		"background":
 			return {"type": "background", "source": _s(parts, 1, "")}
+		"title_card":
+			# [title_card Title Text | Subtitle Text] or [title_card Title Text]
+			var full_text = " ".join(parts.slice(1))
+			var pipe = full_text.find("|")
+			if pipe >= 0:
+				return {"type": "title_card", "title": full_text.substr(0, pipe).strip_edges(), "subtitle": full_text.substr(pipe + 1).strip_edges()}
+			return {"type": "title_card", "title": full_text.strip_edges(), "subtitle": ""}
 
 	push_warning("SceneParser: unknown command [%s]" % content)
 	return {}

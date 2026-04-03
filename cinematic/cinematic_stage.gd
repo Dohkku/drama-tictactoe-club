@@ -305,6 +305,58 @@ func get_characters_on_stage() -> Array:
 	return characters_on_stage.keys()
 
 
+func show_title_card(title: String, subtitle: String = "", duration: float = 2.5) -> void:
+	## Show a centered title card overlay with optional subtitle, then fade out.
+	if title == "":
+		return
+
+	# Create overlay dynamically
+	var overlay = ColorRect.new()
+	overlay.color = Color(0.05, 0.05, 0.08, 1.0)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(overlay)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	vbox.offset_left = -400
+	vbox.offset_right = 400
+	vbox.offset_top = -80
+	vbox.offset_bottom = 80
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	overlay.add_child(vbox)
+
+	var title_label = Label.new()
+	title_label.text = title
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 36)
+	title_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	vbox.add_child(title_label)
+
+	if subtitle != "":
+		var sub_label = Label.new()
+		sub_label.text = subtitle
+		sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sub_label.add_theme_font_size_override("font_size", 20)
+		sub_label.add_theme_color_override("font_color", Color(0.65, 0.6, 0.55))
+		vbox.add_child(sub_label)
+
+	# Fade in
+	overlay.modulate.a = 0.0
+	var fade_in = create_tween()
+	fade_in.tween_property(overlay, "modulate:a", 1.0, 0.5)
+	await fade_in.finished
+
+	await get_tree().create_timer(duration).timeout
+
+	# Fade out
+	var fade_out = create_tween()
+	fade_out.tween_property(overlay, "modulate:a", 0.0, 0.5)
+	await fade_out.finished
+
+	overlay.queue_free()
+
+
 # --- Positioning helpers ---
 
 func _apply_slot_position(slot: Control, fraction: float) -> void:

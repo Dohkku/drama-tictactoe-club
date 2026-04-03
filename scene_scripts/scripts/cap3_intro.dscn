@@ -1,0 +1,48 @@
+@scene cap3_intro
+
+[fullscreen]
+[title_card Capítulo 3 | El Último Tablero]
+
+[wait 0.3]
+
+[enter ryu center_right right]
+[enter sora center_left left]
+[look_at ryu player]
+[look_at sora player]
+
+[pose ryu arms_crossed]
+[pose sora serious]
+
+ryu "neutral" -> player: Has llegado al final.
+
+sora "serious" -> player: La prueba definitiva del club.
+
+player "nervous": ¿Qué prueba?
+
+[pose ryu leaning_forward]
+ryu "intense" -> player: Jugarás contra los dos. Al mismo tiempo.
+
+player "surprised": ¿Los dos a la vez?
+
+[pose sora thinking]
+sora "calm" -> player: Rotarás entre nuestros tableros. Un turno aquí, un turno allá.
+
+[close_up ryu 1.2 0.3]
+ryu "cold" -> player: Si sobrevives... serás miembro oficial del Último Tablero.
+
+[camera_reset 0.3]
+
+[close_up sora 1.2 0.3]
+[pose sora excited]
+sora "happy" -> player: ¡Y si no... bueno, ha sido bonito conocerte!
+
+[camera_reset 0.3]
+
+player "determined": (Todo se decide aquí. No voy a fallar.)
+
+[exit ryu right]
+[exit sora left]
+
+[wait 0.3]
+[split]
+@end

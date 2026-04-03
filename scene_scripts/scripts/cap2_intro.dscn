@@ -1,0 +1,47 @@
+@scene cap2_intro
+
+[fullscreen]
+[title_card Capítulo 2 | El Estilo de Sora]
+
+[wait 0.3]
+
+[enter sora center left]
+[pose sora excited]
+[look_at sora player]
+
+sora "happy" -> player: ¡Mi turno! ¡Mi turno!
+
+player "neutral": ¿Tú también quieres jugar?
+
+sora "serious" -> player: Claro. Pero yo no juego como Ryu.
+
+[pose sora thinking]
+sora "calm" -> player: Ryu es pura lógica. Frío. Calculado.
+
+[pose sora excited]
+[shake 0.3 0.1]
+sora "happy" -> player: ¡Yo juego con el corazón! ¡Improviso!
+
+player "nervous": (Eso suena... peligroso.)
+
+[pose sora idle]
+sora "serious" -> player: Mi apuesta: si pierdes, mañana vienes al club con un disfraz ridículo.
+
+player "surprised": ¿¡Qué!?
+
+sora "happy": ¡Y si ganas, te cuento el secreto de Ryu! Sé por qué creó el club.
+
+[close_up sora 1.2 0.3]
+[pose sora thinking]
+sora "serious" -> player: Es algo que él nunca te contaría por sí mismo.
+
+[camera_reset 0.3]
+
+player "determined": Hecho.
+
+[pose sora excited]
+sora "happy": ¡Al tablero!
+
+[wait 0.3]
+[split]
+@end
