@@ -25,6 +25,7 @@ var duration_slider: HSlider = null
 var duration_value_label: Label = null
 var separator_check: CheckBox = null
 var highlight_check: CheckBox = null
+var layout_area: Control = null
 var log_label: RichTextLabel = null
 var log_lines: Array[String] = []
 
@@ -125,6 +126,33 @@ func _build_ui() -> void:
 		btn.pressed.connect(func() -> void: _set_instant(mode_str))
 		_style_btn(btn, Color(0.35, 0.35, 0.4))
 		instant_row.add_child(btn)
+
+	left.add_child(HSeparator.new())
+
+	# Split ratio slider
+	_lbl(left, "Ratio split (cinematic)", 13, Color(0.6, 0.6, 0.75))
+	var ratio_row := HBoxContainer.new()
+	ratio_row.add_theme_constant_override("separation", 6)
+	left.add_child(ratio_row)
+	var ratio_slider := HSlider.new()
+	ratio_slider.min_value = 0.2
+	ratio_slider.max_value = 0.8
+	ratio_slider.step = 0.05
+	ratio_slider.value = 0.5
+	ratio_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var ratio_val_label := Label.new()
+	ratio_val_label.text = "50%"
+	ratio_val_label.add_theme_font_size_override("font_size", 13)
+	ratio_val_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	ratio_val_label.custom_minimum_size = Vector2(40, 0)
+	ratio_slider.value_changed.connect(func(val: float) -> void:
+		layout.split_ratio = val
+		ratio_val_label.text = "%d%%" % int(val * 100)
+		if layout.get_current_mode() == "split":
+			layout.set_instant("split")
+	)
+	ratio_row.add_child(ratio_slider)
+	ratio_row.add_child(ratio_val_label)
 
 	left.add_child(HSeparator.new())
 
@@ -230,23 +258,18 @@ func _build_ui() -> void:
 	preview_container.add_theme_stylebox_override("panel", preview_style)
 	center.add_child(preview_container)
 
-	# The split container that holds cinematic + separator + board
-	var split := HBoxContainer.new()
-	split.set_anchors_preset(Control.PRESET_FULL_RECT)
-	split.add_theme_constant_override("separation", 0)
-	preview_container.add_child(split)
+	# Layout area — plain Control, no BoxContainer (we manage positions directly)
+	layout_area = Control.new()
+	layout_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+	preview_container.add_child(layout_area)
 
 	# Cinematic panel (purple-ish)
 	cinematic_panel = PanelContainer.new()
-	cinematic_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cinematic_panel.size_flags_stretch_ratio = 1.0
 	var cine_style := StyleBoxFlat.new()
 	cine_style.bg_color = Color(0.18, 0.1, 0.28)
-	cine_style.set_corner_radius_all(4)
 	cinematic_panel.add_theme_stylebox_override("panel", cine_style)
-	split.add_child(cinematic_panel)
+	layout_area.add_child(cinematic_panel)
 
-	# Label inside cinematic panel
 	var cine_label := Label.new()
 	cine_label.text = "CINEMATIC"
 	cine_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -256,7 +279,6 @@ func _build_ui() -> void:
 	cine_label.add_theme_color_override("font_color", Color(0.6, 0.4, 0.8, 0.6))
 	cinematic_panel.add_child(cine_label)
 
-	# Cinematic highlight
 	cinematic_highlight = Control.new()
 	cinematic_highlight.set_script(PanelHighlightScript)
 	cinematic_panel.add_child(cinematic_highlight)
@@ -264,19 +286,15 @@ func _build_ui() -> void:
 	# Separator
 	separator = Control.new()
 	separator.set_script(PanelSeparatorScript)
-	split.add_child(separator)
+	layout_area.add_child(separator)
 
 	# Board panel (blue-ish)
 	board_panel = PanelContainer.new()
-	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board_panel.size_flags_stretch_ratio = 1.0
 	var board_style := StyleBoxFlat.new()
 	board_style.bg_color = Color(0.1, 0.15, 0.28)
-	board_style.set_corner_radius_all(4)
 	board_panel.add_theme_stylebox_override("panel", board_style)
-	split.add_child(board_panel)
+	layout_area.add_child(board_panel)
 
-	# Label inside board panel
 	var board_label := Label.new()
 	board_label.text = "BOARD"
 	board_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -286,7 +304,6 @@ func _build_ui() -> void:
 	board_label.add_theme_color_override("font_color", Color(0.3, 0.5, 0.8, 0.6))
 	board_panel.add_child(board_label)
 
-	# Board highlight
 	board_highlight = Control.new()
 	board_highlight.set_script(PanelHighlightScript)
 	board_panel.add_child(board_highlight)
@@ -308,7 +325,7 @@ func _build_ui() -> void:
 
 	# -- Initialize LayoutManager --
 	layout = LayoutManagerScript.new()
-	layout.setup(cinematic_panel, board_panel, separator)
+	layout.setup(layout_area, cinematic_panel, board_panel, separator)
 	layout.transition_finished.connect(_on_transition_finished)
 	layout.set_instant("split")
 	_update_mode_label()
@@ -338,9 +355,9 @@ func _on_transition_finished(mode: String) -> void:
 
 
 func _on_separator_toggled(on: bool) -> void:
-	# Only affects split mode; in other modes the layout manager hides it
+	layout.separator_enabled = on
 	if layout.get_current_mode() == "split":
-		separator.visible = on
+		layout.set_instant("split")
 	_log("Separator: %s" % ("visible" if on else "hidden"))
 
 
