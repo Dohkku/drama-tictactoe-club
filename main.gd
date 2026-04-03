@@ -1,7 +1,7 @@
 extends Control
 
 const CharacterDataScript = preload("res://characters/character_data.gd")
-const SceneRunnerScript = preload("res://scene_scripts/scene_runner.gd")
+const SceneRunnerScript = preload("res://systems/scene_runner/scene_runner.gd")
 const MatchConfigScript = preload("res://match_system/match_config.gd")
 const MatchManagerScript = preload("res://match_system/match_manager.gd")
 const ProjectDataScript = preload("res://data/project_data.gd")

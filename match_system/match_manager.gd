@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Orchestrates a tournament: matches, cutscenes, and simultaneous round-robin matches.
 
-const SceneParserScript = preload("res://scene_scripts/parser/scene_parser.gd")
+const SceneParserScript = preload("res://systems/scene_runner/scene_parser.gd")
 const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
 const BoardConfigScript = preload("res://data/board_config.gd")
 const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
