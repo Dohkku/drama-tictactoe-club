@@ -84,6 +84,8 @@ func show_dialogue(speaker: String, text: String, speaker_color: Color = Color.W
 	if advance_indicator:
 		advance_indicator.visible = false
 
+	EventBus.dialogue_started.emit(speaker, text)
+
 	text_label.text = _full_text
 	text_label.visible_characters = 0
 	is_typing = true
@@ -205,7 +207,7 @@ func show_choices(options: Array, speaker_color: Color = Color.WHITE) -> void:
 		btn.text = "  %s" % option.text
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.add_theme_font_size_override("font_size", 16)
-		btn.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0))
+		btn.add_theme_color_override("font_color", Color(0.35, 0.28, 0.2))
 		var flag = option.flag
 		btn.pressed.connect(_select_choice.bind(flag))
 		_choice_container.add_child(btn)

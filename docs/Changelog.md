@@ -1,5 +1,54 @@
 # Changelog
 
+## 2026-03-28 — Phase 5 avances (IA + audio DSL + habilidades UI)
+
+### Added
+- UI de habilidades en `board.tscn` + `board.gd` para jugador:
+  - Boton `Doble Jugada`
+  - Boton `Robo`
+- Integracion de habilidades con estado dinamico (enabled/disabled) segun turno/estado de partida.
+- Ejecucion de comandos DSL de audio en `SceneRunner`:
+  - `music`
+  - `sfx`
+  - `stop_music`
+- Test de regresion para IA en modo rotativo en `board/test_board_logic.gd`.
+
+### Changed
+- `ai_player.gd` refactorizado para evaluar arbol usando `make_move()` + snapshot/load_state en vez de mutar `cells` directamente.
+- Heuristicas de minimax mejoradas y limite de profundidad adaptable por tamaño/reglas.
+- `steal_ability.gd` actualizado para no asumir tablero 3x3 fijo (usa `cells.size()`).
+
+### Verified
+- `./godot.sh --headless -s board/test_board_logic.gd` pasa incluyendo test de IA rotativa.
+- `./godot.sh --headless --quit` arranca sin errores.
+
+### Windows / cross-platform hardening
+- `Settings._apply_window_mode()` actualizado para usar modo borderless consistente (windowed + borderless + maximized) en opcion "Sin Bordes".
+- `SceneRunner` ahora normaliza rutas con separadores Windows (`\`) en carga de audio DSL.
+- `SceneEditor` normaliza rutas al guardar scripts para evitar fallos por separadores de path.
+
+---
+
+## 2026-03-28 — Audit de estado real + documentacion actualizada
+
+### Verified
+- `board/test_board_logic.gd` ejecuta y pasa en headless.
+- Startup headless (`./godot.sh --headless --quit`) sin crash.
+- `main.gd` ya no depende de escenas hardcodeadas: carga `ProjectData` y delega en `MatchManager` + `SceneRunner`.
+
+### Documented as implemented
+- DSL de escenas funcional (`SceneParser` + `SceneRunner`) con cutscenes, reactions, condicionales, choices y comandos de layout/camara.
+- Sistema de partidas funcional (`MatchConfig` + `MatchManager`) incluyendo modo simultanea con estado persistente por tablero.
+- Editor in-game funcional (`editor_main`, `character_editor`, `tournament_editor`, `scene_editor`) con guardado/carga de proyecto en `user://current_project.tres`.
+- Menu principal + settings persistentes (`Settings` autoload).
+- Audio procedural de dialogo (`dialogue_audio.gd`) activo durante typewriter.
+
+### Remaining known gaps (confirmados)
+- UX del Scene Editor para crear archivo nuevo con nombre/ruta asistida.
+- Expandir contenido (mas oponentes, guiones, arte final) y QA integral.
+
+---
+
 ## 2026-03-23 — Game Rules + Shockwave Radial
 
 ### Added

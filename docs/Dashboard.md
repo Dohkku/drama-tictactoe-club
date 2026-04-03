@@ -23,10 +23,12 @@
 | Language | GDScript |
 | Resolution | 1280x720 (responsive) |
 | Art style | Placeholder (rectangulos de colores) |
-| Phase actual | Phase 2 completada |
+| Main scene | `ui/main_menu.tscn` |
+| Herramientas | Editor in-game (Personajes, Torneo, Escenas) |
+| Phase actual | DSL + Match System + Editor (MVP funcional) |
 
 ---
 
 ## Next Up
 
-**[[Roadmap#Phase 3 Sistema de Scripting DSL|Phase 3: Sistema de Scripting DSL]]** — El corazon del proyecto. Parser de archivos `.dscn` para escribir escenas de forma declarativa sin tocar codigo.
+**[[Roadmap#Phase 5 Pulido y Contenido|Phase 5: Pulido y Contenido]]** — Integrar audio real (`music/sfx`), mejorar IA para reglas rotativas, UI de habilidades y contenido final.

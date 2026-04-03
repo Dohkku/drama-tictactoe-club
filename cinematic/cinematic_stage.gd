@@ -2,6 +2,8 @@ extends Control
 
 const CharacterSlotScene = preload("res://cinematic/character_slot.tscn")
 const CameraEffectsScript = preload("res://cinematic/camera_effects.gd")
+const CinematicCameraScript = preload("res://cinematic/cinematic_camera.gd")
+const SpeedLinesEffectScript = preload("res://cinematic/speed_lines_effect.gd")
 
 ## Named stage positions as fractions of stage width (0.0 = left edge, 1.0 = right edge)
 const POSITIONS = {
@@ -24,21 +26,31 @@ var _character_positions: Dictionary = {}   # character_id -> position name
 var _character_depth: Dictionary = {}       # character_id -> float (1.0 = normal, >1 = closer, <1 = farther)
 var _camera_active: bool = false            # True during close_up/pull_back to avoid resize conflicts
 var camera_effects: Node = null
+var _camera = null   # CinematicCamera instance
+var _speed_lines = null  # SpeedLinesEffect node
 
 @onready var background: Control = %Background
 @onready var character_layer: Control = %CharacterLayer
+@onready var speed_lines = %SpeedLinesEffect
 
 
 func _ready() -> void:
 	camera_effects = Node.new()
 	camera_effects.set_script(CameraEffectsScript)
 	add_child(camera_effects)
-	camera_effects.setup(self)
+	camera_effects.setup(character_layer, self)
+
+	# Virtual camera system
+	_camera = CinematicCameraScript.new()
+	_camera.setup(character_layer, self)
+
+	# Speed lines reference from scene tree
+	_speed_lines = speed_lines
 
 	character_layer.resized.connect(_on_layer_resized)
-	
+
 	# Initial default background
-	background.set_background(Color(0.12, 0.1, 0.18))
+	background.set_background(Color(0.95, 0.91, 0.85))
 
 
 func register_character(data: Resource) -> void:
@@ -195,42 +207,75 @@ func clear_focus() -> void:
 		characters_on_stage[id].set_focus(true)
 
 
-# --- Camera / Zoom ---
+# --- Camera / Zoom (virtual camera on CharacterLayer) ---
 
-func camera_close_up(character_id: String, zoom: float = 1.4, duration: float = 0.5) -> void:
-	_camera_active = true
-	for id in characters_on_stage:
-		var slot = characters_on_stage[id]
-		slot.pivot_offset = slot.size / 2.0
-		if id == character_id:
-			_character_depth[id] = zoom
-			var tween = slot.create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-			tween.tween_property(slot, "scale", Vector2(zoom, zoom), duration)
-		else:
-			var tween = slot.create_tween().set_ease(Tween.EASE_IN_OUT)
-			tween.tween_property(slot, "modulate:a", 0.3, duration)
-
-
-func camera_pull_back(character_id: String, zoom: float = 0.8, duration: float = 0.5) -> void:
+func camera_close_up(character_id: String, zoom: float = 1.4, _duration: float = 0.5) -> void:
 	if not characters_on_stage.has(character_id):
 		return
 	_camera_active = true
-	_character_depth[character_id] = zoom
 	var slot = characters_on_stage[character_id]
-	slot.pivot_offset = slot.size / 2.0
-	var tween = slot.create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(slot, "scale", Vector2(zoom, zoom), duration)
+	_camera.focus_character(slot.position, slot.size, zoom)
+
+	# Dim non-target characters for cinematic focus
+	var mode = _camera.get_mode()
+	var dim_dur = CinematicCameraScript.SNAPPY_DURATION if mode == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
+	for id in characters_on_stage:
+		if id != character_id:
+			var other = characters_on_stage[id]
+			var tween = other.create_tween().set_ease(Tween.EASE_IN_OUT)
+			tween.tween_property(other, "modulate:a", 0.3, dim_dur)
 
 
-func camera_reset(duration: float = 0.4) -> void:
+func camera_pull_back(character_id: String, zoom: float = 0.8, _duration: float = 0.5) -> void:
+	if not characters_on_stage.has(character_id):
+		return
+	_camera_active = true
+	var slot = characters_on_stage[character_id]
+	_camera.focus_character(slot.position, slot.size, zoom)
+
+
+func camera_snap_to(character_id: String, zoom: float = 1.4) -> void:
+	## Snap-zoom to a character using SNAPPY mode with speed lines.
+	if not characters_on_stage.has(character_id):
+		return
+	_camera_active = true
+	var slot = characters_on_stage[character_id]
+	_camera.focus_character(slot.position, slot.size, zoom, CinematicCameraScript.Mode.SNAPPY)
+	if _speed_lines:
+		_speed_lines.play()
+
+	# Dim non-target characters quickly
+	for id in characters_on_stage:
+		if id != character_id:
+			var other = characters_on_stage[id]
+			var tween = other.create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(other, "modulate:a", 0.3, CinematicCameraScript.SNAPPY_DURATION)
+
+
+func camera_reset(_duration: float = 0.4) -> void:
+	_camera.reset()
+
+	# Restore all character modulate
+	var mode = _camera.get_mode()
+	var reset_dur = CinematicCameraScript.SNAPPY_DURATION if mode == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
 	for id in characters_on_stage:
 		var slot = characters_on_stage[id]
-		slot.pivot_offset = slot.size / 2.0
 		_character_depth[id] = 1.0
 		var tween = slot.create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-		tween.tween_property(slot, "scale", Vector2.ONE, duration)
-		tween.parallel().tween_property(slot, "modulate:a", 1.0, duration)
+		tween.tween_property(slot, "modulate:a", 1.0, reset_dur)
 	_camera_active = false
+
+
+func set_camera_mode(mode_str: String) -> void:
+	match mode_str.to_lower():
+		"snappy":
+			_camera.set_mode(CinematicCameraScript.Mode.SNAPPY)
+		"smooth", _:
+			_camera.set_mode(CinematicCameraScript.Mode.SMOOTH)
+
+
+func get_camera():
+	return _camera
 
 
 # --- Stage management ---
@@ -245,6 +290,9 @@ func clear_stage() -> void:
 	characters_on_stage.clear()
 	_character_positions.clear()
 	_character_depth.clear()
+	if _camera:
+		_camera.reset()
+	_camera_active = false
 
 
 func get_character_color(character_id: String) -> Color:

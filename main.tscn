@@ -1,9 +1,37 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://board/board.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://cinematic/cinematic_stage.tscn" id="3"]
 [ext_resource type="Script" path="res://cinematic/dialogue_box.gd" id="4"]
+[ext_resource type="Script" path="res://ui/panel_highlight.gd" id="5"]
+[ext_resource type="Script" path="res://ui/panel_separator.gd" id="6"]
+
+[sub_resource type="StyleBoxFlat" id="cinematic_panel_style"]
+bg_color = Color(0.95, 0.91, 0.85, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+
+[sub_resource type="StyleBoxFlat" id="board_panel_style"]
+bg_color = Color(0.96, 0.93, 0.88, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+
+[sub_resource type="StyleBoxFlat" id="dialogue_panel_style"]
+bg_color = Color(0.94, 0.90, 0.84, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7, 0.62, 0.5, 0.7)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -30,10 +58,26 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.0
+theme_override_styles/panel = SubResource("cinematic_panel_style")
 
 [node name="CinematicStage" parent="SplitContainer/CinematicPanel" instance=ExtResource("3")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="CinematicHighlight" type="Control" parent="SplitContainer/CinematicPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("5")
+
+[node name="PanelSeparator" type="Control" parent="SplitContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 1
+custom_minimum_size = Vector2(6, 6)
+mouse_filter = 2
+script = ExtResource("6")
 
 [node name="BoardPanel" type="PanelContainer" parent="SplitContainer"]
 unique_name_in_owner = true
@@ -42,10 +86,17 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.0
+theme_override_styles/panel = SubResource("board_panel_style")
 
 [node name="Board" parent="SplitContainer/BoardPanel" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="BoardHighlight" type="Control" parent="SplitContainer/BoardPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("5")
 
 [node name="DebugLayer" type="CanvasLayer" parent="."]
 layer = 20
@@ -76,6 +127,7 @@ offset_top = -130.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 0
+theme_override_styles/panel = SubResource("dialogue_panel_style")
 script = ExtResource("4")
 
 [node name="MarginContainer" type="MarginContainer" parent="DialogueLayer/DialogueBox"]

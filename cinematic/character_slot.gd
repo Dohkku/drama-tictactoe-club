@@ -53,7 +53,7 @@ func _update_pivot() -> void:
 	pivot_offset = size / 2.0
 
 
-func enter_character(data: Resource, from_direction: String = "right") -> void:
+func enter_character(data: Resource, _from_direction: String = "right") -> void:
 	character_data = data
 	visible = true
 	_apply_expression("neutral")
@@ -65,29 +65,21 @@ func enter_character(data: Resource, from_direction: String = "right") -> void:
 	if data.get("default_look"):
 		set_look_direction(data.default_look)
 
-	# Slide in from off-screen
-	var offset := 300.0 if from_direction == "right" else -300.0
-	var target_pos := position
-	position.x += offset
+	# Fade in at target position
 	modulate.a = 0.0
-
-	var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(self, "position", target_pos, ENTER_DURATION)
-	tween.parallel().tween_property(self, "modulate:a", 1.0, ENTER_DURATION * 0.6)
+	var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(self, "modulate:a", 1.0, 0.2)
 	await tween.finished
 	_base_position = position
 	entrance_finished.emit()
 
 
-func exit_character(to_direction: String = "right") -> void:
+func exit_character(_to_direction: String = "right") -> void:
 	_stop_body_tween()
-	var offset := 300.0 if to_direction == "right" else -300.0
-	var target_pos := position
-	target_pos.x += offset
 
-	var tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(self, "position", target_pos, EXIT_DURATION)
-	tween.parallel().tween_property(self, "modulate:a", 0.0, EXIT_DURATION)
+	# Fade out at current position
+	var tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(self, "modulate:a", 0.0, 0.2)
 	await tween.finished
 
 	character_data = null

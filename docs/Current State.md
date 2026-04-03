@@ -1,63 +1,82 @@
 # Current State
 
-> Ultima actualizacion: 2026-03-23
+> Ultima actualizacion: 2026-03-28
 
 ## Estado General
 
-**Phase 2 completada.** El juego es jugable con piezas fisicas animadas, efectos de colocacion, reacciones narrativas (hardcodeadas), y habilidades especiales.
+**El proyecto ya supero ampliamente Phase 2.** Hoy hay un loop jugable con menu principal, editor de proyecto, sistema DSL funcional, manager de torneo (incluyendo modo simultanea), y guardado/carga de proyecto.
 
 ---
 
 ## Lo que funciona
 
-### Tablero
-- Grid 3x3 con celdas clickeables (mouse + touch)
-- Piezas fisicas (X azul, O roja) con emociones que cambian color
-- Piezas en "mano" debajo/arriba del tablero, se animan al colocar
-- IA con dificultad configurable (minimax + random blend)
-- Deteccion de victoria, empate, patrones (centro, esquina, near win, fork)
+### Gameplay de tablero
+- Grid configurable por reglas (`GameRules`), no hardcoded a 3x3.
+- Piezas fisicas con "mano" superior/inferior, animaciones y reflow responsive en resize/layout transitions.
+- Rotacion de piezas implementada visual + logica (`make_move()` retorna `{success, removed_cell}`).
+- Deteccion de victoria/empate/patrones narrativos.
+- Test headless de `BoardLogic` pasando (incluye modo rotacion).
 
-### Efectos de colocacion
-- **Slam**: escala 1.5x y rebota
-- **Rotate**: gira durante movimiento
-- **Vibrate**: sacudida rapida
-- **Bounce**: rebote vertical
-- **Shockwave**: empuje radial de todas las piezas cercanas + spring back elastico
-- Cada personaje tiene su estilo (Player: slam, Akira: spinning)
-- Override por movimiento (ej: Akira usa dramatic cuando se enoja)
+### IA
+- IA con mezcla random + minimax por dificultad.
+- Minimax actualizado para simular movimientos con `make_move()` + snapshot/load_state, respetando reglas de rotacion/overflow.
+- Se agrego test headless de regresion para IA en modo rotativo.
 
-### Cinematicas
-- Personajes entran/salen con tweens
-- Expresiones cambian color del slot
-- Dialogo con typewriter effect, avanza con click/touch
-- Camera shake y flash
-- Sincronizacion de emociones entre personaje y sus piezas
+### DSL de escenas (`.dscn`) — implementado
+- Parser real (`scene_scripts/parser/scene_parser.gd`) para cutscenes y reactions.
+- Runner real (`scene_scripts/scene_runner.gd`) con `await` y control de flujo.
+- Comandos activos:
+  - Escena/personajes: `enter`, `exit`, `move`, `pose`, `look_at`, `expression`, `focus`, `clear_focus`
+  - Camara/layout: `shake`, `flash`, `close_up`, `pull_back`, `camera_reset`, `fullscreen`, `split`, `board_only`
+  - Flujo: `wait`, `if/else/end_if`, `choose`, `set_flag`, `clear_flag`
+  - Tablero: `board_enable`, `board_disable`, `set_style`, `set_emotion`, `override_next_style`
+  - Otros: `background`
+- Reacciones por evento (`@on ... @end_on`) activadas via `EventBus.specific_pattern`.
 
-### Reglas configurables (preparado, no activado)
-- `game_rules.gd` soporta: board_size variable, win_length, max_pieces (rotacion), overflow_mode, allow_overwrite, custom_win_patterns
-- Presets: `standard()`, `rotating_3()`, `big_board()`
-- board_logic.gd y board.gd ya usan GameRules
+### Match / Tournament system
+- `MatchConfig` y `MatchManager` implementados.
+- Pipeline de eventos soportado:
+  - Cutscene
+  - Match normal
+  - Match simultanea (round-robin por tableros, estado persistente por oponente, `turns_per_visit`).
+- Carga de reacciones por oponente y disparo de reacciones de fin (`player_wins`, `opponent_wins`, `draw`).
+- Registro de historial en `GameState`.
 
-### Habilidades (demo)
-- Steal: roba pieza oponente (Akira)
-- Double Play: turno extra (Player)
-- No hay UI para activarlas aun
+### Editor in-game (funcional)
+- Entrada desde menu principal (`Editor`).
+- Tabs:
+  - **Personajes:** id/nombre/color, expresiones, poses, voz, estilo default, retrato.
+  - **Torneo:** secuencia visual de eventos (cutscene/match/simultaneous), reorder, configuracion por match.
+  - **Escenas:** editor `.dscn` con lista de archivos, guardado y preview con playback/step.
+- Persistencia de proyecto en `user://current_project.tres`.
+- Boton **JUGAR** en editor: guarda y lanza `main.tscn`.
+
+### UI base / settings
+- Main menu como escena inicial.
+- Panel de settings con volumen master y modo de ventana, persistidos en `user://settings.cfg`.
+- Modo "Sin Bordes" ajustado para mayor consistencia cross-platform (windowed+borderless+maximized).
+
+### Audio actual
+- Audio de dialogo procedural: beeps por caracter con waveform/pitch/variation por personaje (`dialogue_audio.gd` + `dialogue_box.gd`).
+- Comandos DSL de audio ahora ejecutan en runtime (`music`, `sfx`, `stop_music`) via `SceneRunner` con `AudioStreamPlayer`.
 
 ---
 
-## Lo que falta (proximo)
+## Estado de contenido actual
 
-- **DSL de escenas** — todo esta hardcoded en main.gd
-- **Sistema de partidas** — solo hay una partida que se repite
-- **UI de habilidades** — existen pero no se pueden activar
-- **Mas oponentes** — solo Akira
-- **Audio** — silencio total
-- **Arte** — rectangulos de colores
+- Personajes de data default: `player`, `akira`, `mei`.
+- Scripts `.dscn` reales para:
+  - Prologo
+  - Intro/reacciones match 01
+  - Intro/reacciones match 02
+  - Intros de modo simultanea
+- Proyecto default (`data/resources/default_project.tres`) ya usa esa estructura.
 
 ---
 
 ## Bugs conocidos / Notas
 
-- `test_board_logic.gd` roto (make_move ahora retorna Dictionary, no bool)
-- AI minimax manipula cells directamente, no soporta rotacion — suficiente para standard, necesita rewrite para rotating mode
-- `ObjectDB instances leaked` warning al cerrar con --quit (normal, no es bug real)
+- `test_board_logic.gd` **ya no esta roto** (actualizado a retorno `Dictionary` y pasando).
+- UI de habilidades implementada en tablero para jugador (`Doble Jugada`, `Robo`) con estado habilitado/deshabilitado dinamico.
+- Normalizacion basica de rutas con `\` -> `/` en carga de audio DSL y guardado de scripts del Scene Editor.
+- Queda pendiente mejorar UX/feedback visual avanzado de habilidades y balance.

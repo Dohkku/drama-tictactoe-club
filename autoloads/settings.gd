@@ -34,7 +34,17 @@ func _apply_audio() -> void:
 	AudioServer.set_bus_volume_db(master_idx, linear_to_db(master_volume))
 
 func _apply_window_mode() -> void:
+	# Reset borderless by default before applying a mode.
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
 	match window_mode:
-		0: DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		1: DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-		2: DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+		0:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		1:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		2:
+			# "Sin Bordes": borderless + maximized window is more consistent across OSes.
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+			DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
+		_:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)

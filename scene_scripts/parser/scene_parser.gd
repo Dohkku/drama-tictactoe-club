@@ -196,6 +196,10 @@ static func _parse_bracket(content: String) -> Dictionary:
 			return {"type": "pull_back", "character": _s(parts, 1), "zoom": _f(parts, 2, 0.8), "duration": _f(parts, 3, 0.5)}
 		"camera_reset":
 			return {"type": "camera_reset", "duration": _f(parts, 1, 0.4)}
+		"camera_mode":
+			return {"type": "camera_mode", "mode": _s(parts, 1, "smooth")}
+		"camera_snap":
+			return {"type": "camera_snap", "character": _s(parts, 1), "zoom": _f(parts, 2, 1.4)}
 		"background":
 			return {"type": "background", "source": _s(parts, 1, "")}
 

@@ -2,6 +2,7 @@ extends SceneTree
 
 const BL = preload("res://board/board_logic.gd")
 const GR = preload("res://board/game_rules.gd")
+const AI = preload("res://board/ai_player.gd")
 
 func _init():
 	print("=== Testing BoardLogic ===")
@@ -87,6 +88,16 @@ func _init():
 	assert(rot_board.cells[0] == BL.Piece.EMPTY, "Cell 0 should be empty now")
 	assert(rot_board.cells[8] == BL.Piece.X, "Cell 8 should be X")
 	print("PASS: Piece rotation works")
+
+	# Test 7: AI handles rotating rules via make_move simulation
+	print("\n--- Test 7: AI with rotating rules ---")
+	var ai = AI.new()
+	ai.difficulty = 1.0
+	ai.max_search_depth_override = 4
+	var ai_move = ai.choose_move(rot_board)
+	assert(ai_move >= 0, "AI should return a valid move on rotating board")
+	assert(ai_move in rot_board.get_valid_moves(), "AI move must be valid under current rules")
+	print("PASS: AI rotating-rule move selection works")
 
 	print("\n=== All BoardLogic tests PASSED ===")
 	quit()

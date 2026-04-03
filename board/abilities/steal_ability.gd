@@ -33,7 +33,7 @@ func apply(board_logic, _board_state: Dictionary) -> Dictionary:
 
 	# Find opponent pieces
 	var opponent_cells: Array[int] = []
-	for i in range(9):
+	for i in range(board_logic.cells.size()):
 		if board_logic.cells[i] == opponent:
 			opponent_cells.append(i)
 

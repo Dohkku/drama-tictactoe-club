@@ -5,18 +5,22 @@ extends RefCounted
 ## Needs references to the stage, board, and dialogue box nodes.
 
 const PlacementStyleScript = preload("res://board/placement_style.gd")
+const CinematicCameraScript = preload("res://cinematic/cinematic_camera.gd")
 
 var _stage: Control       # CinematicStage
 var _board: Control       # Board (can be null for pure cutscenes)
 var _dialogue_box: Control  # DialogueBox
 var _reactions: Dictionary = {}  # event_name -> Array[Dictionary]
 var _running: bool = false
+var _music_player: AudioStreamPlayer = null
+var _sfx_player: AudioStreamPlayer = null
 
 
 func setup(stage: Control, board: Control, dialogue_box: Control) -> void:
 	_stage = stage
 	_board = board
 	_dialogue_box = dialogue_box
+	_setup_audio_players()
 	EventBus.dialogue_trigger.connect(_handle_dialogue_trigger)
 
 
@@ -130,15 +134,32 @@ func _run(commands: Array) -> void:
 				await _stage.get_tree().create_timer(depth_dur).timeout
 			"close_up":
 				_stage.camera_close_up(cmd.character, cmd.get("zoom", 1.4), cmd.get("duration", 0.5))
-				await _stage.get_tree().create_timer(cmd.get("duration", 0.5)).timeout
+				var close_cam = _stage.get_camera()
+				var close_dur = CinematicCameraScript.SNAPPY_DURATION if close_cam and close_cam.get_mode() == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
+				await _stage.get_tree().create_timer(close_dur).timeout
 			"pull_back":
 				_stage.camera_pull_back(cmd.character, cmd.get("zoom", 0.8), cmd.get("duration", 0.5))
-				await _stage.get_tree().create_timer(cmd.get("duration", 0.5)).timeout
+				var pull_cam = _stage.get_camera()
+				var pull_dur = CinematicCameraScript.SNAPPY_DURATION if pull_cam and pull_cam.get_mode() == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
+				await _stage.get_tree().create_timer(pull_dur).timeout
 			"camera_reset":
 				_stage.camera_reset(cmd.get("duration", 0.4))
-				await _stage.get_tree().create_timer(cmd.get("duration", 0.4)).timeout
+				var reset_cam = _stage.get_camera()
+				var reset_dur = CinematicCameraScript.SNAPPY_DURATION if reset_cam and reset_cam.get_mode() == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
+				await _stage.get_tree().create_timer(reset_dur).timeout
+			"camera_mode":
+				_stage.set_camera_mode(cmd.mode)
+			"camera_snap":
+				_stage.camera_snap_to(cmd.character, cmd.get("zoom", 1.4))
+				await _stage.get_tree().create_timer(CinematicCameraScript.SNAPPY_DURATION).timeout
 			"background":
 				_stage.set_background(cmd.source)
+			"music":
+				_cmd_music(cmd)
+			"sfx":
+				_cmd_sfx(cmd)
+			"stop_music":
+				_cmd_stop_music()
 
 	_running = false
 
@@ -214,6 +235,109 @@ func _cmd_set_emotion(cmd: Dictionary) -> void:
 			_board.set_piece_emotion(true, cmd.emotion)
 		"opponent":
 			_board.set_piece_emotion(false, cmd.emotion)
+
+
+func _cmd_music(cmd: Dictionary) -> void:
+	_setup_audio_players()
+	if _music_player == null:
+		return
+
+	var track: String = cmd.get("track", "")
+	if track == "":
+		push_warning("SceneRunner: [music] requires a track path")
+		return
+
+	var stream: AudioStream = _load_audio_stream(track)
+	if stream == null:
+		push_warning("SceneRunner: music track not found or unsupported: %s" % track)
+		return
+
+	_music_player.stream = stream
+	_music_player.play()
+
+
+func _cmd_sfx(cmd: Dictionary) -> void:
+	_setup_audio_players()
+	if _sfx_player == null:
+		return
+
+	var sound: String = cmd.get("sound", "")
+	if sound == "":
+		push_warning("SceneRunner: [sfx] requires a sound path")
+		return
+
+	var stream: AudioStream = _load_audio_stream(sound)
+	if stream == null:
+		push_warning("SceneRunner: sfx not found or unsupported: %s" % sound)
+		return
+
+	_sfx_player.stream = stream
+	_sfx_player.play()
+
+
+func _cmd_stop_music() -> void:
+	if _music_player and _music_player.playing:
+		_music_player.stop()
+
+
+func _setup_audio_players() -> void:
+	if _stage == null:
+		return
+	if _music_player == null:
+		_music_player = AudioStreamPlayer.new()
+		_music_player.name = "SceneMusicPlayer"
+		_music_player.bus = "Master"
+		_music_player.process_mode = Node.PROCESS_MODE_ALWAYS
+		_stage.add_child(_music_player)
+	if _sfx_player == null:
+		_sfx_player = AudioStreamPlayer.new()
+		_sfx_player.name = "SceneSfxPlayer"
+		_sfx_player.bus = "Master"
+		_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+		_stage.add_child(_sfx_player)
+	_update_audio_volumes()
+
+
+func _update_audio_volumes() -> void:
+	# Settings is an autoload; if unavailable, keep sane defaults.
+	if _music_player:
+		var music_linear := 1.0
+		if typeof(Settings) != TYPE_NIL:
+			music_linear = clampf(Settings.master_volume * Settings.music_volume, 0.0001, 1.0)
+		_music_player.volume_db = linear_to_db(music_linear)
+	if _sfx_player:
+		var sfx_linear := 1.0
+		if typeof(Settings) != TYPE_NIL:
+			sfx_linear = clampf(Settings.master_volume * Settings.sfx_volume, 0.0001, 1.0)
+		_sfx_player.volume_db = linear_to_db(sfx_linear)
+
+
+func _load_audio_stream(path_or_key: String) -> AudioStream:
+	var candidate := path_or_key.strip_edges()
+	if candidate == "":
+		return null
+	candidate = candidate.replace("\\", "/")
+
+	# Allow direct resource paths.
+	if candidate.begins_with("res://") or candidate.begins_with("user://"):
+		if ResourceLoader.exists(candidate):
+			var stream = load(candidate)
+			return stream if stream is AudioStream else null
+		return null
+
+	# Convenience lookup by simple name.
+	var candidates = [
+		"res://audio/music/%s.ogg" % candidate,
+		"res://audio/music/%s.wav" % candidate,
+		"res://audio/sfx/%s.ogg" % candidate,
+		"res://audio/sfx/%s.wav" % candidate,
+	]
+	for p in candidates:
+		if ResourceLoader.exists(p):
+			var stream = load(p)
+			if stream is AudioStream:
+				return stream
+	return null
 
 
 # ---- Resolvers ----

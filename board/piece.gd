@@ -1,12 +1,14 @@
 extends Control
 
-const PlacementEffectsScript = preload("res://board/placement_effects.gd")
-
 var piece_type: int = 0  # 1=X, 2=O
 var character_id: String = ""
 var emotion: String = "neutral"
 var piece_color: Color = Color.WHITE
 var _expression_colors: Dictionary = {}
+
+# Drop-shadow offset (pixels)
+const _SHADOW_OFFSET := Vector2(2.0, 2.0)
+const _SHADOW_ALPHA := 0.22
 
 
 func setup(type: int, char_id: String, color: Color, expressions: Dictionary = {}) -> void:
@@ -25,11 +27,20 @@ func _draw() -> void:
 	var piece_radius: float = min(size.x, size.y) * 0.35
 	var current_color = _get_emotion_color()
 
-	# Background glow
+	# --- Drop shadow ---
+	var shadow_color = Color(0.0, 0.0, 0.0, _SHADOW_ALPHA)
+	var shadow_center = center + _SHADOW_OFFSET
+	if piece_type == 1:
+		_draw_x(shadow_center, piece_radius, shadow_color)
+	elif piece_type == 2:
+		_draw_o(shadow_center, piece_radius, shadow_color)
+
+	# --- Background glow ---
 	var glow_color = current_color
 	glow_color.a = 0.25
 	draw_circle(center, piece_radius * 1.15, glow_color)
 
+	# --- Main piece ---
 	if piece_type == 1:
 		_draw_x(center, piece_radius, current_color)
 	elif piece_type == 2:
@@ -56,33 +67,63 @@ func set_emotion(new_emotion: String) -> void:
 
 
 func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, all_pieces: Array) -> void:
+	## Animate the piece from its current hand position to target_pos on the board.
+	## Uses a physical anticipation-arc: lift -> wind-up -> arc-to-target -> settle.
 	pivot_offset = size / 2.0
 
-	# Rotation + scale pulse during travel (makes spinning visible even for symmetric shapes)
-	if style.move_rotation != 0.0:
-		var spin = create_tween()
-		spin.tween_property(self, "rotation_degrees", style.move_rotation, style.move_duration)
-		spin.tween_property(self, "rotation_degrees", 0.0, 0.15)
-		# Scale pulse so spinning is visible on circles and crosses
-		var loops = max(1, int(style.move_duration / 0.18))
-		var pulse = create_tween().set_loops(loops)
-		pulse.tween_property(self, "scale", Vector2(1.25, 1.25), 0.09).set_trans(Tween.TRANS_SINE)
-		pulse.tween_property(self, "scale", Vector2(0.8, 0.8), 0.09).set_trans(Tween.TRANS_SINE)
+	var start_pos := position
+	var start_size := size
 
-	# Move + resize to target
-	var move_tween = create_tween().set_ease(style.move_ease).set_trans(style.move_trans).set_parallel(true)
-	move_tween.tween_property(self, "position", target_pos, style.move_duration)
-	move_tween.tween_property(self, "size", target_size, style.move_duration)
-	await move_tween.finished
+	# Direction from current position to target (used for wind-up)
+	var travel := target_pos - start_pos
+	var travel_dist := travel.length()
 
+	# ------------------------------------------------------------------
+	# 1. LIFT  – scale up slightly and float upward
+	# ------------------------------------------------------------------
+	var lift_scale := Vector2(1.15, 1.15)
+	var lift_pos := Vector2(start_pos.x, start_pos.y - style.lift_height)
+
+	var lift_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD).set_parallel(true)
+	lift_tween.tween_property(self, "scale", lift_scale, 0.1)
+	lift_tween.tween_property(self, "position", lift_pos, 0.1)
+	await lift_tween.finished
+
+	# ------------------------------------------------------------------
+	# 2. ANTICIPATION  – pull back in the opposite direction (wind-up)
+	# ------------------------------------------------------------------
+	var anticipation_offset := Vector2.ZERO
+	if travel_dist > 1.0:
+		anticipation_offset = -travel.normalized() * travel_dist * style.anticipation_factor
+	var antic_pos := lift_pos + anticipation_offset
+
+	var antic_tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	antic_tween.tween_property(self, "position", antic_pos, 0.08)
+	await antic_tween.finished
+
+	# ------------------------------------------------------------------
+	# 3. ARC TO TARGET  – fly to the cell with slight overshoot via TRANS_BACK
+	# ------------------------------------------------------------------
+	var arc_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK).set_parallel(true)
+	arc_tween.tween_property(self, "position", target_pos, style.arc_duration)
+	arc_tween.tween_property(self, "size", target_size, style.arc_duration)
+	# Ease scale back toward 1.0 during the arc so the piece shrinks smoothly
+	arc_tween.tween_property(self, "scale", Vector2(1.03, 1.03), style.arc_duration)
+	await arc_tween.finished
+
+	# ------------------------------------------------------------------
+	# 4. SETTLE  – snap to exact position and scale
+	# ------------------------------------------------------------------
+	var settle_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD).set_parallel(true)
+	settle_tween.tween_property(self, "scale", Vector2.ONE, style.settle_duration)
+	settle_tween.tween_property(self, "position", target_pos, style.settle_duration)
+	await settle_tween.finished
+
+	# Ensure perfectly clean state
 	scale = Vector2.ONE
+	position = target_pos
+	size = target_size
 	pivot_offset = size / 2.0
-
-	# Landing effects
-	for effect_name in style.effects:
-		var fx = PlacementEffectsScript.apply(effect_name, self, style.intensity, all_pieces)
-		if fx:
-			await fx.finished
 
 
 func _get_emotion_color() -> Color:

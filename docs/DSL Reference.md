@@ -1,32 +1,25 @@
 # DSL Reference
 
-> Referencia del lenguaje de scripting de escenas `.dscn`. **Aun no implementado** — este documento define el diseno objetivo para Phase 3.
+> Referencia del lenguaje de scripting `.dscn` **actualmente implementado** en `scene_parser.gd` + `scene_runner.gd`.
 
 ---
 
 ## Estructura de archivo
 
-```
+### Cutscene
+```text
 @scene nombre_escena
-@background nombre_fondo
+@background gym_interior
 
-(comandos de escena)
-
+(comandos)
 @end
 ```
 
-## Tipos de archivo
-
-### Cutscenes (lineales)
-Se ejecutan de principio a fin. Usadas para intros, outros, transiciones.
-
-### Reacciones (event-driven)
-Bloques `@on` que se disparan cuando el tablero emite un patron.
-
-```
+### Reacciones
+```text
 @reactions nombre_partida
 
-@on nombre_evento
+@on evento_nombre
 (comandos)
 @end_on
 
@@ -35,138 +28,112 @@ Bloques `@on` que se disparan cuando el tablero emite un patron.
 
 ---
 
-## Comandos
+## Dialogo
 
-### Dialogo
+```text
+character_id "expresion": Texto...
+character_id "expresion" -> target_id: Texto dirigido...
 ```
-character_id "expresion": Texto del dialogo aqui.
+
+- `target_id` es opcional (hace que el speaker "mire" al target y muestre `A -> B` en nombre).
+- El dialogo espera input del jugador (click/touch) para avanzar.
+
+---
+
+## Comandos soportados
+
+### Personajes / escena
+| Comando | Descripcion |
+|---|---|
+| `[enter WHO POSITION]` | Entra personaje |
+| `[enter WHO POSITION FROM_DIR]` | Entra desde direccion explicita |
+| `[exit WHO]` | Sale personaje |
+| `[exit WHO DIRECTION]` | Sale en direccion especifica |
+| `[move WHO POSITION]` | Mover personaje en stage |
+| `[expression WHO EXPR]` | Cambia expresion |
+| `[pose WHO STATE]` | Cambia pose/estado corporal |
+| `[look_at WHO TARGET]` | Cambia direccion de mirada |
+| `[focus WHO]` | Enfoca un personaje |
+| `[clear_focus]` | Limpia enfoque |
+| `[background SOURCE]` | Cambia fondo de stage |
+
+### Camara / layout
+| Comando | Descripcion |
+|---|---|
+| `[shake INTENSITY DURATION]` | Shake de camara |
+| `[flash COLOR DURATION]` | Flash de pantalla |
+| `[depth WHO SCALE DURATION]` | Simula profundidad por escala |
+| `[close_up WHO ZOOM DURATION]` | Close-up |
+| `[pull_back WHO ZOOM DURATION]` | Pull-back |
+| `[camera_reset DURATION]` | Resetea camara |
+| `[fullscreen]` | Layout full cinematic |
+| `[split]` | Layout split |
+| `[board_only]` | Layout solo tablero |
+
+### Flujo
+| Comando | Descripcion |
+|---|---|
+| `[wait SECONDS]` | Pausa |
+| `[if flag FLAG]` | Condicional |
+| `[else]` | Rama alternativa |
+| `[end_if]` | Fin condicional |
+| `[set_flag FLAG]` | Setea flag true |
+| `[clear_flag FLAG]` | Setea flag false |
+| `[choose] ... [end_choose]` | Bloque de elecciones |
+
+Formato de opcion en choose:
+```text
+> Texto opcion -> flag_resultado
 ```
-- `character_id`: id registrado en character_data (ej: `akira`, `player`)
-- `expresion`: nombre de expresion (ej: `smirk`, `angry`, `neutral`). Vacio `""` para sin cambio
-- Pausa la ejecucion hasta que el jugador avance
-
-### Personajes
-| Comando | Descripcion |
-|---|---|
-| `[enter WHO WHERE]` | Personaje entra. WHERE: `left`, `center`, `right` |
-| `[exit WHO]` | Personaje sale |
-| `[expression WHO EXPR]` | Cambiar expresion sin dialogo |
-
-### Efectos de camara
-| Comando | Descripcion |
-|---|---|
-| `[shake INTENSITY DURATION]` | Sacudir pantalla |
-| `[flash COLOR DURATION]` | Flash de pantalla (COLOR: white, red, etc.) |
-| `[zoom LEVEL DURATION]` | Zoom (no implementado aun) |
-
-### Timing
-| Comando | Descripcion |
-|---|---|
-| `[wait SECONDS]` | Pausa sin input |
-
-### Audio (futuro)
-| Comando | Descripcion |
-|---|---|
-| `[music TRACK]` | Cambiar musica de fondo |
-| `[sfx SOUND]` | Reproducir efecto de sonido |
-| `[stop_music]` | Parar musica |
 
 ### Tablero
 | Comando | Descripcion |
 |---|---|
-| `[board_enable]` | Activar input del tablero |
-| `[board_disable]` | Desactivar input del tablero |
-| `[set_style WHO STYLE]` | Cambiar estilo de colocacion |
-| `[set_emotion WHO EMOTION]` | Cambiar emocion de piezas |
+| `[board_enable]` | Habilita input de tablero |
+| `[board_disable]` | Deshabilita input de tablero |
+| `[set_style TARGET STYLE]` | Cambia estilo (`player`/`opponent`) |
+| `[set_emotion TARGET EMOTION]` | Cambia emocion de piezas |
 | `[override_next_style STYLE]` | Override para siguiente movimiento |
 
-### Condicionales
-```
-[if flag NOMBRE_FLAG]
-(comandos si flag es true)
-[else]
-(comandos si flag es false)
-[end_if]
-```
-
-### Flags
-```
-[set_flag NOMBRE_FLAG]
-[clear_flag NOMBRE_FLAG]
-```
-
----
-
-## Eventos de tablero (para @on)
-
-| Evento | Cuando se dispara |
+### Audio
+| Comando | Estado |
 |---|---|
-| `center_taken_by_player` | Jugador pone pieza en el centro |
-| `center_taken_by_opponent` | Oponente pone pieza en el centro |
-| `corner_taken_by_player` | Jugador toma una esquina |
-| `corner_taken_by_opponent` | Oponente toma una esquina |
-| `player_near_win` | Jugador tiene 2 de 3 en una linea |
-| `opponent_near_win` | Oponente tiene 2 de 3 en una linea |
-| `player_fork` | Jugador crea doble amenaza |
-| `opponent_fork` | Oponente crea doble amenaza |
-| `player_piece_rotated` | Una pieza del jugador fue rotada (modo rotacion) |
-| `opponent_piece_rotated` | Una pieza del oponente fue rotada |
-| `move_count_N` | Se llego al movimiento N |
-| `player_wins` | Jugador gana |
-| `opponent_wins` | Oponente gana |
-| `draw` | Empate |
+| `[music TRACK]` | Ejecutado en runner (reproduce `AudioStream`) |
+| `[sfx SOUND]` | Ejecutado en runner (one-shot `AudioStream`) |
+| `[stop_music]` | Ejecutado en runner (detiene musica actual) |
+
+Notas:
+- Acepta rutas directas (`res://...` / `user://...`) o lookup simple por nombre en `res://audio/music/` y `res://audio/sfx/`.
+- El volumen usa `Settings.master_volume * Settings.music_volume|sfx_volume`.
 
 ---
 
-## Ejemplo completo
+## Tags de texto en dialogo
 
-```
-@scene match_01_intro
-@background gym_interior
+Procesadas por `DialogueTextProcessor`:
 
-[enter akira center]
-akira "smirk": Asi que crees que puedes ganarme?
-akira "confident": Llevo tres anos como campeon del club.
+- `{b}...{/b}`
+- `{i}...{/i}`
+- `{color:...}...{/color}`
+- `{shake}...{/shake}`
+- `{wave}...{/wave}`
+- `{rainbow}...{/rainbow}`
+- `{trigger:accion}` (no visible; emite `EventBus.dialogue_trigger`)
+- `{wait:segundos}` (no visible; pausa typewriter)
 
-[enter player left]
-player "nervous": (No puedo creer que este haciendo esto...)
-player "determined": He estado practicando. Vamos.
+Implementado en runtime: trigger `ai_move` (hace que board dispare turno AI).
 
-[shake 1.0]
-akira "intense": Entonces demuestralo!
+---
 
-[board_enable]
-@end
-```
+## Eventos comunes para `@on`
 
-```
-@reactions match_01
+Emitidos desde patrones del tablero o fin de partida:
 
-@on center_taken_by_player
-[board_disable]
-[override_next_style dramatic]
-[set_emotion opponent angry]
-akira "surprised": El centro?!
-[shake 0.5]
-akira "angry": No creas que eso cambia nada!
-[board_enable]
-@end_on
-
-@on player_near_win
-[board_disable]
-[set_emotion opponent surprised]
-[override_next_style nervous]
-akira "sweating": (No... tengo que bloquear!)
-[board_enable]
-@end_on
-
-@on player_wins
-[if flag chose_aggressive_style]
-    player "fierce": Eso pasa cuando me subestimas!
-[else]
-    player "happy": Fue un juego renido...
-[end_if]
-akira "shocked": Imposible...!
-@end_on
-@end
-```
+- `center_taken_by_player`, `center_taken_by_opponent`
+- `corner_taken_by_player`, `corner_taken_by_opponent`
+- `player_near_win`, `opponent_near_win`
+- `player_fork`, `opponent_fork`
+- `player_piece_rotated`, `opponent_piece_rotated`
+- `move_count_N` (ej: `move_count_5`)
+- `player_wins`, `opponent_wins`, `draw`
+- `before_opponent_move` (usado por `MatchManager` antes del turno AI)

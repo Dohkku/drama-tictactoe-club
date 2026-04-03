@@ -320,13 +320,19 @@ func _on_save_pressed() -> void:
 	if _current_file_path == "":
 		_set_status("Asigna un nombre de archivo primero")
 		return
-	var file = FileAccess.open(_current_file_path, FileAccess.WRITE)
+	var normalized_path := _normalize_script_path(_current_file_path)
+	if normalized_path == "":
+		_set_status("Ruta invalida para guardar")
+		return
+	var file = FileAccess.open(normalized_path, FileAccess.WRITE)
 	if not file:
 		_set_status("Error al guardar")
 		return
 	file.store_string(code_edit.text)
 	file.close()
-	_set_status("Guardado: %s" % _current_file_path.get_file())
+	_current_file_path = normalized_path
+	file_name_label.text = normalized_path.get_file()
+	_set_status("Guardado: %s" % normalized_path.get_file())
 
 
 # ============================================================
@@ -545,3 +551,18 @@ func get_script_text() -> String:
 
 func get_current_path() -> String:
 	return _current_file_path
+
+
+func _normalize_script_path(path: String) -> String:
+	var p = path.strip_edges()
+	if p == "":
+		return ""
+	# Normalize windows-style separators when users paste paths.
+	p = p.replace("\\", "/")
+	if p.begins_with("res://"):
+		return p
+	if p.begins_with("user://"):
+		return p
+	if p.begins_with("/"):
+		return p
+	return SCRIPTS_DIR + p
