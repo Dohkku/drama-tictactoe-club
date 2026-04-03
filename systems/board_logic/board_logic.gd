@@ -85,8 +85,8 @@ func make_move(index: int) -> RefCounted:
 	_undo_stack.append(get_state())
 	_redo_stack.clear()
 
-	var piece := current_turn
-	var history: Array = move_history.get(piece, [])
+	var player := current_turn
+	var history: Array = move_history.get(player, [])
 
 	# Rotation: remove oldest if at max
 	if rules.max_pieces_per_player > 0 and history.size() >= rules.max_pieces_per_player:
@@ -95,7 +95,7 @@ func make_move(index: int) -> RefCounted:
 			cells[oldest] = EMPTY
 			result.removed_cell = oldest
 			result.add_event(MoveResultScript.PIECE_ROTATED, {
-				"player": piece, "removed_cell": oldest, "new_cell": index,
+				"player": player, "removed_cell": oldest, "new_cell": index,
 			})
 		else:  # block
 			_undo_stack.pop_back()
@@ -103,36 +103,36 @@ func make_move(index: int) -> RefCounted:
 			return result
 
 	# Place
-	cells[index] = piece
+	cells[index] = player
 	history.append(index)
-	move_history[piece] = history
+	move_history[player] = history
 	move_count += 1
 	result.success = true
-	result.add_event(MoveResultScript.PIECE_PLACED, {"player": piece, "cell": index})
+	result.add_event(MoveResultScript.PIECE_PLACED, {"player": player, "cell": index})
 
 	# Global history
 	global_history.append({
-		"player": piece, "cell": index,
+		"player": player, "cell": index,
 		"move_number": move_count, "removed_cell": result.removed_cell,
 	})
 
 	# Special cell effects
-	var special = rules.get_special_cell(index)
+	var special: Dictionary = rules.get_special_cell(index)
 	if not special.is_empty():
-		_apply_special_cell(result, special, piece)
+		_apply_special_cell(result, special, player)
 
 	# Detect positional events (near wins, forks, center/corner)
-	_detect_events(result, index, piece)
+	_detect_events(result, index, player)
 
 	# Check victory
-	var win_pat := _find_winning_pattern(piece)
+	var win_pat := _find_winning_pattern(player)
 	if not win_pat.is_empty():
 		game_over = true
-		winner = piece
+		winner = player
 		winning_pattern = win_pat
 		result.is_win = true
 		result.winning_pattern = win_pat
-		result.add_event(MoveResultScript.WIN, {"player": piece, "pattern": win_pat})
+		result.add_event(MoveResultScript.WIN, {"player": player, "pattern": win_pat})
 	elif rules.win_condition == GameRulesScript.WIN_MOST_PIECES and _is_board_full():
 		_resolve_most_pieces(result)
 	elif _check_draw():
@@ -148,18 +148,18 @@ func make_move(index: int) -> RefCounted:
 	return result
 
 
-func _apply_special_cell(result: RefCounted, special: Dictionary, piece: int) -> void:
+func _apply_special_cell(result: RefCounted, special: Dictionary, player: int) -> void:
 	var cell_type: String = special.get("type", "")
 	match cell_type:
 		GameRulesScript.SPECIAL_BONUS:
 			_pending_effect = SpecialEffect.EXTRA_TURN
-			result.add_event(MoveResultScript.BONUS_TURN, {"player": piece})
+			result.add_event(MoveResultScript.BONUS_TURN, {"player": player})
 			result.add_event(MoveResultScript.SPECIAL_CELL, {
 				"cell": result.cell, "type": cell_type, "effect": "extra_turn",
 			})
 		GameRulesScript.SPECIAL_TRAP:
 			_pending_effect = SpecialEffect.SKIP_NEXT
-			result.add_event(MoveResultScript.SKIP_TURN, {"player": piece})
+			result.add_event(MoveResultScript.SKIP_TURN, {"player": player})
 			result.add_event(MoveResultScript.SPECIAL_CELL, {
 				"cell": result.cell, "type": cell_type, "effect": "skip_opponent",
 			})
@@ -180,20 +180,20 @@ func _advance_turn(result: RefCounted) -> void:
 			current_turn = (current_turn % rules.num_players) + 1
 
 
-func _detect_events(result: RefCounted, index: int, piece: int) -> void:
+func _detect_events(result: RefCounted, index: int, player: int) -> void:
 	var w: int = rules.get_width()
 	var h: int = rules.get_height()
 
 	# Center
 	if w % 2 == 1 and h % 2 == 1:
 		if index == (h / 2) * w + (w / 2):
-			result.add_event(MoveResultScript.CENTER_TAKEN, {"player": piece})
+			result.add_event(MoveResultScript.CENTER_TAKEN, {"player": player})
 
 	# Corner
 	if index in rules.get_corners():
-		result.add_event(MoveResultScript.CORNER_TAKEN, {"player": piece})
+		result.add_event(MoveResultScript.CORNER_TAKEN, {"player": player})
 
-	# Near wins + forks (cached per player to avoid duplicate work)
+	# Near wins + forks for all players
 	for p in get_all_players():
 		var nears := get_near_wins(p)
 		for nw in nears:
@@ -206,11 +206,9 @@ func _detect_events(result: RefCounted, index: int, piece: int) -> void:
 
 func _resolve_most_pieces(result: RefCounted) -> void:
 	var counts := {}
-	for p in get_all_players():
-		counts[p] = 0
 	for c in cells:
-		if c > 0 and counts.has(c):
-			counts[c] += 1
+		if c > 0:
+			counts[c] = counts.get(c, 0) + 1
 	var best_player := 0
 	var best_count := 0
 	for p in counts:
@@ -344,36 +342,6 @@ func get_near_wins(piece: int) -> Array[Dictionary]:
 	return results
 
 
-## Legacy compat: returns string pattern names for the scene runner.
-func detect_patterns(last_move: int, piece: int) -> Array[String]:
-	var patterns: Array[String] = []
-	var w: int = rules.get_width()
-	var h: int = rules.get_height()
-	if w % 2 == 1 and h % 2 == 1:
-		if last_move == (h / 2) * w + (w / 2):
-			patterns.append("center_taken_by_%d" % piece)
-			if rules.num_players == 2:
-				patterns.append("center_taken_by_%s" % ("player" if piece == 1 else "opponent"))
-	if last_move in rules.get_corners():
-		patterns.append("corner_taken_by_%d" % piece)
-		if rules.num_players == 2:
-			patterns.append("corner_taken_by_%s" % ("player" if piece == 1 else "opponent"))
-	for p in get_all_players():
-		if not get_near_wins(p).is_empty():
-			patterns.append("player_%d_near_win" % p)
-	if rules.num_players == 2:
-		if not get_near_wins(1).is_empty():
-			patterns.append("player_near_win")
-		if not get_near_wins(2).is_empty():
-			patterns.append("opponent_near_win")
-	if get_near_wins(piece).size() >= 2:
-		patterns.append("player_%d_fork" % piece)
-		if rules.num_players == 2:
-			patterns.append("%s_fork" % ("player" if piece == 1 else "opponent"))
-	patterns.append("move_count_%d" % move_count)
-	return patterns
-
-
 func _find_winning_pattern(piece: int) -> Array[int]:
 	for pattern in _win_patterns:
 		var all_match := true
@@ -400,5 +368,67 @@ func _check_draw() -> bool:
 	return _is_board_full()
 
 
-func _count_near_wins(piece: int) -> int:
+func check_winner(piece: int) -> bool:
+	return not _find_winning_pattern(piece).is_empty()
+
+
+func check_draw_state() -> bool:
+	return _check_draw()
+
+
+func recompute_game_state() -> void:
+	## Re-evaluate win/draw after external board changes (e.g. abilities).
+	if game_over:
+		return
+	for p in get_all_players():
+		var win_pat := _find_winning_pattern(p)
+		if not win_pat.is_empty():
+			game_over = true
+			winner = p
+			winning_pattern = win_pat
+			return
+	if _check_draw():
+		game_over = true
+		winner = EMPTY
+
+
+## Convert a MoveResult's events into pattern strings for the scene runner.
+func get_patterns_from_result(result: RefCounted) -> Array[String]:
+	var patterns: Array[String] = []
+	for event in result.events:
+		var data: Dictionary = event.data
+		match event.type:
+			MoveResultScript.CENTER_TAKEN:
+				var p: int = data.player
+				patterns.append("center_taken_by_%d" % p)
+				if rules.num_players == 2:
+					patterns.append("center_taken_by_%s" % ("player" if p == 1 else "opponent"))
+			MoveResultScript.CORNER_TAKEN:
+				var p: int = data.player
+				patterns.append("corner_taken_by_%d" % p)
+				if rules.num_players == 2:
+					patterns.append("corner_taken_by_%s" % ("player" if p == 1 else "opponent"))
+			MoveResultScript.NEAR_WIN:
+				var p: int = data.player
+				patterns.append("player_%d_near_win" % p)
+				if rules.num_players == 2:
+					if p == 1:
+						patterns.append("player_near_win")
+					elif p == 2:
+						patterns.append("opponent_near_win")
+			MoveResultScript.FORK:
+				var p: int = data.player
+				patterns.append("player_%d_fork" % p)
+				if rules.num_players == 2:
+					patterns.append("%s_fork" % ("player" if p == 1 else "opponent"))
+			MoveResultScript.PIECE_ROTATED:
+				var p: int = data.player
+				patterns.append("player_%d_piece_rotated" % p)
+				if rules.num_players == 2:
+					patterns.append("%s_piece_rotated" % ("player" if p == 1 else "opponent"))
+	patterns.append("move_count_%d" % move_count)
+	return patterns
+
+
+func count_near_wins(piece: int) -> int:
 	return get_near_wins(piece).size()

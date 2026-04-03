@@ -1,8 +1,8 @@
 extends SceneTree
 
-const BL = preload("res://board/board_logic.gd")
-const GR = preload("res://board/game_rules.gd")
-const AI = preload("res://board/ai_player.gd")
+const BL = preload("res://systems/board_logic/board_logic.gd")
+const GR = preload("res://systems/board_logic/game_rules.gd")
+const AI = preload("res://systems/board_logic/ai_player.gd")
 
 func _init():
 	print("=== Testing BoardLogic ===")
@@ -11,44 +11,44 @@ func _init():
 	# Test 1: Basic moves
 	print("\n--- Test 1: Basic moves ---")
 	assert(board.make_move(4).success == true, "Center move should succeed")
-	assert(board.cells[4] == BL.Piece.X, "Cell 4 should be X")
-	assert(board.current_turn == BL.Piece.O, "Turn should switch to O")
+	assert(board.cells[4] == 1, "Cell 4 should be player 1")
+	assert(board.current_turn == 2, "Turn should switch to player 2")
 	assert(board.make_move(4).success == false, "Duplicate move should fail")
 	print("PASS: Basic moves work")
 
 	# Test 2: Win detection
 	print("\n--- Test 2: Win detection ---")
 	board.reset()
-	board.make_move(0)  # X
-	board.make_move(3)  # O
-	board.make_move(1)  # X
-	board.make_move(4)  # O
-	board.make_move(2)  # X - wins top row
+	board.make_move(0)  # P1
+	board.make_move(3)  # P2
+	board.make_move(1)  # P1
+	board.make_move(4)  # P2
+	board.make_move(2)  # P1 - wins top row
 	assert(board.game_over == true, "Game should be over")
-	assert(board.winner == BL.Piece.X, "X should win")
+	assert(board.winner == 1, "Player 1 should win")
 	print("PASS: Win detection works")
 
 	# Test 3: Draw detection
 	print("\n--- Test 3: Draw detection ---")
 	board.reset()
-	board.make_move(0)  # X
-	board.make_move(1)  # O
-	board.make_move(2)  # X
-	board.make_move(5)  # O
-	board.make_move(3)  # X
-	board.make_move(6)  # O
-	board.make_move(4)  # X
-	board.make_move(8)  # O
-	board.make_move(7)  # X
+	board.make_move(0)  # P1
+	board.make_move(1)  # P2
+	board.make_move(2)  # P1
+	board.make_move(5)  # P2
+	board.make_move(3)  # P1
+	board.make_move(6)  # P2
+	board.make_move(4)  # P1
+	board.make_move(8)  # P2
+	board.make_move(7)  # P1
 	assert(board.game_over == true, "Game should be over")
-	assert(board.winner == BL.Piece.EMPTY, "Should be a draw")
+	assert(board.winner == BL.EMPTY, "Should be a draw")
 	print("PASS: Draw detection works")
 
-	# Test 4: Pattern detection
+	# Test 4: Pattern detection via MoveResult
 	print("\n--- Test 4: Pattern detection ---")
 	board.reset()
-	board.make_move(4)  # X takes center
-	var patterns = board.detect_patterns(4, BL.Piece.X)
+	var result = board.make_move(4)  # P1 takes center
+	var patterns = board.get_patterns_from_result(result)
 	assert("center_taken_by_player" in patterns, "Should detect center taken")
 	print("Patterns after center: ", patterns)
 	print("PASS: Pattern detection works")
@@ -70,23 +70,23 @@ func _init():
 	rotating_rules.max_pieces_per_player = 3
 	rotating_rules.overflow_mode = "rotate"
 	var rot_board = BL.new(rotating_rules)
-	
-	rot_board.make_move(0) # X1
-	rot_board.make_move(1) # O1
-	rot_board.make_move(2) # X2
-	rot_board.make_move(3) # O2
-	rot_board.make_move(4) # X3
-	rot_board.make_move(5) # O3
-	
-	# Current state: X at [0, 2, 4], O at [1, 3, 5]
-	assert(rot_board.cells[0] == BL.Piece.X, "X still has first piece")
-	
-	# X places 4th piece, 1st (at 0) should disappear
-	var move_result = rot_board.make_move(8) # X4
+
+	rot_board.make_move(0) # P1-1
+	rot_board.make_move(1) # P2-1
+	rot_board.make_move(2) # P1-2
+	rot_board.make_move(3) # P2-2
+	rot_board.make_move(4) # P1-3
+	rot_board.make_move(5) # P2-3
+
+	# Current state: P1 at [0, 2, 4], P2 at [1, 3, 5]
+	assert(rot_board.cells[0] == 1, "P1 still has first piece")
+
+	# P1 places 4th piece, 1st (at 0) should disappear
+	var move_result = rot_board.make_move(8) # P1-4
 	assert(move_result.success == true, "4th move should succeed")
 	assert(move_result.removed_cell == 0, "Cell 0 should have been removed")
-	assert(rot_board.cells[0] == BL.Piece.EMPTY, "Cell 0 should be empty now")
-	assert(rot_board.cells[8] == BL.Piece.X, "Cell 8 should be X")
+	assert(rot_board.cells[0] == BL.EMPTY, "Cell 0 should be empty now")
+	assert(rot_board.cells[8] == 1, "Cell 8 should be player 1")
 	print("PASS: Piece rotation works")
 
 	# Test 7: AI handles rotating rules via make_move simulation

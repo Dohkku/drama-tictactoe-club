@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://match_system/match_config.gd" id="5_mc"]
 [ext_resource type="Script" path="res://data/project_data.gd" id="6_pd"]
 [ext_resource type="Script" path="res://data/board_config.gd" id="7_bc"]
-[ext_resource type="Script" path="res://board/game_rules.gd" id="8_gr"]
+[ext_resource type="Script" path="res://systems/board_logic/game_rules.gd" id="8_gr"]
 
 [sub_resource type="Resource" id="rules_std"]
 script = ExtResource("8_gr")

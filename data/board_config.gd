@@ -5,7 +5,7 @@ extends Resource
 ## Editable from the editor's "Tablero" tab.
 ## Each match can have its own BoardConfig, or inherit the project default.
 
-const GameRulesScript = preload("res://board/game_rules.gd")
+const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
 
 ## --- Game rules (sub-resource) ---
 ## Defines board size, win conditions, rotation, etc.

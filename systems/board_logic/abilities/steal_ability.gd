@@ -1,40 +1,33 @@
-extends Resource
+extends "res://systems/board_logic/abilities/special_ability.gd"
 
-## "Steal" — Convert one of the opponent's pieces to yours.
-## Can only be used once per match, and only if the opponent has at least one piece.
-
-const SpecialAbilityScript = preload("res://systems/board_logic/abilities/special_ability.gd")
-
-var ability_name: String = "Robo"
-var description: String = "Convierte una pieza del oponente en tuya"
-var uses_per_match: int = 1
-var _uses_remaining: int = 0
+## "Steal" — Convert one of an opponent's pieces to yours.
+## Can only be used once per match, and only if an opponent has at least one piece.
+## Supports N-player games: steals from any opponent, not just player 2.
 
 
-func reset() -> void:
-	_uses_remaining = uses_per_match
+func _init() -> void:
+	ability_name = "Robo"
+	description = "Convierte una pieza del oponente en tuya"
+	uses_per_match = 1
 
 
-func can_use(board_logic, _board_state: Dictionary) -> bool:
-	if _uses_remaining <= 0:
-		return false
+func _can_use_impl(board_logic, _board_state: Dictionary) -> bool:
 	# Need at least one opponent piece on the board
-	var opponent_piece = 1 if board_logic.current_turn == 2 else 2
+	var current = board_logic.current_turn
 	for cell in board_logic.cells:
-		if cell == opponent_piece:
+		if cell > 0 and cell != current:
 			return true
 	return false
 
 
-func apply(board_logic, _board_state: Dictionary) -> Dictionary:
-	_uses_remaining -= 1
+func _apply_impl(board_logic, _board_state: Dictionary) -> Dictionary:
 	var current = board_logic.current_turn
-	var opponent = 1 if current == 2 else 2
 
-	# Find opponent pieces
+	# Find all opponent pieces (any player that isn't current)
 	var opponent_cells: Array[int] = []
 	for i in range(board_logic.cells.size()):
-		if board_logic.cells[i] == opponent:
+		var cv = board_logic.cells[i]
+		if cv > 0 and cv != current:
 			opponent_cells.append(i)
 
 	if opponent_cells.is_empty():
@@ -42,12 +35,13 @@ func apply(board_logic, _board_state: Dictionary) -> Dictionary:
 
 	# Steal a random opponent piece
 	var target = opponent_cells[randi() % opponent_cells.size()]
+	var from_piece = board_logic.cells[target]
 	board_logic.cells[target] = current
 
 	return {
 		"type": "steal",
 		"cells_affected": [target],
-		"from_piece": opponent,
+		"from_piece": from_piece,
 		"to_piece": current,
 		"description": "¡Pieza robada en casilla %d!" % target,
 	}

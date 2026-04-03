@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Manages piece creation, hand layout, cell-piece mapping, and resize reflow.
 
-const PieceScript = preload("res://board/piece.gd")
+const PieceScript = preload("res://systems/board_visuals/piece.gd")
 
 var board: Control  # Reference to the Board node
 

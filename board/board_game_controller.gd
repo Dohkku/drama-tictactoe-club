@@ -3,6 +3,9 @@ extends RefCounted
 
 ## Manages game flow: turns, move execution, AI turns, game-over handling.
 
+const AI_THINK_DELAY := 0.4
+const GAME_OVER_DELAY := 0.8
+
 var board: Control  # Reference to the Board node
 
 
@@ -32,9 +35,9 @@ func start_game() -> void:
 
 	board.input_enabled = true
 	board._animating = false
-	_update_input_state()
+	update_input_state()
 	board.abilities.update_ui_state()
-	_update_status("Tu turno — X")
+	update_status("Tu turno — X")
 	EventBus.game_started.emit()
 
 
@@ -60,7 +63,7 @@ func do_move(index: int, is_player: bool) -> void:
 
 	board._animating = true
 	board.input_enabled = false
-	_update_input_state()
+	update_input_state()
 
 	var pieces = board.pieces
 
@@ -112,9 +115,12 @@ func do_move(index: int, is_player: bool) -> void:
 	var style = board._next_move_style_override if board._next_move_style_override else (board.player_style if is_player else board.opponent_style)
 	board._next_move_style_override = null
 
-	# All pieces for effects
+	# All pieces for effects (avoid array concat)
 	var all_nodes: Array = []
-	for p in pieces.player_pieces + pieces.opponent_pieces:
+	for p in pieces.player_pieces:
+		if is_instance_valid(p):
+			all_nodes.append(p)
+	for p in pieces.opponent_pieces:
 		if is_instance_valid(p):
 			all_nodes.append(p)
 
@@ -129,34 +135,34 @@ func do_move(index: int, is_player: bool) -> void:
 	EventBus.move_made.emit(index, piece_str)
 	EventBus.board_state_changed.emit(board.logic.cells.duplicate())
 
-	var patterns = board.logic.detect_patterns(index, piece_type)
+	var patterns = board.logic.get_patterns_from_result(move_result)
 	for pattern in patterns:
 		EventBus.specific_pattern.emit(pattern)
 
 	if board.logic.game_over:
-		await _handle_game_over()
+		await handle_game_over()
 	elif board._skip_turn_switch:
 		board._skip_turn_switch = false
 		board.input_enabled = true
-		_update_input_state()
-		_update_status("¡Turno extra!")
+		update_input_state()
+		update_status("¡Turno extra!")
 		board.abilities.update_ui_state()
 	else:
 		EventBus.turn_changed.emit(board.logic.piece_to_string(board.logic.current_turn))
 		if not is_player and not board.external_input_control:
 			board.input_enabled = true
-			_update_input_state()
-			_update_status("Tu turno — X")
+			update_input_state()
+			update_status("Tu turno — X")
 		board.abilities.update_ui_state()
 
 
 func do_ai_turn() -> void:
-	_update_status("Oponente pensando...")
+	update_status("Oponente pensando...")
 	board.abilities.update_ui_state()
 	if board.pre_move_hook_enabled:
 		EventBus.before_ai_move.emit()
 		await EventBus.pre_move_complete
-	await board.get_tree().create_timer(0.4).timeout
+	await board.get_tree().create_timer(AI_THINK_DELAY).timeout
 	var move = board.ai.choose_move(board.logic)
 	if move >= 0:
 		await do_move(move, false)
@@ -170,31 +176,31 @@ func trigger_ai_turn() -> void:
 	await do_ai_turn()
 
 
-func _handle_game_over() -> void:
+func handle_game_over() -> void:
 	var result: String
 	if board.logic.winner != 0:
 		var winner_str = board.logic.piece_to_string(board.logic.winner)
 		EventBus.game_won.emit(winner_str)
 		if board.logic.winner == board.player_piece:
-			_update_status("¡Ganaste!")
+			update_status("¡Ganaste!")
 			result = "win"
 		else:
-			_update_status("Perdiste...")
+			update_status("Perdiste...")
 			result = "lose"
 	else:
-		_update_status("¡Empate!")
+		update_status("¡Empate!")
 		EventBus.game_draw.emit()
 		result = "draw"
 
-	await board.get_tree().create_timer(0.8).timeout
+	await board.get_tree().create_timer(GAME_OVER_DELAY).timeout
 	EventBus.match_ended.emit(result)
 
 
-func _update_input_state() -> void:
+func update_input_state() -> void:
 	for cell in board.cells:
 		cell.set_input_enabled(board.input_enabled)
 
 
-func _update_status(text: String) -> void:
+func update_status(text: String) -> void:
 	if board.status_label:
 		board.status_label.text = text

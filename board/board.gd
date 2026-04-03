@@ -3,12 +3,12 @@ extends Control
 ## Board facade: orchestrates modules and exposes the public API.
 ## All external callers (MatchManager, SceneRunner, BoardEditor) use this interface.
 
-const BoardLogicScript = preload("res://board/board_logic.gd")
-const GameRulesScript = preload("res://board/game_rules.gd")
-const AIPlayerScript = preload("res://board/ai_player.gd")
-const CellScript = preload("res://board/cell.gd")
-const PlacementStyleScript = preload("res://board/placement_style.gd")
-const BoardPiecesScript = preload("res://board/board_pieces.gd")
+const BoardLogicScript = preload("res://systems/board_logic/board_logic.gd")
+const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
+const AIPlayerScript = preload("res://systems/board_logic/ai_player.gd")
+const CellScript = preload("res://systems/board_visuals/cell.gd")
+const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
+const BoardPiecesScript = preload("res://systems/board_visuals/board_pieces.gd")
 const BoardGameControllerScript = preload("res://board/board_game_controller.gd")
 const BoardAbilityControllerScript = preload("res://board/board_ability_controller.gd")
 const BoardStateManagerScript = preload("res://board/board_state_manager.gd")
@@ -93,8 +93,8 @@ func _ready() -> void:
 
 func _create_cells() -> void:
 	var total = game_rules.get_total_cells()
-	var board_size = game_rules.board_size
-	grid.columns = board_size
+	var cols = game_rules.get_width()
+	grid.columns = cols
 	for i in range(total):
 		var cell = Control.new()
 		cell.set_script(CellScript)
@@ -103,8 +103,8 @@ func _create_cells() -> void:
 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		# Checkerboard: determine if dark cell based on row+col parity
-		var row = i / board_size
-		var col = i % board_size
+		var row = i / cols
+		var col = i % cols
 		cell.is_dark_cell = ((row + col) % 2 == 1)
 		if _board_config:
 			_apply_config_to_cell(cell)
@@ -295,9 +295,9 @@ func _on_layout_transition_finished() -> void:
 
 
 func _update_input_state() -> void:
-	game_controller._update_input_state()
+	game_controller.update_input_state()
 
 
 func _on_input_toggle(enabled: bool) -> void:
 	input_enabled = enabled
-	game_controller._update_input_state()
+	game_controller.update_input_state()

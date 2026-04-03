@@ -3,11 +3,11 @@ extends SceneTree
 ## Integration test: simulates full tournament flow with player input.
 ## Run: godot --headless --script board/test_game_flow.gd
 
-const BoardLogicScript = preload("res://board/board_logic.gd")
-const GameRulesScript = preload("res://board/game_rules.gd")
-const AIPlayerScript = preload("res://board/ai_player.gd")
+const BoardLogicScript = preload("res://systems/board_logic/board_logic.gd")
+const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
+const AIPlayerScript = preload("res://systems/board_logic/ai_player.gd")
 const SceneParserScript = preload("res://scene_scripts/parser/scene_parser.gd")
-const PlacementStyleScript = preload("res://board/placement_style.gd")
+const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
 
 var _pass_count := 0
 var _fail_count := 0
@@ -52,11 +52,11 @@ func test_board_logic_full_game() -> void:
 		var valid = board.get_valid_moves()
 		_assert(valid.size() > 0, "Move %d: valid moves available (%d)" % [moves_made, valid.size()])
 
-		if board.current_turn == 1:  # Player (X)
+		if board.current_turn == 1:  # Player
 			var move = valid[0]  # Simple strategy: take first available
 			var result = board.make_move(move)
 			_assert(result.success, "Player move %d at cell %d succeeded" % [moves_made, move])
-		else:  # AI (O)
+		else:  # AI
 			var ai_move = ai.choose_move(board)
 			_assert(ai_move >= 0, "AI chose valid move at cell %d" % ai_move)
 			var result = board.make_move(ai_move)
@@ -66,9 +66,9 @@ func test_board_logic_full_game() -> void:
 
 	_assert(board.game_over, "Game ended after %d moves" % moves_made)
 	if board.winner == 1:
-		print("  INFO: Player (X) won")
+		print("  INFO: Player 1 won")
 	elif board.winner == 2:
-		print("  INFO: AI (O) won")
+		print("  INFO: Player 2 (AI) won")
 	else:
 		print("  INFO: Draw")
 
@@ -88,9 +88,9 @@ func test_ai_responds_to_all_moves() -> void:
 
 	# Test AI blocks a win
 	board = BoardLogicScript.new(rules)
-	board.make_move(0)  # X
-	board.make_move(3)  # O
-	board.make_move(1)  # X - two in a row at top
+	board.make_move(0)  # P1
+	board.make_move(3)  # P2
+	board.make_move(1)  # P1 - two in a row at top
 	# AI should block at cell 2
 	var block_move = ai.choose_move(board)
 	_assert(block_move == 2, "AI blocks player win at cell 2 (got %d)" % block_move)
@@ -163,13 +163,13 @@ func test_board_logic_rotating_rules() -> void:
 		moves_made += 1
 
 	# Count pieces per player - should never exceed max_pieces_per_player
-	var x_count := 0
-	var o_count := 0
+	var p1_count := 0
+	var p2_count := 0
 	for cell in board.cells:
-		if cell == 1: x_count += 1
-		elif cell == 2: o_count += 1
-	_assert(x_count <= 3, "Rotating: X has %d pieces (<= 3 max)" % x_count)
-	_assert(o_count <= 3, "Rotating: O has %d pieces (<= 3 max)" % o_count)
+		if cell == 1: p1_count += 1
+		elif cell == 2: p2_count += 1
+	_assert(p1_count <= 3, "Rotating: P1 has %d pieces (<= 3 max)" % p1_count)
+	_assert(p2_count <= 3, "Rotating: P2 has %d pieces (<= 3 max)" % p2_count)
 	print("  INFO: Game ended after %d moves (winner: %d)" % [moves_made, board.winner])
 
 

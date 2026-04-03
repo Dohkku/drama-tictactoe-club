@@ -3,8 +3,8 @@ extends RefCounted
 
 ## Manages special abilities: setup, UI, execution, and visual effects.
 
-const StealAbilityScript = preload("res://board/abilities/steal_ability.gd")
-const DoublePlayAbilityScript = preload("res://board/abilities/double_play_ability.gd")
+const StealAbilityScript = preload("res://systems/board_logic/abilities/steal_ability.gd")
+const DoublePlayAbilityScript = preload("res://systems/board_logic/abilities/double_play_ability.gd")
 
 var board: Control  # Reference to the Board node
 var player_abilities: Array = []
@@ -42,34 +42,23 @@ func update_ui_state() -> void:
 		board.ability_bar.visible = not board.logic.game_over
 	var can_try = _can_use_player_abilities()
 
+	var state := _get_board_state()
 	if board.double_play_button:
 		var double_ability = _find_ability_by_type(player_abilities, DoublePlayAbilityScript)
-		var can_use_double = can_try and double_ability != null and double_ability.can_use(board.logic, {
-			"move_count": board.logic.move_count,
-			"current_turn": board.logic.current_turn,
-			"cells": board.logic.cells.duplicate(),
-		})
+		var can_use_double: bool = can_try and double_ability != null and double_ability.can_use(board.logic, state)
 		board.double_play_button.disabled = not can_use_double
 
 	if board.steal_button:
 		var steal_ability = _find_ability_by_type(player_abilities, StealAbilityScript)
-		var can_use_steal = can_try and steal_ability != null and steal_ability.can_use(board.logic, {
-			"move_count": board.logic.move_count,
-			"current_turn": board.logic.current_turn,
-			"cells": board.logic.cells.duplicate(),
-		})
+		var can_use_steal: bool = can_try and steal_ability != null and steal_ability.can_use(board.logic, state)
 		board.steal_button.disabled = not can_use_steal
 
 
 func apply_ability(ability: Resource, _is_player: bool) -> Dictionary:
-	var board_state = {
-		"move_count": board.logic.move_count,
-		"current_turn": board.logic.current_turn,
-		"cells": board.logic.cells.duplicate(),
-	}
-	if not ability.can_use(board.logic, board_state):
+	var state := _get_board_state()
+	if not ability.can_use(board.logic, state):
 		return {}
-	var result = ability.apply(board.logic, board_state)
+	var result: Dictionary = ability.apply(board.logic, state)
 	if result.get("skip_turn_switch", false):
 		board._skip_turn_switch = true
 	return result
@@ -104,7 +93,7 @@ func _on_steal_pressed() -> void:
 	EventBus.board_state_changed.emit(board.logic.cells.duplicate())
 	_recompute_game_state_after_ability()
 	if board.logic.game_over:
-		await board.game_controller._handle_game_over()
+		await board.game_controller.handle_game_over()
 		return
 	update_ui_state()
 
@@ -173,15 +162,12 @@ func _update_piece_node_identity(piece_node: Control, piece_value: int) -> void:
 		piece_node.set_emotion(board.current_opponent_emotion)
 
 
+func _get_board_state() -> Dictionary:
+	return {
+		"move_count": board.logic.move_count,
+		"current_turn": board.logic.current_turn,
+	}
+
+
 func _recompute_game_state_after_ability() -> void:
-	if board.logic.game_over:
-		return
-	if board.logic._check_winner(board.player_piece):
-		board.logic.game_over = true
-		board.logic.winner = board.player_piece
-	elif board.logic._check_winner(board.ai_piece):
-		board.logic.game_over = true
-		board.logic.winner = board.ai_piece
-	elif board.logic._check_draw():
-		board.logic.game_over = true
-		board.logic.winner = 0
+	board.logic.recompute_game_state()

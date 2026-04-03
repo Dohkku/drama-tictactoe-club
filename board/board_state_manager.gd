@@ -74,8 +74,8 @@ func load_state(state: Dictionary) -> void:
 	pieces.position_hand_pieces(false)
 	board._animating = false
 	board.input_enabled = false
-	board.game_controller._update_input_state()
+	board.game_controller.update_input_state()
 	board.abilities.update_ui_state()
-	board.game_controller._update_status(
+	board.game_controller.update_status(
 		"Tu turno — X" if board.logic.current_turn == board.player_piece else "Oponente pensando..."
 	)

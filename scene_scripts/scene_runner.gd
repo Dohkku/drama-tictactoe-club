@@ -4,7 +4,7 @@ extends RefCounted
 ## Executes scene commands produced by SceneParser.
 ## Needs references to the stage, board, and dialogue box nodes.
 
-const PlacementStyleScript = preload("res://board/placement_style.gd")
+const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
 const CinematicCameraScript = preload("res://cinematic/cinematic_camera.gd")
 
 var _stage: Control       # CinematicStage

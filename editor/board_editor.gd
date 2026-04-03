@@ -4,7 +4,7 @@ extends HSplitContainer
 ## Exposes both visual properties and game rules for full board customization.
 
 const BoardConfigScript = preload("res://data/board_config.gd")
-const GameRulesScript = preload("res://board/game_rules.gd")
+const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
 const BoardScene = preload("res://board/board.tscn")
 
 signal config_changed
