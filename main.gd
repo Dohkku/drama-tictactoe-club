@@ -6,11 +6,12 @@ const MatchConfigScript = preload("res://match_system/match_config.gd")
 const MatchManagerScript = preload("res://match_system/match_manager.gd")
 const ProjectDataScript = preload("res://data/project_data.gd")
 const TournamentEventScript = preload("res://data/tournament_event.gd")
+const LayoutManagerScript = preload("res://systems/layout/layout_manager.gd")
 
 @onready var cinematic_stage = %CinematicStage
 @onready var board = %Board
 @onready var dialogue_box = %DialogueBox
-@onready var split_container: BoxContainer = %SplitContainer
+@onready var split_container: Control = %SplitContainer
 @onready var cinematic_panel: PanelContainer = %CinematicPanel
 @onready var board_panel: PanelContainer = %BoardPanel
 @onready var debug_log: Label = %DebugLog
@@ -18,16 +19,11 @@ const TournamentEventScript = preload("res://data/tournament_event.gd")
 @onready var board_highlight: Control = %BoardHighlight
 @onready var panel_separator: Control = %PanelSeparator
 
-const LAYOUT_TRANSITION_DURATION := 0.8
 var _debug_lines: Array[String] = []
-var _current_layout: String = "split"  # "split", "fullscreen", "board_only"
-var _layout_tween: Tween = null
-var _transitioning: bool = false
 var runner: RefCounted = null
 var match_manager: RefCounted = null
+var layout: RefCounted = null
 var _dialogue_active: bool = false
-
-
 var _escape_dialog: AcceptDialog = null
 
 
@@ -42,8 +38,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _show_exit_confirmation() -> void:
 	if _escape_dialog and is_instance_valid(_escape_dialog):
 		_escape_dialog.queue_free()
-
-	var dialog = ConfirmationDialog.new()
+	var dialog := ConfirmationDialog.new()
 	dialog.title = "Salir"
 	dialog.dialog_text = "¿Volver al menú principal?"
 	dialog.ok_button_text = "Sí"
@@ -60,23 +55,22 @@ func _return_to_menu() -> void:
 
 
 func _ready() -> void:
+	# Layout manager
+	layout = LayoutManagerScript.new()
+	layout.setup(split_container, cinematic_panel, board_panel, panel_separator)
+	layout.transition_finished.connect(_on_layout_finished)
+	layout.set_instant("fullscreen")
+
 	_setup_runner()
 	var loaded := _load_project_data()
 	if not loaded:
-		# Fallback to default project resource
-		var default_res = load("res://data/resources/default_project.tres")
+		var default_res: Resource = load("res://data/resources/default_project.tres")
 		if default_res:
 			_apply_project_data(default_res)
 		else:
 			push_error("Main: Failed to load default_project.tres")
 
 	_connect_events()
-	_update_layout()
-	get_tree().get_root().size_changed.connect(_update_layout)
-
-	# Start in fullscreen mode since prologue is a pure cutscene
-	_current_layout = "fullscreen"
-	_apply_layout_instant()
 
 	await get_tree().create_timer(0.5).timeout
 	if match_manager:
@@ -85,33 +79,27 @@ func _ready() -> void:
 		push_error("Main: match_manager is null, cannot start tournament")
 
 
-func _apply_project_data(project_data: ProjectDataScript) -> void:
-	# Register characters from project data
+func _apply_project_data(project_data: Resource) -> void:
 	for character in project_data.characters:
 		if character is CharacterDataScript:
 			cinematic_stage.register_character(character)
 
-	# Migrate: ensure board_config exists with game_rules
 	if project_data.board_config == null:
 		project_data.board_config = load("res://data/board_config.gd").create_default()
 	else:
-		# Ensure game_rules sub-resource is populated
 		project_data.board_config.get_rules()
 
 	board.apply_board_config(project_data.board_config)
 
-	# Set up tournament from project data events
 	match_manager = MatchManagerScript.new()
 	match_manager.setup(runner, board, cinematic_stage, project_data.board_config)
 
-	# Sort events by order_index before processing
 	var sorted_events: Array[Resource] = project_data.events.duplicate()
-	sorted_events.sort_custom(func(a, b): return a.order_index < b.order_index)
+	sorted_events.sort_custom(func(a: Resource, b: Resource) -> bool: return a.order_index < b.order_index)
 
 	for event in sorted_events:
 		if not (event is TournamentEventScript):
 			continue
-
 		match event.event_type:
 			"match":
 				if event.match_config != null:
@@ -137,63 +125,12 @@ func _log_debug(text: String) -> void:
 	debug_log.text = "\n".join(_debug_lines)
 
 
-func _update_layout() -> void:
-	var viewport_size := get_viewport_rect().size
-	var is_portrait = viewport_size.y > viewport_size.x
-	split_container.vertical = is_portrait
-
-	if is_portrait and board_panel.get_index() < cinematic_panel.get_index():
-		split_container.move_child(cinematic_panel, 0)
-	elif not is_portrait and cinematic_panel.get_index() > board_panel.get_index():
-		split_container.move_child(cinematic_panel, 0)
-
-	# Keep the separator between the two panels
-	var first_idx := cinematic_panel.get_index()
-	var second_idx := board_panel.get_index()
-	var between := mini(first_idx, second_idx) + 1
-	if panel_separator.get_index() != between:
-		split_container.move_child(panel_separator, between)
-
-	# Re-enforce current layout state on resize (no animation)
-	if not _transitioning:
-		_apply_layout_instant()
-
-
-func _apply_layout_instant() -> void:
-	## Snap panels to match _current_layout without animation.
-	var is_portrait = get_viewport_rect().size.y > get_viewport_rect().size.x
-	match _current_layout:
-		"fullscreen":
-			board_panel.size_flags_stretch_ratio = 0.001
-			cinematic_panel.size_flags_stretch_ratio = 1.0
-			board_panel.visible = false
-			cinematic_panel.visible = true
-			panel_separator.visible = false
-		"split":
-			board_panel.size_flags_stretch_ratio = 1.0
-			cinematic_panel.size_flags_stretch_ratio = 1.0
-			board_panel.visible = true
-			cinematic_panel.visible = true
-			panel_separator.visible = true
-		"board_only":
-			cinematic_panel.size_flags_stretch_ratio = 0.001
-			board_panel.size_flags_stretch_ratio = 1.0
-			cinematic_panel.visible = false
-			board_panel.visible = true
-			panel_separator.visible = false
-
-
 func _load_project_data() -> bool:
-	## Tries to load project data from user://current_project.tres.
-	## Returns true if data was loaded successfully, false to use hardcoded fallback.
 	if not ResourceLoader.exists("user://current_project.tres"):
 		return false
-
-	var project_data = ResourceLoader.load("user://current_project.tres")
+	var project_data: Resource = ResourceLoader.load("user://current_project.tres")
 	if project_data == null or not (project_data is ProjectDataScript):
-		push_warning("ProjectData: failed to load or invalid type at user://current_project.tres")
 		return false
-
 	_apply_project_data(project_data)
 	return true
 
@@ -229,10 +166,10 @@ func _on_pattern(pattern_name: String) -> void:
 
 
 func _on_sim_rotate(opponent_id: String, match_index: int, total: int) -> void:
-	var name = opponent_id
+	var display_name: String = opponent_id
 	if cinematic_stage._character_registry.has(opponent_id):
-		name = cinematic_stage._character_registry[opponent_id].display_name
-	_log_debug("Tablero %d/%d: vs %s" % [match_index + 1, total, name])
+		display_name = cinematic_stage._character_registry[opponent_id].display_name
+	_log_debug("Tablero %d/%d: vs %s" % [match_index + 1, total, display_name])
 
 
 func _on_script_finished(script_id: String) -> void:
@@ -240,7 +177,18 @@ func _on_script_finished(script_id: String) -> void:
 		_log_debug("Tournament complete!")
 
 
-# --- Panel highlight management ---
+# --- Layout ---
+
+func _on_layout_transition(mode: String) -> void:
+	await get_tree().process_frame
+	layout.transition_to(mode)
+
+
+func _on_layout_finished(_mode: String) -> void:
+	EventBus.layout_transition_finished.emit()
+
+
+# --- Panel highlights ---
 
 func _on_dialogue_started(_speaker: String, _text: String) -> void:
 	_dialogue_active = true
@@ -257,10 +205,6 @@ func _on_board_input_changed(_enabled: bool) -> void:
 
 
 func _update_panel_highlights() -> void:
-	## Decide which panel (if any) should glow based on current game state.
-	## Priority: board input enabled  ->  highlight board
-	##           dialogue active       ->  highlight cinematic
-	##           otherwise             ->  both inactive
 	if board and board.input_enabled and not _dialogue_active:
 		cinematic_highlight.set_highlighted(false)
 		board_highlight.set_highlighted(true)
@@ -270,69 +214,3 @@ func _update_panel_highlights() -> void:
 	else:
 		cinematic_highlight.set_highlighted(false)
 		board_highlight.set_highlighted(false)
-
-
-# --- Layout transitions ---
-
-func _on_layout_transition(mode: String) -> void:
-	await get_tree().process_frame
-	# Kill any in-progress layout tween
-	if _layout_tween and _layout_tween.is_valid():
-		_layout_tween.kill()
-	_transitioning = true
-	match mode:
-		"fullscreen":
-			await _transition_to_fullscreen()
-		"split":
-			await _transition_to_split()
-		"board_only":
-			await _transition_to_board_only()
-	_transitioning = false
-	EventBus.layout_transition_finished.emit()
-
-
-func _transition_to_fullscreen() -> void:
-	if _current_layout == "fullscreen":
-		return
-	_current_layout = "fullscreen"
-
-	cinematic_panel.visible = true
-	board_panel.visible = true  # Keep visible during tween
-	_layout_tween = create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-	_layout_tween.tween_property(board_panel, "size_flags_stretch_ratio", 0.001, LAYOUT_TRANSITION_DURATION)
-	_layout_tween.parallel().tween_property(cinematic_panel, "size_flags_stretch_ratio", 1.0, LAYOUT_TRANSITION_DURATION)
-	await _layout_tween.finished
-	board_panel.visible = false  # Hide after animation completes
-	panel_separator.visible = false
-	_log_debug("Layout: fullscreen")
-
-
-func _transition_to_split() -> void:
-	if _current_layout == "split":
-		return
-	_current_layout = "split"
-
-	board_panel.visible = true
-	cinematic_panel.visible = true
-	panel_separator.visible = true
-	_layout_tween = create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-	_layout_tween.tween_property(board_panel, "size_flags_stretch_ratio", 1.0, LAYOUT_TRANSITION_DURATION)
-	_layout_tween.parallel().tween_property(cinematic_panel, "size_flags_stretch_ratio", 1.0, LAYOUT_TRANSITION_DURATION)
-	await _layout_tween.finished
-	_log_debug("Layout: split")
-
-
-func _transition_to_board_only() -> void:
-	if _current_layout == "board_only":
-		return
-	_current_layout = "board_only"
-
-	board_panel.visible = true
-	cinematic_panel.visible = true
-	_layout_tween = create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-	_layout_tween.tween_property(cinematic_panel, "size_flags_stretch_ratio", 0.001, LAYOUT_TRANSITION_DURATION)
-	_layout_tween.parallel().tween_property(board_panel, "size_flags_stretch_ratio", 1.0, LAYOUT_TRANSITION_DURATION)
-	await _layout_tween.finished
-	cinematic_panel.visible = false
-	panel_separator.visible = false
-	_log_debug("Layout: board_only")

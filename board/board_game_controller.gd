@@ -124,8 +124,36 @@ func do_move(index: int, is_player: bool) -> void:
 		if is_instance_valid(p):
 			all_nodes.append(p)
 
-	# Animate movement
+	# Audio and effect hooks during animation
+	var audio: Node = board.board_audio
+	var sfx: Control = board.screen_effects
+	var is_heavy: bool = style.impact_squash >= 0.3 if style.get("impact_squash") != null else false
+	var eff: Resource = null
+	if piece_node.get("effect_player") and piece_node.effect_player and piece_node.effect_player.get("effect"):
+		eff = piece_node.effect_player.effect
+	var pn: Control = piece_node
+	var _on_phase := func(phase_name: String) -> void:
+		if audio:
+			match phase_name:
+				"lift":
+					audio.play_sfx("lift")
+				"arc":
+					audio.play_sfx("whoosh")
+				"impact":
+					if is_heavy:
+						audio.play_sfx("impact_heavy")
+					else:
+						audio.play_sfx("impact_light")
+		if phase_name == "impact" and eff and sfx:
+			if eff.get("screen_flash_enabled") and eff.screen_flash_enabled:
+				sfx.flash(eff.screen_flash_color, eff.screen_flash_duration)
+			if eff.get("propagation_enabled") and eff.propagation_enabled and is_instance_valid(pn):
+				var center: Vector2 = pn.global_position + pn.size / 2.0
+				sfx.propagation_ring(center, eff.propagation_color, 200.0, eff.propagation_duration)
+
+	piece_node.phase_started.connect(_on_phase)
 	await piece_node.play_move_to(final_pos, piece_size, style, all_nodes)
+	piece_node.phase_started.disconnect(_on_phase)
 
 	board._animating = false
 	pieces.position_hand_pieces()
@@ -178,8 +206,11 @@ func trigger_ai_turn() -> void:
 
 func handle_game_over() -> void:
 	var result: String
+	var audio: Node = board.board_audio
+	var sfx: Control = board.screen_effects
+
 	if board.logic.winner != 0:
-		var winner_str = board.logic.piece_to_string(board.logic.winner)
+		var winner_str: String = board.logic.piece_to_string(board.logic.winner)
 		EventBus.game_won.emit(winner_str)
 		if board.logic.winner == board.player_piece:
 			update_status("¡Ganaste!")
@@ -187,10 +218,32 @@ func handle_game_over() -> void:
 		else:
 			update_status("Perdiste...")
 			result = "lose"
+
+		# Win line
+		if sfx and not board.logic.winning_pattern.is_empty():
+			var positions := PackedVector2Array()
+			for idx in board.logic.winning_pattern:
+				if idx >= 0 and idx < board.cells.size():
+					positions.append(board.cells[idx].get_center_position())
+			if positions.size() >= 2:
+				var color: Color = board.player_color if board.logic.winner == board.player_piece else board.opponent_color
+				board._win_line_node = sfx.play_win_line(positions, color)
+
+		if audio:
+			audio.play_sfx("win")
+			audio.duck_bgm(0.5)
 	else:
 		update_status("¡Empate!")
 		EventBus.game_draw.emit()
 		result = "draw"
+
+		# Draw effect
+		if sfx and board.board_frame:
+			var board_rect := Rect2(board.board_frame.global_position, board.board_frame.size)
+			sfx.play_draw_effect(board_rect, 1.5)
+
+		if audio:
+			audio.play_sfx("draw")
 
 	await board.get_tree().create_timer(GAME_OVER_DELAY).timeout
 	EventBus.match_ended.emit(result)

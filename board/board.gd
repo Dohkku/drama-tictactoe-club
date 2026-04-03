@@ -13,6 +13,10 @@ const BoardGameControllerScript = preload("res://board/board_game_controller.gd"
 const BoardAbilityControllerScript = preload("res://board/board_ability_controller.gd")
 const BoardStateManagerScript = preload("res://board/board_state_manager.gd")
 const PieceDesignScript = preload("res://systems/board_visuals/piece_design.gd")
+const ScreenEffectsScript = preload("res://systems/board_visuals/screen_effects.gd")
+const BoardAudioScript = preload("res://systems/board_visuals/board_audio.gd")
+const PieceEffectScript = preload("res://systems/board_visuals/piece_effect.gd")
+const PieceEffectPlayerScript = preload("res://systems/board_visuals/piece_effect_player.gd")
 
 # --- Core state ---
 var logic: RefCounted
@@ -56,6 +60,9 @@ var state_manager: RefCounted    # BoardStateManager
 @onready var steal_button: Button = %StealButton
 
 var _board_config: Resource = null
+var screen_effects: Control = null
+var board_audio: Node = null
+var _win_line_node: Control = null
 
 
 func _ready() -> void:
@@ -77,6 +84,16 @@ func _ready() -> void:
 	game_controller = BoardGameControllerScript.new(self)
 	abilities = BoardAbilityControllerScript.new(self)
 	state_manager = BoardStateManagerScript.new(self)
+
+	# Screen effects overlay (above piece_layer)
+	screen_effects = Control.new()
+	screen_effects.set_script(ScreenEffectsScript)
+	add_child(screen_effects)
+
+	# Board audio
+	board_audio = Node.new()
+	board_audio.set_script(BoardAudioScript)
+	add_child(board_audio)
 
 	abilities.setup_defaults()
 	abilities.connect_ui()
@@ -212,6 +229,16 @@ func full_reset(new_rules: Resource = null) -> void:
 	## Tear down and rebuild the board with (optionally) new rules.
 	if new_rules:
 		game_rules = new_rules
+
+	# Clear win line
+	if _win_line_node and is_instance_valid(_win_line_node):
+		_win_line_node.queue_free()
+		_win_line_node = null
+
+	# Clear effect players
+	for p in pieces.player_pieces + pieces.opponent_pieces:
+		if is_instance_valid(p) and p.get("effect_player") and is_instance_valid(p.effect_player):
+			p.effect_player.queue_free()
 
 	# Clear existing cells
 	for c in cells:
