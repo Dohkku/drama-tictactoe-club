@@ -108,9 +108,10 @@ func _evaluate_position(board, ai_piece: int) -> int:
 		var ai_count := 0
 		var opponent_count := 0
 		for idx in pattern:
-			if board.cells[idx] == ai_piece:
+			var cv = board.cells[idx]
+			if cv == ai_piece:
 				ai_count += 1
-			elif board.cells[idx] != 0:
+			elif cv > 0:  # Skip EMPTY (0) and BLOCKED (-1)
 				opponent_count += 1
 
 		if ai_count > 0 and opponent_count > 0:
@@ -121,12 +122,13 @@ func _evaluate_position(board, ai_piece: int) -> int:
 			score -= _line_score(opponent_count, win_length)
 
 	# Favor center on odd boards
-	var bsize = board.rules.board_size
-	if bsize % 2 == 1:
-		var center = int((bsize * bsize) / 2)
-		if board.cells[center] == ai_piece:
+	var bw = board.rules.get_width()
+	var bh = board.rules.get_height()
+	if bw % 2 == 1 and bh % 2 == 1:
+		var center = (bh / 2) * bw + (bw / 2)
+		if center < board.cells.size() and board.cells[center] == ai_piece:
 			score += 8
-		elif board.cells[center] != 0:
+		elif center < board.cells.size() and board.cells[center] > 0 and board.cells[center] != ai_piece:
 			score -= 8
 
 	return score
