@@ -146,13 +146,8 @@ func _apply_layout_instant() -> void:
 			board_panel.visible = false
 			cinematic_panel.visible = true
 		"split":
-			if is_portrait:
-				# Portrait: give most space to the board (bottom)
-				cinematic_panel.size_flags_stretch_ratio = 0.35
-				board_panel.size_flags_stretch_ratio = 1.0
-			else:
-				board_panel.size_flags_stretch_ratio = 1.0
-				cinematic_panel.size_flags_stretch_ratio = 1.0
+			board_panel.size_flags_stretch_ratio = 1.0
+			cinematic_panel.size_flags_stretch_ratio = 1.0
 			board_panel.visible = true
 			cinematic_panel.visible = true
 		"board_only":
@@ -298,14 +293,11 @@ func _transition_to_split() -> void:
 		return
 	_current_layout = "split"
 
-	var is_portrait = get_viewport_rect().size.y > get_viewport_rect().size.x
-	var cinema_ratio = 0.35 if is_portrait else 1.0
-
 	board_panel.visible = true
 	cinematic_panel.visible = true
 	_layout_tween = create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
 	_layout_tween.tween_property(board_panel, "size_flags_stretch_ratio", 1.0, LAYOUT_TRANSITION_DURATION)
-	_layout_tween.parallel().tween_property(cinematic_panel, "size_flags_stretch_ratio", cinema_ratio, LAYOUT_TRANSITION_DURATION)
+	_layout_tween.parallel().tween_property(cinematic_panel, "size_flags_stretch_ratio", 1.0, LAYOUT_TRANSITION_DURATION)
 	await _layout_tween.finished
 	_log_debug("Layout: split")
 

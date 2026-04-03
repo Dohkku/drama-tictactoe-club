@@ -20,6 +20,7 @@ var opponent_pieces: Array[Control] = []
 var cell_to_piece: Dictionary = {}  # cell_index -> piece node
 var _player_next: int = 0
 var _opponent_next: int = 0
+var _reflow_request_id: int = 0
 
 var player_style: Resource = null
 var opponent_style: Resource = null
@@ -44,6 +45,8 @@ var game_rules: Resource = null  # GameRules — set before _ready or call setup
 @onready var grid: GridContainer = %GridContainer
 @onready var status_label: Label = %StatusLabel
 @onready var piece_layer: Control = %PieceLayer
+@onready var opponent_hand_area: Control = $"VBoxContainer/OpponentHandArea"
+@onready var player_hand_area: Control = $"VBoxContainer/PlayerHandArea"
 
 
 func _ready() -> void:
@@ -64,6 +67,7 @@ func _ready() -> void:
 	_start_game()
 
 	get_tree().get_root().size_changed.connect(_on_resized)
+	resized.connect(_on_resized)
 
 
 func setup_rules(rules: Resource) -> void:
@@ -87,6 +91,7 @@ func _create_cells() -> void:
 
 func _connect_signals() -> void:
 	EventBus.board_input_enabled.connect(_on_input_toggle)
+	EventBus.layout_transition_finished.connect(_on_layout_transition_finished)
 
 
 func _start_game() -> void:
@@ -157,13 +162,18 @@ func _make_piece_node(piece_type: int, is_player: bool, sz: Vector2) -> Control:
 
 func _position_hand_pieces(animate: bool = true) -> void:
 	var grid_rect = _get_grid_rect_in_layer()
-	# Size pieces to fit in the reserved 50px hand areas
-	var hand_h := 42.0
+	var player_hand_rect = _get_control_rect_in_layer(player_hand_area)
+	var opponent_hand_rect = _get_control_rect_in_layer(opponent_hand_area)
+	var hand_band_h: float = max(24.0, min(player_hand_rect.size.y, opponent_hand_rect.size.y) - 4.0)
+	if hand_band_h <= 24.0:
+		hand_band_h = 50.0
+	var cell_size = _get_cell_size()
+	var hand_h: float = clamp(min(cell_size.y * 0.42, hand_band_h), 24.0, 96.0)
 	var piece_size = Vector2(hand_h, hand_h)
 	var gap = 4.0
 
 	# Player hand: centered in PlayerHandArea below the grid
-	var player_y = grid_rect.position.y + grid_rect.size.y + (50.0 - hand_h) / 2.0
+	var player_y = player_hand_rect.position.y + (player_hand_rect.size.y - hand_h) / 2.0
 	var max_y = size.y - piece_size.y - 2.0
 	player_y = min(player_y, max_y)
 	var player_available: Array[Control] = []
@@ -177,7 +187,7 @@ func _position_hand_pieces(animate: bool = true) -> void:
 		_move_piece_to_hand(p, target_pos, piece_size, animate)
 
 	# Opponent hand: centered in OpponentHandArea above the grid
-	var opponent_y = grid_rect.position.y - 50.0 + (50.0 - hand_h) / 2.0
+	var opponent_y = opponent_hand_rect.position.y + (opponent_hand_rect.size.y - hand_h) / 2.0
 	opponent_y = max(opponent_y, 2.0)
 	var opponent_available: Array[Control] = []
 	for p in opponent_pieces:
@@ -346,6 +356,10 @@ func _get_grid_rect_in_layer() -> Rect2:
 	var gp = grid.global_position - piece_layer.global_position
 	return Rect2(gp, grid.size)
 
+func _get_control_rect_in_layer(control: Control) -> Rect2:
+	var gp = control.global_position - piece_layer.global_position
+	return Rect2(gp, control.size)
+
 func _get_cell_pos_in_layer(index: int) -> Vector2:
 	return cells[index].global_position - piece_layer.global_position
 
@@ -355,10 +369,34 @@ func _get_cell_size() -> Vector2:
 	return cells[0].size
 
 func _on_resized() -> void:
+	_schedule_piece_reflow()
+
+func _on_layout_transition_finished() -> void:
+	_schedule_piece_reflow()
+
+func _schedule_piece_reflow() -> void:
+	if not is_inside_tree():
+		return
+	if size.x < 10 or size.y < 10:
+		return  # Board collapsed (fullscreen cinematic)
+	_reflow_request_id += 1
+	var request_id := _reflow_request_id
+	_run_piece_reflow(request_id)
+
+func _run_piece_reflow(request_id: int) -> void:
 	if size.x < 10 or size.y < 10:
 		return  # Board collapsed (fullscreen cinematic)
 	await get_tree().process_frame
-	_position_hand_pieces(false)  # Snap on resize, don't animate
+	if request_id != _reflow_request_id:
+		return
+	_apply_piece_layout_snap()
+	await get_tree().process_frame
+	if request_id != _reflow_request_id:
+		return
+	_apply_piece_layout_snap()
+
+func _apply_piece_layout_snap() -> void:
+	_position_hand_pieces(false)  # Snap on resize/layout changes, don't animate
 	for cell_idx in cell_to_piece:
 		var p = cell_to_piece[cell_idx]
 		if is_instance_valid(p):
@@ -368,6 +406,7 @@ func _on_resized() -> void:
 			p.position = target + (cell_size - ps) / 2.0
 			p.size = ps
 			p.pivot_offset = ps / 2.0
+			p.queue_redraw()
 
 
 # --- Public API ---
