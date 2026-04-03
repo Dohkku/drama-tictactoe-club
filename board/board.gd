@@ -12,6 +12,7 @@ const BoardPiecesScript = preload("res://systems/board_visuals/board_pieces.gd")
 const BoardGameControllerScript = preload("res://board/board_game_controller.gd")
 const BoardAbilityControllerScript = preload("res://board/board_ability_controller.gd")
 const BoardStateManagerScript = preload("res://board/board_state_manager.gd")
+const PieceDesignScript = preload("res://systems/board_visuals/piece_design.gd")
 
 # --- Core state ---
 var logic: RefCounted
@@ -32,10 +33,8 @@ var auto_ai_enabled: bool = true
 
 var player_color: Color = Color(0.2, 0.6, 1.0)
 var opponent_color: Color = Color(1.0, 0.3, 0.3)
-var player_expressions: Dictionary = {}
-var opponent_expressions: Dictionary = {}
-var current_player_emotion: String = "neutral"
-var current_opponent_emotion: String = "neutral"
+var player_design: Resource = null
+var opponent_design: Resource = null
 
 var game_rules: Resource = null
 
@@ -68,6 +67,10 @@ func _ready() -> void:
 
 	player_style = PlacementStyleScript.slam()
 	opponent_style = PlacementStyleScript.gentle()
+	if player_design == null:
+		player_design = PieceDesignScript.x_design()
+	if opponent_design == null:
+		opponent_design = PieceDesignScript.o_design()
 
 	# Initialize modules
 	pieces = BoardPiecesScript.new(self)
@@ -257,15 +260,8 @@ func refresh_piece_colors() -> void:
 			p.queue_redraw()
 
 
-func set_piece_emotion(is_player: bool, emotion: String) -> void:
-	if is_player:
-		current_player_emotion = emotion
-	else:
-		current_opponent_emotion = emotion
-	var arr = pieces.player_pieces if is_player else pieces.opponent_pieces
-	for p in arr:
-		if is_instance_valid(p):
-			p.set_emotion(emotion)
+func set_piece_emotion(_is_player: bool, _emotion: String) -> void:
+	pass  # Deprecated: emotions replaced by PieceDesign system
 
 
 func trigger_ai_turn() -> void:

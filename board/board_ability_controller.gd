@@ -155,11 +155,9 @@ func _update_piece_node_identity(piece_node: Control, piece_value: int) -> void:
 	if not is_instance_valid(piece_node):
 		return
 	if piece_value == board.player_piece:
-		piece_node.setup(board.player_piece, "player", board.player_color, board.player_expressions)
-		piece_node.set_emotion(board.current_player_emotion)
+		piece_node.setup(board.player_design, "player", board.player_color)
 	elif piece_value == board.ai_piece:
-		piece_node.setup(board.ai_piece, "opponent", board.opponent_color, board.opponent_expressions)
-		piece_node.set_emotion(board.current_opponent_emotion)
+		piece_node.setup(board.opponent_design, "opponent", board.opponent_color)
 
 
 func _get_board_state() -> Dictionary:

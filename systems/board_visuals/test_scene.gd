@@ -10,6 +10,10 @@ const AIPlayerScript = preload("res://systems/board_logic/ai_player.gd")
 const CellScript = preload("res://systems/board_visuals/cell.gd")
 const PieceScript = preload("res://systems/board_visuals/piece.gd")
 const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
+const PieceDesignScript = preload("res://systems/board_visuals/piece_design.gd")
+const PieceEffectScript = preload("res://systems/board_visuals/piece_effect.gd")
+const PieceEffectPlayerScript = preload("res://systems/board_visuals/piece_effect_player.gd")
+const ScreenEffectsScript = preload("res://systems/board_visuals/screen_effects.gd")
 
 var logic: RefCounted
 var ai: RefCounted
@@ -23,6 +27,7 @@ var opponent_next: int = 0
 var _animating: bool = false
 
 var current_style: Resource
+var screen_fx: Control = null
 var log_lines: Array[String] = []
 
 # UI references
@@ -34,26 +39,47 @@ var board_frame: PanelContainer
 var log_label: RichTextLabel
 var status_label: Label
 var style_option: OptionButton
-var emotion_option: OptionButton
+var player_design_option: OptionButton
+var opponent_design_option: OptionButton
 var checkerboard_check: CheckBox
 var border_check: CheckBox
 var board_size_spin: SpinBox
 var max_pieces_spin: SpinBox
 var ai_check: CheckBox
+var cell_empty_picker: ColorPickerButton
+var cell_alt_picker: ColorPickerButton
+var line_color_picker: ColorPickerButton
+var border_color_picker: ColorPickerButton
+var board_bg_picker: ColorPickerButton
+var cell_hover_picker: ColorPickerButton
+var player_body_shape_option: OptionButton
+var opponent_body_shape_option: OptionButton
+var player_body_color_picker: ColorPickerButton
+var opponent_body_color_picker: ColorPickerButton
+var player_symbol_color_picker: ColorPickerButton
+var opponent_symbol_color_picker: ColorPickerButton
+var player_effect_option: OptionButton
+var opponent_effect_option: OptionButton
+
+var _all_designs: Array = []
+var _all_effects: Array = []
+var player_design: Resource = null
+var opponent_design: Resource = null
+var player_effect: Resource = null
+var opponent_effect: Resource = null
 
 const STYLES := ["gentle", "slam", "spinning", "dramatic", "nervous"]
-const EMOTIONS := ["neutral", "happy", "angry", "sad", "focused"]
 const PLAYER_COLOR := Color(0.3, 0.6, 1.0)
 const OPPONENT_COLOR := Color(1.0, 0.3, 0.3)
-const EXPRESSION_COLORS := {
-	"happy": Color(0.3, 0.9, 0.4),
-	"angry": Color(1.0, 0.2, 0.1),
-	"sad": Color(0.4, 0.4, 0.7),
-	"focused": Color(0.9, 0.7, 0.2),
-}
 
 
 func _ready() -> void:
+	_all_designs = PieceDesignScript.all_designs()
+	_all_effects = PieceEffectScript.all_effects()
+	player_design = _all_designs[0]  # X
+	opponent_design = _all_designs[1]  # O
+	player_effect = _all_effects[0]  # none
+	opponent_effect = _all_effects[0]  # none
 	_build_ui()
 	_new_game()
 
@@ -88,6 +114,10 @@ func _clear_board() -> void:
 		if is_instance_valid(c):
 			c.queue_free()
 	cells.clear()
+	# Clean effect players
+	for p in player_pieces + opponent_pieces:
+		if is_instance_valid(p) and p.effect_player and is_instance_valid(p.effect_player):
+			p.effect_player.queue_free()
 	for p in player_pieces + opponent_pieces:
 		if is_instance_valid(p):
 			p.queue_free()
@@ -114,10 +144,10 @@ func _create_cells() -> void:
 		var col = i % rules.board_size
 		cell.is_dark_cell = ((row + col) % 2 == 1)
 		cell.checkerboard = use_checker
-		cell.color_empty = Color(0.92, 0.88, 0.82)
-		cell.color_alt = Color(0.25, 0.27, 0.32)
-		cell.color_hover = Color(0.85, 0.80, 0.72)
-		cell.color_line = Color(0.6, 0.5, 0.4)
+		cell.color_empty = cell_empty_picker.color if cell_empty_picker else Color(0.92, 0.88, 0.82)
+		cell.color_alt = cell_alt_picker.color if cell_alt_picker else Color(0.25, 0.27, 0.32)
+		cell.color_hover = cell_hover_picker.color if cell_hover_picker else Color(0.85, 0.80, 0.72)
+		cell.color_line = line_color_picker.color if line_color_picker else Color(0.6, 0.5, 0.4)
 		cell.line_width = 2.0
 		cell.cell_clicked.connect(_on_cell_clicked)
 		grid.add_child(cell)
@@ -125,26 +155,36 @@ func _create_cells() -> void:
 
 
 func _create_pieces() -> void:
-	var count = rules.get_pieces_for(1)
+	var count: int = rules.get_pieces_for(1)
 	for i in range(count):
 		var p := Control.new()
 		p.set_script(PieceScript)
-		p.setup(1, "player", PLAYER_COLOR, EXPRESSION_COLORS)
+		p.setup(player_design, "player", PLAYER_COLOR)
 		p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		piece_layer.add_child(p)
+		_attach_effect(p, player_effect)
 		player_pieces.append(p)
 
 	count = rules.get_pieces_for(2)
 	for i in range(count):
 		var p := Control.new()
 		p.set_script(PieceScript)
-		p.setup(2, "opponent", OPPONENT_COLOR, EXPRESSION_COLORS)
+		p.setup(opponent_design, "opponent", OPPONENT_COLOR)
 		p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		piece_layer.add_child(p)
+		_attach_effect(p, opponent_effect)
 		opponent_pieces.append(p)
 
 	await get_tree().process_frame
 	_position_hand_pieces()
+
+
+func _attach_effect(piece: Control, eff: Resource) -> void:
+	var ep := Node2D.new()
+	ep.set_script(PieceEffectPlayerScript)
+	ep.setup(eff)
+	piece_layer.add_child(ep)
+	piece.effect_player = ep
 
 
 func _position_hand_pieces() -> void:
@@ -239,13 +279,31 @@ func _do_move(index: int, is_player: bool) -> void:
 	var offset = (cell_size - piece_size) / 2.0
 	var final_pos = target_pos + offset
 
-	# Animate
+	# Animate with phase hooks for screen effects
 	var style = current_style
 	var all_nodes: Array = []
 	for p in player_pieces + opponent_pieces:
 		if is_instance_valid(p):
 			all_nodes.append(p)
+
+	var eff: Resource = null
+	if piece_node.effect_player and piece_node.effect_player.effect:
+		eff = piece_node.effect_player.effect
+	var pn: Control = piece_node
+	var _on_phase := func(phase_name: String) -> void:
+		if phase_name != "impact" or eff == null:
+			return
+		if eff.board_shake_intensity > 0.0:
+			_shake_board(eff.board_shake_intensity, eff.board_shake_duration)
+		if eff.screen_flash_enabled and screen_fx:
+			screen_fx.flash(eff.screen_flash_color, eff.screen_flash_duration)
+		if eff.propagation_enabled and screen_fx and is_instance_valid(pn):
+			var impact_center: Vector2 = pn.global_position + pn.size / 2.0
+			screen_fx.propagation_ring(impact_center, eff.propagation_color, 200.0, eff.propagation_duration)
+
+	piece_node.phase_started.connect(_on_phase)
 	await piece_node.play_move_to(final_pos, piece_size, style, all_nodes)
+	piece_node.phase_started.disconnect(_on_phase)
 
 	_animating = false
 	_position_hand_pieces()
@@ -363,12 +421,63 @@ func _build_ui() -> void:
 	style_option.item_selected.connect(func(_i): current_style = _get_style())
 	left.add_child(style_option)
 
-	_lbl(left, "Emoción piezas", 13, Color(0.6, 0.6, 0.75))
-	emotion_option = OptionButton.new()
-	for e in EMOTIONS:
-		emotion_option.add_item(e)
-	emotion_option.item_selected.connect(func(_i): _apply_emotion())
-	left.add_child(emotion_option)
+	_lbl(left, "Diseño J1", 13, Color(0.6, 0.6, 0.75))
+	player_design_option = OptionButton.new()
+	for d in _all_designs:
+		player_design_option.add_item(d.design_name)
+	player_design_option.select(0)
+	player_design_option.item_selected.connect(func(idx: int): _on_design_changed(true, idx))
+	left.add_child(player_design_option)
+
+	_lbl(left, "Diseño J2", 13, Color(0.6, 0.6, 0.75))
+	opponent_design_option = OptionButton.new()
+	for d in _all_designs:
+		opponent_design_option.add_item(d.design_name)
+	opponent_design_option.select(1)
+	opponent_design_option.item_selected.connect(func(idx: int): _on_design_changed(false, idx))
+	left.add_child(opponent_design_option)
+
+	left.add_child(HSeparator.new())
+	_lbl(left, "Cuerpo ficha", 13, Color(0.6, 0.6, 0.75))
+	var body_labels: PackedStringArray = PieceDesignScript.body_shape_labels()
+
+	_lbl(left, "Forma J1", 11, Color(0.55, 0.55, 0.65))
+	player_body_shape_option = OptionButton.new()
+	for bl in body_labels:
+		player_body_shape_option.add_item(bl)
+	player_body_shape_option.select(0)
+	player_body_shape_option.item_selected.connect(func(idx: int): _on_body_shape_changed(true, idx))
+	left.add_child(player_body_shape_option)
+	player_body_color_picker = _piece_color_picker(left, "Cuerpo J1", PLAYER_COLOR.darkened(0.3), true, "body")
+	player_symbol_color_picker = _piece_color_picker(left, "Símbolo J1", PLAYER_COLOR, true, "symbol")
+
+	_lbl(left, "Forma J2", 11, Color(0.55, 0.55, 0.65))
+	opponent_body_shape_option = OptionButton.new()
+	for bl in body_labels:
+		opponent_body_shape_option.add_item(bl)
+	opponent_body_shape_option.select(0)
+	opponent_body_shape_option.item_selected.connect(func(idx: int): _on_body_shape_changed(false, idx))
+	left.add_child(opponent_body_shape_option)
+	opponent_body_color_picker = _piece_color_picker(left, "Cuerpo J2", OPPONENT_COLOR.darkened(0.3), false, "body")
+	opponent_symbol_color_picker = _piece_color_picker(left, "Símbolo J2", OPPONENT_COLOR, false, "symbol")
+
+	left.add_child(HSeparator.new())
+	_lbl(left, "Efectos J1", 13, Color(0.6, 0.6, 0.75))
+	player_effect_option = OptionButton.new()
+	var effect_names: PackedStringArray = PieceEffectScript.effect_names()
+	for n in effect_names:
+		player_effect_option.add_item(n)
+	player_effect_option.select(0)
+	player_effect_option.item_selected.connect(func(idx: int): _on_effect_changed(true, idx))
+	left.add_child(player_effect_option)
+
+	_lbl(left, "Efectos J2", 13, Color(0.6, 0.6, 0.75))
+	opponent_effect_option = OptionButton.new()
+	for n in effect_names:
+		opponent_effect_option.add_item(n)
+	opponent_effect_option.select(0)
+	opponent_effect_option.item_selected.connect(func(idx: int): _on_effect_changed(false, idx))
+	left.add_child(opponent_effect_option)
 
 	left.add_child(HSeparator.new())
 	_lbl(left, "Config visual", 13, Color(0.6, 0.6, 0.75))
@@ -385,6 +494,27 @@ func _build_ui() -> void:
 	border_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 	border_check.toggled.connect(func(_v): _apply_border())
 	left.add_child(border_check)
+
+	cell_empty_picker = _color_picker(left, "Casilla", Color(0.92, 0.88, 0.82))
+	cell_alt_picker = _color_picker(left, "Casilla alt", Color(0.25, 0.27, 0.32))
+	line_color_picker = _color_picker(left, "Líneas", Color(0.6, 0.5, 0.4))
+	border_color_picker = _color_picker(left, "Borde", Color(0.45, 0.35, 0.25))
+	board_bg_picker = _color_picker(left, "Fondo", Color(0.3, 0.28, 0.24))
+	cell_hover_picker = _color_picker(left, "Hover", Color(0.85, 0.80, 0.72))
+
+	left.add_child(HSeparator.new())
+	_lbl(left, "Temas", 13, Color(0.6, 0.6, 0.75))
+	var themes_flow := HFlowContainer.new()
+	themes_flow.add_theme_constant_override("h_separation", 4)
+	themes_flow.add_theme_constant_override("v_separation", 4)
+	left.add_child(themes_flow)
+	for theme_name in ["Clásico", "Oscuro", "Neón", "Pastel"]:
+		var tb := Button.new()
+		tb.text = theme_name
+		tb.add_theme_font_size_override("font_size", 11)
+		var tn: String = theme_name
+		tb.pressed.connect(func(): _apply_theme(tn))
+		themes_flow.add_child(tb)
 
 	left.add_child(HSeparator.new())
 	var reset_btn := Button.new()
@@ -446,6 +576,10 @@ func _build_ui() -> void:
 	piece_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(piece_layer)
 
+	screen_fx = Control.new()
+	screen_fx.set_script(ScreenEffectsScript)
+	center.add_child(screen_fx)
+
 	# ── RIGHT: Log ──
 	var right_col := VBoxContainer.new()
 	right_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -461,12 +595,118 @@ func _build_ui() -> void:
 	right_col.add_child(log_label)
 
 
-func _apply_emotion() -> void:
-	var emo = EMOTIONS[emotion_option.selected]
-	for p in player_pieces + opponent_pieces:
+func _on_body_shape_changed(is_player: bool, idx: int) -> void:
+	var shape_names: PackedStringArray = PieceDesignScript.body_shape_names()
+	var d: Resource = player_design if is_player else opponent_design
+	d.body_shape = shape_names[idx]
+	var pieces: Array[Control] = player_pieces if is_player else opponent_pieces
+	for p in pieces:
 		if is_instance_valid(p):
-			p.set_emotion(emo)
-	_log("Emoción: %s" % emo)
+			p.queue_redraw()
+	_log("Forma %s: %s" % ["J1" if is_player else "J2", PieceDesignScript.body_shape_labels()[idx]])
+
+
+func _on_piece_color_changed(is_player: bool, which: String, color: Color) -> void:
+	var d: Resource = player_design if is_player else opponent_design
+	if which == "body":
+		d.body_color = color
+	else:
+		d.symbol_color = color
+	var pieces: Array[Control] = player_pieces if is_player else opponent_pieces
+	for p in pieces:
+		if is_instance_valid(p):
+			p.queue_redraw()
+
+
+func _on_effect_changed(is_player: bool, idx: int) -> void:
+	var new_effect: Resource = _all_effects[idx]
+	var pieces: Array[Control] = player_pieces if is_player else opponent_pieces
+	if is_player:
+		player_effect = new_effect
+	else:
+		opponent_effect = new_effect
+	for p in pieces:
+		if is_instance_valid(p) and p.effect_player and is_instance_valid(p.effect_player):
+			p.effect_player.setup(new_effect)
+	var label: String = "J1" if is_player else "J2"
+	_log("Efecto %s: %s" % [label, PieceEffectScript.effect_names()[idx]])
+
+
+func _on_design_changed(is_player: bool, idx: int) -> void:
+	var new_design: Resource = _all_designs[idx]
+	if is_player:
+		player_design = new_design
+		for p in player_pieces:
+			if is_instance_valid(p):
+				p.set_design(new_design)
+		_log("Diseño J1: %s" % new_design.design_name)
+	else:
+		opponent_design = new_design
+		for p in opponent_pieces:
+			if is_instance_valid(p):
+				p.set_design(new_design)
+		_log("Diseño J2: %s" % new_design.design_name)
+
+
+func _shake_board(intensity: float, duration: float) -> void:
+	if not board_frame:
+		return
+	var original_pos: Vector2 = board_frame.position
+	var steps: int = int(duration / 0.03)
+	for i in steps:
+		var offset := Vector2(
+			randf_range(-intensity, intensity),
+			randf_range(-intensity, intensity)
+		)
+		var tw := board_frame.create_tween()
+		tw.tween_property(board_frame, "position", original_pos + offset, 0.03)
+		await tw.finished
+	board_frame.position = original_pos
+
+
+func _apply_colors() -> void:
+	for c in cells:
+		if is_instance_valid(c):
+			c.color_empty = cell_empty_picker.color
+			c.color_alt = cell_alt_picker.color
+			c.color_hover = cell_hover_picker.color
+			c.color_line = line_color_picker.color
+			c.queue_redraw()
+	_apply_border()
+
+
+func _apply_theme(theme_name: String) -> void:
+	match theme_name:
+		"Clásico":
+			cell_empty_picker.color = Color(0.92, 0.88, 0.82)
+			cell_alt_picker.color = Color(0.25, 0.27, 0.32)
+			line_color_picker.color = Color(0.6, 0.5, 0.4)
+			border_color_picker.color = Color(0.45, 0.35, 0.25)
+			board_bg_picker.color = Color(0.3, 0.28, 0.24)
+			cell_hover_picker.color = Color(0.85, 0.80, 0.72)
+		"Oscuro":
+			cell_empty_picker.color = Color(0.18, 0.18, 0.22)
+			cell_alt_picker.color = Color(0.12, 0.12, 0.16)
+			line_color_picker.color = Color(0.3, 0.3, 0.35)
+			border_color_picker.color = Color(0.25, 0.25, 0.3)
+			board_bg_picker.color = Color(0.08, 0.08, 0.12)
+			cell_hover_picker.color = Color(0.22, 0.22, 0.28)
+		"Neón":
+			cell_empty_picker.color = Color(0.05, 0.05, 0.08)
+			cell_alt_picker.color = Color(0.08, 0.08, 0.12)
+			line_color_picker.color = Color(0.0, 0.9, 0.9)
+			border_color_picker.color = Color(0.9, 0.0, 0.9)
+			board_bg_picker.color = Color(0.02, 0.02, 0.05)
+			cell_hover_picker.color = Color(0.08, 0.08, 0.14)
+		"Pastel":
+			cell_empty_picker.color = Color(0.95, 0.88, 0.9)
+			cell_alt_picker.color = Color(0.85, 0.9, 0.88)
+			line_color_picker.color = Color(0.75, 0.7, 0.8)
+			border_color_picker.color = Color(0.8, 0.75, 0.85)
+			board_bg_picker.color = Color(0.9, 0.85, 0.92)
+			cell_hover_picker.color = Color(0.90, 0.82, 0.85)
+	_apply_colors()
+	_log("Tema: %s" % theme_name)
 
 
 func _apply_checkerboard() -> void:
@@ -482,8 +722,8 @@ func _apply_border() -> void:
 		return
 	if border_check and border_check.button_pressed:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.3, 0.28, 0.24)
-		style.border_color = Color(0.45, 0.35, 0.25)
+		style.bg_color = board_bg_picker.color if board_bg_picker else Color(0.3, 0.28, 0.24)
+		style.border_color = border_color_picker.color if border_color_picker else Color(0.45, 0.35, 0.25)
 		style.set_border_width_all(10)
 		style.set_corner_radius_all(3)
 		style.set_content_margin_all(10)
@@ -500,6 +740,44 @@ func _lbl(parent: Control, text: String, sz: int, col: Color) -> void:
 	l.add_theme_font_size_override("font_size", sz)
 	l.add_theme_color_override("font_color", col)
 	parent.add_child(l)
+
+
+func _piece_color_picker(parent: Control, text: String, default_color: Color, is_player: bool, which: String) -> ColorPickerButton:
+	var h := HBoxContainer.new()
+	parent.add_child(h)
+	var l := Label.new()
+	l.text = text
+	l.custom_minimum_size = Vector2(80, 0)
+	l.add_theme_font_size_override("font_size", 11)
+	l.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65))
+	h.add_child(l)
+	var cp := ColorPickerButton.new()
+	cp.color = default_color
+	cp.custom_minimum_size = Vector2(40, 24)
+	cp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var p: bool = is_player
+	var w: String = which
+	cp.color_changed.connect(func(c: Color): _on_piece_color_changed(p, w, c))
+	h.add_child(cp)
+	return cp
+
+
+func _color_picker(parent: Control, text: String, default_color: Color) -> ColorPickerButton:
+	var h := HBoxContainer.new()
+	parent.add_child(h)
+	var l := Label.new()
+	l.text = text
+	l.custom_minimum_size = Vector2(80, 0)
+	l.add_theme_font_size_override("font_size", 11)
+	l.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65))
+	h.add_child(l)
+	var cp := ColorPickerButton.new()
+	cp.color = default_color
+	cp.custom_minimum_size = Vector2(40, 24)
+	cp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cp.color_changed.connect(func(_c: Color): _apply_colors())
+	h.add_child(cp)
+	return cp
 
 
 func _spin(parent: Control, text: String, mn: int, mx: int, dv: int) -> SpinBox:

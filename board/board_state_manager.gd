@@ -15,7 +15,7 @@ func save() -> Dictionary:
 	var placed = {}
 	for cell_idx in pieces.cell_to_piece:
 		var p = pieces.cell_to_piece[cell_idx]
-		placed[cell_idx] = {"type": p.piece_type, "is_player": p.character_id == "player"}
+		placed[cell_idx] = {"is_player": p.character_id == "player"}
 	return {
 		"logic": board.logic.get_state(),
 		"placed_pieces": placed,

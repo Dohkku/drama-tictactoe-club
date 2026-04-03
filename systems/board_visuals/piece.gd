@@ -1,169 +1,317 @@
 extends Control
 
-var piece_type: int = 0  # 1=X, 2=O
+var design: Resource = null  # PieceDesign
 var character_id: String = ""
-var emotion: String = "neutral"
 var piece_color: Color = Color.WHITE
-var _expression_colors: Dictionary = {}
+var effect_player: Node2D = null
 
-# Drop-shadow offset (pixels)
+signal phase_started(phase_name: String)
+signal phase_completed(phase_name: String)
+signal move_completed()
+
 const _SHADOW_OFFSET := Vector2(2.0, 2.0)
 const _SHADOW_ALPHA := 0.22
 
 
-func setup(type: int, char_id: String, color: Color, expressions: Dictionary = {}) -> void:
-	piece_type = type
+func setup(piece_design: Resource, char_id: String, color: Color) -> void:
+	design = piece_design
 	character_id = char_id
 	piece_color = color
-	_expression_colors = expressions
+	queue_redraw()
+
+
+func set_design(new_design: Resource) -> void:
+	design = new_design
 	queue_redraw()
 
 
 func _draw() -> void:
-	if piece_type == 0:
+	if design == null:
 		return
 
-	var center = size / 2.0
-	var piece_radius: float = min(size.x, size.y) * 0.35
-	var current_color = _get_emotion_color()
+	var center: Vector2 = size / 2.0
+	var piece_radius: float = minf(size.x, size.y) * 0.35
 
-	# --- Emotion modifiers ---
-	var glow_radius_mult: float = 1.15
-	var glow_alpha: float = 0.25
-	var line_width_mult: float = 1.0
-	var radius_mult: float = 1.0
-	var piece_alpha: float = 1.0
+	var body_col: Color = design.body_color if design.body_color.a > 0.01 else piece_color
+	var sym_col: Color = design.symbol_color if design.symbol_color.a > 0.01 else piece_color
 
-	match emotion:
-		"happy":
-			glow_radius_mult = 1.4
-			glow_alpha = 0.4
-		"angry":
-			glow_radius_mult = 1.5
-			glow_alpha = 0.5
-			line_width_mult = 1.4
-		"focused":
-			glow_radius_mult = 1.3
-			glow_alpha = 0.35
-		"sad":
-			glow_radius_mult = 1.0
-			glow_alpha = 0.15
-			radius_mult = 0.85
-			piece_alpha = 0.7
+	# 1. Drop shadow of body
+	var shadow_color := Color(0.0, 0.0, 0.0, _SHADOW_ALPHA)
+	_draw_body(center + _SHADOW_OFFSET, piece_radius, shadow_color)
 
-	var draw_radius: float = piece_radius * radius_mult
-	var draw_color: Color = Color(current_color)
-	draw_color.a *= piece_alpha
+	# 2. Body filled
+	_draw_body(center, piece_radius, body_col)
 
-	# --- Drop shadow ---
-	var shadow_color = Color(0.0, 0.0, 0.0, _SHADOW_ALPHA)
-	var shadow_center = center + _SHADOW_OFFSET
-	if piece_type == 1:
-		_draw_x(shadow_center, draw_radius, shadow_color, line_width_mult)
-	elif piece_type == 2:
-		_draw_o(shadow_center, draw_radius, shadow_color, line_width_mult)
+	# 3. Body border
+	_draw_body_border(center, piece_radius, body_col.darkened(0.25))
 
-	# --- Background glow ---
-	var glow_color = current_color
-	glow_color.a = glow_alpha
-	draw_circle(center, draw_radius * glow_radius_mult, glow_color)
+	# 4. Drop shadow of symbol
+	_draw_design(center + _SHADOW_OFFSET * 0.5, piece_radius, shadow_color)
 
-	# --- Happy halo (outer ring) ---
-	if emotion == "happy":
-		var halo_color: Color = Color(current_color)
-		halo_color.a = 0.2
-		var halo_radius: float = draw_radius * 1.55
-		var halo_width: float = maxf(2.0, draw_radius * 0.07)
-		draw_arc(center, halo_radius, 0, TAU, 48, halo_color, halo_width, true)
-
-	# --- Main piece ---
-	if piece_type == 1:
-		_draw_x(center, draw_radius, draw_color, line_width_mult)
-	elif piece_type == 2:
-		_draw_o(center, draw_radius, draw_color, line_width_mult)
+	# 5. Symbol on top
+	_draw_design(center, piece_radius, sym_col)
 
 
-func _draw_x(center: Vector2, radius: float, color: Color, width_mult: float = 1.0) -> void:
-	var offset = Vector2(radius, radius) * 0.6
-	var width = max(4.0, radius * 0.18) * width_mult
+# ── Body shapes ──
+
+func _draw_body(center: Vector2, radius: float, color: Color) -> void:
+	var shape: String = design.body_shape if design.body_shape != "" else "circle"
+	match shape:
+		"circle":
+			draw_circle(center, radius, color)
+		"rounded_square":
+			_draw_rounded_rect(center, radius * 0.9, radius * 0.2, color)
+		"hexagon":
+			_draw_regular_polygon(center, radius, 6, color)
+		"diamond_body":
+			_draw_regular_polygon(center, radius, 4, color)
+		"shield":
+			_draw_shield(center, radius, color)
+		_:
+			draw_circle(center, radius, color)
+
+
+func _draw_body_border(center: Vector2, radius: float, color: Color) -> void:
+	var width: float = maxf(1.5, radius * 0.06)
+	var shape: String = design.body_shape if design.body_shape != "" else "circle"
+	match shape:
+		"circle":
+			draw_arc(center, radius, 0, TAU, 48, color, width, true)
+		"rounded_square":
+			var pts: PackedVector2Array = _rounded_rect_points(center, radius * 0.9, radius * 0.2)
+			draw_polyline(pts, color, width, true)
+		"hexagon":
+			var pts: PackedVector2Array = _regular_polygon_points(center, radius, 6)
+			pts.append(pts[0])
+			draw_polyline(pts, color, width, true)
+		"diamond_body":
+			var pts: PackedVector2Array = _regular_polygon_points(center, radius, 4)
+			pts.append(pts[0])
+			draw_polyline(pts, color, width, true)
+		"shield":
+			var pts: PackedVector2Array = _shield_points(center, radius)
+			pts.append(pts[0])
+			draw_polyline(pts, color, width, true)
+		_:
+			draw_arc(center, radius, 0, TAU, 48, color, width, true)
+
+
+func _draw_rounded_rect(center: Vector2, half_size: float, corner_radius: float, color: Color) -> void:
+	draw_colored_polygon(_rounded_rect_points(center, half_size, corner_radius), color)
+
+
+func _rounded_rect_points(center: Vector2, half_size: float, corner_radius: float) -> PackedVector2Array:
+	var points: PackedVector2Array = PackedVector2Array()
+	var cr: float = minf(corner_radius, half_size * 0.5)
+	var hs: float = half_size
+	# Corners: top-right, bottom-right, bottom-left, top-left
+	var corners: Array[Vector2] = [
+		center + Vector2(hs - cr, -hs + cr),
+		center + Vector2(hs - cr, hs - cr),
+		center + Vector2(-hs + cr, hs - cr),
+		center + Vector2(-hs + cr, -hs + cr),
+	]
+	var start_angles: Array[float] = [-PI / 2.0, 0.0, PI / 2.0, PI]
+	for c_idx in 4:
+		for i in 9:
+			var angle: float = start_angles[c_idx] + (PI / 2.0) * float(i) / 8.0
+			points.append(corners[c_idx] + Vector2(cos(angle), sin(angle)) * cr)
+	return points
+
+
+func _draw_regular_polygon(center: Vector2, radius: float, sides: int, color: Color) -> void:
+	draw_colored_polygon(_regular_polygon_points(center, radius, sides), color)
+
+
+func _regular_polygon_points(center: Vector2, radius: float, sides: int) -> PackedVector2Array:
+	var points: PackedVector2Array = PackedVector2Array()
+	for i in sides:
+		var angle: float = -PI / 2.0 + float(i) * TAU / float(sides)
+		points.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	return points
+
+
+func _draw_shield(center: Vector2, radius: float, color: Color) -> void:
+	draw_colored_polygon(_shield_points(center, radius), color)
+
+
+func _shield_points(center: Vector2, radius: float) -> PackedVector2Array:
+	var w: float = radius * 0.95
+	var h: float = radius * 1.1
+	return PackedVector2Array([
+		center + Vector2(-w, -h * 0.6),
+		center + Vector2(w, -h * 0.6),
+		center + Vector2(w, h * 0.1),
+		center + Vector2(0, h * 0.7),
+		center + Vector2(-w, h * 0.1),
+	])
+
+
+# ── Symbol shapes ──
+
+func _draw_design(center: Vector2, radius: float, color: Color) -> void:
+	var width: float = maxf(4.0, radius * 0.18) * design.line_width_factor
+
+	match design.design_type:
+		"geometric":
+			match design.geometric_shape:
+				"x": _draw_x(center, radius, color, width)
+				"o": _draw_o(center, radius, color, width)
+				"triangle": _draw_symbol_triangle(center, radius, color, width)
+				"square": _draw_symbol_square(center, radius, color, width)
+				"star": _draw_symbol_star(center, radius, color, width)
+				"diamond": _draw_symbol_diamond(center, radius, color, width)
+		"text":
+			_draw_text(center, radius, color)
+		"texture":
+			_draw_texture(center, radius, color)
+
+
+func _draw_x(center: Vector2, radius: float, color: Color, width: float) -> void:
+	var offset := Vector2(radius, radius) * 0.6
 	draw_line(center - offset, center + offset, color, width, true)
 	draw_line(center + Vector2(-offset.x, offset.y), center + Vector2(offset.x, -offset.y), color, width, true)
 
 
-func _draw_o(center: Vector2, radius: float, color: Color, width_mult: float = 1.0) -> void:
-	var width = max(4.0, radius * 0.18) * width_mult
+func _draw_o(center: Vector2, radius: float, color: Color, width: float) -> void:
 	draw_arc(center, radius * 0.6, 0, TAU, 36, color, width, true)
 
 
-func set_emotion(new_emotion: String) -> void:
-	if emotion == new_emotion:
-		return
-	emotion = new_emotion
-	queue_redraw()
+func _draw_symbol_triangle(center: Vector2, radius: float, color: Color, width: float) -> void:
+	var r: float = radius * 0.65
+	var points: PackedVector2Array = PackedVector2Array()
+	for i in 3:
+		var angle: float = -PI / 2.0 + i * TAU / 3.0
+		points.append(center + Vector2(cos(angle), sin(angle)) * r)
+	points.append(points[0])
+	if design.fill:
+		draw_colored_polygon(points, color)
+	else:
+		draw_polyline(points, color, width, true)
 
+
+func _draw_symbol_square(center: Vector2, radius: float, color: Color, width: float) -> void:
+	var r: float = radius * 0.55
+	var rect := Rect2(center - Vector2(r, r), Vector2(r * 2, r * 2))
+	if design.fill:
+		draw_rect(rect, color, true)
+	else:
+		draw_rect(rect, color, false, width)
+
+
+func _draw_symbol_star(center: Vector2, radius: float, color: Color, width: float) -> void:
+	var outer: float = radius * 0.65
+	var inner: float = outer * 0.4
+	var points: PackedVector2Array = PackedVector2Array()
+	for i in 5:
+		var angle_out: float = -PI / 2.0 + i * TAU / 5.0
+		points.append(center + Vector2(cos(angle_out), sin(angle_out)) * outer)
+		var angle_in: float = angle_out + TAU / 10.0
+		points.append(center + Vector2(cos(angle_in), sin(angle_in)) * inner)
+	points.append(points[0])
+	if design.fill:
+		draw_colored_polygon(points, color)
+	else:
+		draw_polyline(points, color, width, true)
+
+
+func _draw_symbol_diamond(center: Vector2, radius: float, color: Color, width: float) -> void:
+	var rx: float = radius * 0.45
+	var ry: float = radius * 0.65
+	var points: PackedVector2Array = PackedVector2Array([
+		center + Vector2(0, -ry),
+		center + Vector2(rx, 0),
+		center + Vector2(0, ry),
+		center + Vector2(-rx, 0),
+		center + Vector2(0, -ry),
+	])
+	if design.fill:
+		draw_colored_polygon(points, color)
+	else:
+		draw_polyline(points, color, width, true)
+
+
+func _draw_text(center: Vector2, radius: float, color: Color) -> void:
+	var font: Font = ThemeDB.fallback_font
+	var font_size: int = int(radius * 1.4)
+	var text: String = design.text_character
+	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+	var pos := Vector2(center.x - text_size.x / 2.0, center.y + text_size.y / 4.0)
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+
+func _draw_texture(center: Vector2, radius: float, color: Color) -> void:
+	if design.texture_image == null:
+		return
+	var tex_size := Vector2(radius * 1.2, radius * 1.2)
+	var rect := Rect2(center - tex_size / 2.0, tex_size)
+	draw_texture_rect(design.texture_image, rect, false, color)
+
+
+# ── Animation ──
 
 func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, all_pieces: Array) -> void:
-	## Animate the piece from its current hand position to target_pos on the board.
-	## Uses a physical anticipation-arc: lift -> wind-up -> arc-to-target -> settle.
 	pivot_offset = size / 2.0
-
 	var start_pos := position
-	var start_size := size
-
-	# Direction from current position to target (used for wind-up)
 	var travel := target_pos - start_pos
 	var travel_dist := travel.length()
 
-	# ------------------------------------------------------------------
-	# 1. LIFT  – scale up slightly and float upward
-	# ------------------------------------------------------------------
+	# 1. LIFT
+	phase_started.emit("lift")
 	var lift_scale := Vector2(1.15, 1.15)
 	var lift_pos := Vector2(start_pos.x, start_pos.y - style.lift_height)
-
 	var lift_dur: float = style.arc_duration * 0.35
 	var lift_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD).set_parallel(true)
 	lift_tween.tween_property(self, "scale", lift_scale, lift_dur)
 	lift_tween.tween_property(self, "position", lift_pos, lift_dur)
 	await lift_tween.finished
+	phase_completed.emit("lift")
 
-	# ------------------------------------------------------------------
-	# 2. ANTICIPATION  – pull back in the opposite direction (wind-up)
-	# ------------------------------------------------------------------
+	# 2. ANTICIPATION
+	phase_started.emit("anticipation")
 	var anticipation_offset := Vector2.ZERO
 	if travel_dist > 1.0:
 		anticipation_offset = -travel.normalized() * travel_dist * style.anticipation_factor
 	var antic_pos := lift_pos + anticipation_offset
-
 	var antic_dur: float = style.arc_duration * 0.25
 	var antic_tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	antic_tween.tween_property(self, "position", antic_pos, antic_dur)
 	await antic_tween.finished
+	phase_completed.emit("anticipation")
 
-	# ------------------------------------------------------------------
-	# 3. ARC TO TARGET  – fly to the cell with slight overshoot via TRANS_BACK
-	# ------------------------------------------------------------------
+	# Trail before arc
+	if effect_player and effect_player.has_method("start_trail"):
+		effect_player.start_trail(self)
+
+	# 3. ARC TO TARGET
+	phase_started.emit("arc")
 	var arc_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK).set_parallel(true)
 	arc_tween.tween_property(self, "position", target_pos, style.arc_duration)
 	arc_tween.tween_property(self, "size", target_size, style.arc_duration)
-	# Ease scale back toward 1.0 during the arc so the piece shrinks smoothly
 	arc_tween.tween_property(self, "scale", Vector2(1.03, 1.03), style.arc_duration)
-	# Spin during arc if requested
 	if style.spin_rotations > 0:
 		rotation = 0.0
 		arc_tween.tween_property(self, "rotation", style.spin_rotations * TAU, style.arc_duration) \
 			.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
 	await arc_tween.finished
+	phase_completed.emit("arc")
 
-	# ------------------------------------------------------------------
-	# 4. SETTLE  – snap to exact position and scale
-	# ------------------------------------------------------------------
-	# Reset rotation after spin
+	# Stop trail + particles on landing
+	if effect_player and effect_player.has_method("stop_trail"):
+		effect_player.stop_trail()
+		effect_player.play_impact(target_pos + target_size / 2.0)
+
+	# 4. IMPACT — hookpoint for screen effects
+	phase_started.emit("impact")
+	phase_completed.emit("impact")
+
+	# 5. SETTLE
+	phase_started.emit("settle")
 	if style.spin_rotations > 0:
 		var spin_settle := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 		spin_settle.tween_property(self, "rotation", 0.0, style.settle_duration)
 		await spin_settle.finished
 
-	# Jitter/shake if requested
 	if style.shake_amount > 0:
 		for i in 4:
 			var offset := Vector2(
@@ -179,18 +327,13 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 	settle_tween.tween_property(self, "position", target_pos, style.settle_duration)
 	await settle_tween.finished
 
-	# Ensure perfectly clean state
 	scale = Vector2.ONE
 	rotation = 0.0
 	position = target_pos
 	size = target_size
 	pivot_offset = size / 2.0
-
-
-func _get_emotion_color() -> Color:
-	if _expression_colors.has(emotion):
-		return _expression_colors[emotion]
-	return piece_color
+	phase_completed.emit("settle")
+	move_completed.emit()
 
 
 func _notification(what: int) -> void:

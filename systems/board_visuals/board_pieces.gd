@@ -54,9 +54,8 @@ func make_piece_node(piece_type: int, is_player: bool, sz: Vector2) -> Control:
 	p.pivot_offset = sz / 2.0
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var color = board.player_color if is_player else board.opponent_color
-	var expressions = board.player_expressions if is_player else board.opponent_expressions
-	p.setup(piece_type, "player" if is_player else "opponent", color, expressions)
-	p.set_emotion(board.current_player_emotion if is_player else board.current_opponent_emotion)
+	var design = board.player_design if is_player else board.opponent_design
+	p.setup(design, "player" if is_player else "opponent", color)
 	return p
 
 
