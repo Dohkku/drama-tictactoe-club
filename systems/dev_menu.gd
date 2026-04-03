@@ -8,7 +8,7 @@ const SYSTEMS := [
 	{"name": "Layout Manager", "scene": "res://systems/layout/layout_sandbox.tscn", "color": Color(0.9, 0.6, 0.2), "desc": "Paneles, transiciones"},
 	{"name": "Board Visuals", "scene": "res://systems/board_visuals/visual_sandbox.tscn", "color": Color(0.2, 0.5, 0.9), "desc": "Tablero visual, fichas, animaciones"},
 	{"name": "Scene Runner", "scene": "res://systems/scene_runner/scene_runner_sandbox.tscn", "color": Color(0.9, 0.3, 0.5), "desc": "Parser DSL, ejecución de scripts"},
-	{"name": "Match System", "scene": "res://systems/match/test_scene.tscn", "color": Color(0.8, 0.8, 0.2), "desc": "Torneos, partidas, orquestación"},
+	{"name": "Match System", "scene": "res://systems/match/match_sandbox.tscn", "color": Color(0.8, 0.8, 0.2), "desc": "Torneos, partidas, orquestación"},
 ]
 
 
