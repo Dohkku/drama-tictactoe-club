@@ -21,17 +21,16 @@ static func _make(lift: float, anticipation: float, arc: float, settle: float) -
 
 
 static func gentle() -> Resource:
-	return _make(6.0, 0.2, 0.3, 0.12)
+	return _make(8.0, 0.2, 0.6, 0.25)
 
 static func slam() -> Resource:
-	return _make(10.0, 0.4, 0.2, 0.08)
+	return _make(14.0, 0.35, 0.45, 0.18)
 
 static func spinning() -> Resource:
-	# Spinning concept removed; uses gentle parameters.
-	return _make(6.0, 0.2, 0.3, 0.12)
+	return _make(8.0, 0.2, 0.6, 0.25)
 
 static func dramatic() -> Resource:
-	return _make(12.0, 0.5, 0.18, 0.1)
+	return _make(18.0, 0.45, 0.5, 0.22)
 
 static func nervous() -> Resource:
-	return _make(4.0, 0.15, 0.35, 0.15)
+	return _make(5.0, 0.15, 0.7, 0.3)

@@ -142,8 +142,8 @@ func snap_layout() -> void:
 func schedule_reflow() -> void:
 	if not board.is_inside_tree():
 		return
-	if board.size.x < 10 or board.size.y < 10:
-		return
+	if board.size.x < 50 or board.size.y < 50:
+		return  # Board collapsed during layout transition
 	if board.logic.game_over or board._animating:
 		return
 	_reflow_request_id += 1
@@ -152,7 +152,7 @@ func schedule_reflow() -> void:
 
 
 func _run_piece_reflow(request_id: int) -> void:
-	if board.size.x < 10 or board.size.y < 10:
+	if board.size.x < 50 or board.size.y < 50:
 		return
 	await board.get_tree().process_frame
 	if request_id != _reflow_request_id:

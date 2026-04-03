@@ -122,6 +122,7 @@ func _play_match(config: Resource) -> void:
 
 func _on_before_ai_move() -> void:
 	await _stage.get_tree().process_frame
+	await _wait_for_runner()  # Wait for any pattern reactions to finish first
 	await _runner.trigger_reaction("before_opponent_move")
 	EventBus.pre_move_complete.emit()
 
@@ -385,6 +386,9 @@ func _configure_board_visuals(config: Resource) -> void:
 	if opponent_data:
 		_board.opponent_color = opponent_data.color
 		_board.opponent_expressions = opponent_data.expressions
+
+	# Update existing pieces to match character colors
+	_board.refresh_piece_colors()
 
 	var p_style_name = config.player_style
 	var o_style_name = config.opponent_style

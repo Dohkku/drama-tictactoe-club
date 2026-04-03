@@ -245,6 +245,18 @@ func override_next_style(s: Resource) -> void:
 	_next_move_style_override = s
 
 
+func refresh_piece_colors() -> void:
+	## Update all existing pieces to match current player/opponent colors.
+	for p in pieces.player_pieces:
+		if is_instance_valid(p):
+			p.piece_color = player_color
+			p.queue_redraw()
+	for p in pieces.opponent_pieces:
+		if is_instance_valid(p):
+			p.piece_color = opponent_color
+			p.queue_redraw()
+
+
 func set_piece_emotion(is_player: bool, emotion: String) -> void:
 	if is_player:
 		current_player_emotion = emotion
