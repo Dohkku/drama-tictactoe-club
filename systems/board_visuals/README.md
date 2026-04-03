@@ -1,93 +1,114 @@
 # Sistema 2: Board Visuals
 
-Renderizado y animación del tablero. No toma decisiones de juego ni gestiona turnos.
+Renderizado, animación y efectos del tablero. No toma decisiones de juego ni gestiona turnos.
 
 **Ubicación canónica**: `systems/board_visuals/`
-
-## Responsabilidades
-
-- Renderizado de celdas (colores, checkerboard, bordes, hover)
-- Renderizado de piezas (X, O, sombra, glow, emociones)
-- Animación de colocación (lift → anticipation → arc → settle)
-- Hand areas (piezas disponibles arriba/abajo del tablero)
-- Reflow de piezas al redimensionar
-- Estilos de colocación (gentle, slam, dramatic, nervous, spinning)
-
-## NO es responsable de
-
-- Lógica del juego, turnos, IA (→ Board Logic)
-- Flujo de partida, game over, señales (→ Board integration en `board/`)
-- Habilidades (→ Board integration)
-- Diálogos o reacciones (→ Scene Runner)
 
 ## Archivos
 
 | Archivo | Descripción |
 |---------|-------------|
-| `cell.gd` | Celda individual: renderizado, hover, click, checkerboard |
-| `piece.gd` | Pieza individual: renderizado X/O, emociones, animación 4-fases |
-| `placement_style.gd` | Resource con parámetros de animación. Presets: gentle, slam, spinning, dramatic, nervous |
-| `board_pieces.gd` | Gestión de piezas: creación, hand layout, cell-piece mapping, reflow |
+| `piece.gd` | Pieza: body shape + símbolo, squash/stretch, selección dormida |
+| `piece_design.gd` | Resource: diseño visual (forma, body, colores, texto/textura) |
+| `placement_style.gd` | Resource: animación de colocación (5 presets + squash/spring) |
+| `piece_effect.gd` | Resource: partículas trail/impact, screen flash, propagation |
+| `piece_effect_player.gd` | Runtime: CPUParticles2D para trail e impacto |
+| `screen_effects.gd` | Efectos pantalla: flash, propagation ring, win line, draw effect |
+| `board_audio.gd` | Audio procedural: SFX por fase, BGM, duck/interrupt, temas |
+| `cell.gd` | Celda: renderizado, hover, checkerboard |
+| `board_pieces.gd` | Gestor de piezas para el facade de producción (board.gd) |
 
-## API
-
-### Cell
-```
-cell_index: int
-is_occupied: bool
-checkerboard: bool
-color_empty / color_alt / color_hover / color_line: Color
-set_occupied(val)
-set_input_enabled(val)
-clear()
-signal cell_clicked(index)
-```
+## API Principal
 
 ### Piece
 ```
-piece_type: int (1=X, 2=O)
-character_id: String
-emotion: String
-piece_color: Color
-setup(type, char_id, color, expressions)
-set_emotion(emotion)
+setup(design, char_id, color)
+set_design(design)
 play_move_to(target_pos, target_size, style, all_pieces)
+set_selectable(val)   # Infraestructura dormida
+set_selected(val)     # Infraestructura dormida
+
+signal phase_started(phase_name)   # lift, anticipation, arc, impact, settle
+signal phase_completed(phase_name)
+signal move_completed()
+signal piece_clicked(piece)        # Si selectable=true
+```
+
+### PieceDesign
+```
+design_type: "geometric" | "text" | "texture"
+geometric_shape: "x" | "o" | "triangle" | "square" | "star" | "diamond"
+text_character: String (Unicode)
+body_shape: "circle" | "rounded_square" | "hexagon" | "diamond_body" | "shield"
+body_color / symbol_color: Color (transparent = usar piece_color)
+fill: bool
+line_width_factor: float
+
+Factorías: x_design(), o_design(), triangle_design(), square_design(),
+           star_design(), diamond_design(), text_design(char, name)
+all_designs() → Array de 10 presets
 ```
 
 ### PlacementStyle
 ```
-lift_height: float
-anticipation_factor: float
-arc_duration: float
-settle_duration: float
+lift_height, anticipation_factor, arc_duration, settle_duration
+spin_rotations, shake_amount
+arc_stretch, impact_squash, spring_bounces
+
 Presets: gentle(), slam(), spinning(), dramatic(), nervous()
 ```
 
-### BoardPieces
+### PieceEffect
 ```
-player_pieces / opponent_pieces: Array[Control]
-cell_to_piece: Dictionary
-create_all_pieces()
-clear_all_pieces()
-position_hand_pieces(animate)
-snap_layout()
-schedule_reflow()
-get_cell_size() → Vector2
-get_cell_pos_in_layer(index) → Vector2
-get_piece_ratio() → float
+trail_enabled/color/amount/lifetime/spread/velocity/scale/gravity
+impact_enabled/color/amount/lifetime/spread/velocity/scale/gravity
+board_shake_intensity/duration
+screen_flash_enabled/color/duration
+propagation_enabled/color/duration
+
+Presets: none(), fire(), sparkle(), smoke(), shockwave()
 ```
 
-## Test Scene
-
-```bash
-# Desde el dev menu o directamente:
-godot --scene res://systems/board_visuals/test_scene.tscn
+### ScreenEffects
+```
+flash(color, duration)
+propagation_ring(origin, color, max_radius, duration)
+play_win_line(positions, color, width, duration, glow, pulse, pulse_speed, particles) → Control
+play_draw_effect(board_rect, duration)
 ```
 
-- Grid de celdas con click para colocar piezas
-- IA oponente configurable
-- Selector de estilo de animación (5 estilos)
-- Selector de emoción de piezas
-- Toggle checkerboard y borde
-- Tamaño de tablero y máx fichas configurables
-- Log de eventos
+### BoardAudio
+```
+play_sfx(name)     # lift, whoosh, impact_light, impact_heavy, win, draw
+play_bgm(track)    # Procedural o desde res://audio/music/
+stop_bgm()
+duck_bgm(duration)
+interrupt_bgm(sting_name)
+set_sfx_volume(linear) / set_bgm_volume(linear)
+apply_theme(idx)   # 0=Clásico, 1=Retro, 2=Suave
+
+Override: soltar .ogg/.wav en res://audio/sfx/ o res://audio/music/
+```
+
+## Flujo de animación
+
+```
+play_move_to():
+  LIFT → visual_scale stretch
+  ANTICIPATION → wind-up
+  trail starts
+  ARC → fly + spin + squash in movement direction
+  trail stops, impact particles
+  IMPACT → screen flash + propagation + squash on landing
+  SETTLE → spring bounces (jelly) + shake → visual_scale = 1,1
+```
+
+Cada transición emite `phase_started`/`phase_completed` para hooks externos.
+
+## Selección de piezas (dormida)
+
+Infraestructura lista para fichas con habilidades:
+1. `piece.set_selectable(true)` en piezas del hand
+2. Conectar `piece_clicked` → guardar `selected_piece`
+3. En click celda → usar `selected_piece` en vez de secuencial
+4. Tras colocar → `selected_piece = null`
