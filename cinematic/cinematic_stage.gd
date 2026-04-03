@@ -65,6 +65,11 @@ func get_character_data(character_id: String) -> Resource:
 
 func enter_character(character_id: String, position_name: String = "center", enter_from: String = "") -> void:
 	if characters_on_stage.has(character_id):
+		# Already on stage: just reposition silently
+		var pos_fraction = POSITIONS.get(position_name, 0.5)
+		_character_positions[character_id] = position_name
+		_apply_slot_position(characters_on_stage[character_id], pos_fraction)
+		_reposition_all()
 		return
 	if not _character_registry.has(character_id):
 		push_warning("Character not registered: %s" % character_id)

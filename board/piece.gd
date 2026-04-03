@@ -84,9 +84,10 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 	var lift_scale := Vector2(1.15, 1.15)
 	var lift_pos := Vector2(start_pos.x, start_pos.y - style.lift_height)
 
+	var lift_dur: float = style.arc_duration * 0.35
 	var lift_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD).set_parallel(true)
-	lift_tween.tween_property(self, "scale", lift_scale, 0.1)
-	lift_tween.tween_property(self, "position", lift_pos, 0.1)
+	lift_tween.tween_property(self, "scale", lift_scale, lift_dur)
+	lift_tween.tween_property(self, "position", lift_pos, lift_dur)
 	await lift_tween.finished
 
 	# ------------------------------------------------------------------
@@ -97,8 +98,9 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 		anticipation_offset = -travel.normalized() * travel_dist * style.anticipation_factor
 	var antic_pos := lift_pos + anticipation_offset
 
+	var antic_dur: float = style.arc_duration * 0.25
 	var antic_tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	antic_tween.tween_property(self, "position", antic_pos, 0.08)
+	antic_tween.tween_property(self, "position", antic_pos, antic_dur)
 	await antic_tween.finished
 
 	# ------------------------------------------------------------------

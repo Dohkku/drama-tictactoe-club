@@ -70,7 +70,6 @@ func _play_event(event: Dictionary) -> void:
 
 	_current += 1
 	if _current < _events.size():
-		_stage.clear_stage()
 		_dialogue_box.hide_dialogue()
 		await _stage.get_tree().create_timer(0.8).timeout
 		await _play_event(_events[_current])
@@ -79,6 +78,7 @@ func _play_event(event: Dictionary) -> void:
 
 
 func _play_cutscene(script_path: String) -> void:
+	_stage.clear_stage()
 	_runner.clear_reactions()
 	var data = SceneParserScript.parse_file(script_path)
 	await _runner.execute(data)
@@ -402,9 +402,15 @@ func _configure_board_visuals(config: Resource) -> void:
 
 func _configure_board(config: Resource) -> void:
 	var board_cfg = _resolve_board_config(config)
+	# Hide board during reset to prevent stale state flash
+	_board.modulate.a = 0.0
 	await _board.full_reset(board_cfg.get_rules())
 	_board.apply_board_config(board_cfg)
 	_configure_board_visuals(config)  # Character colors override config defaults
+	# Fade board back in cleanly
+	var tw = _board.create_tween()
+	tw.tween_property(_board, "modulate:a", 1.0, 0.3)
+	await tw.finished
 
 
 func _resolve_board_config(config: Resource) -> Resource:
