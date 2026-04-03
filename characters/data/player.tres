@@ -9,10 +9,5 @@ display_name = "Tú"
 color = Color(0.2, 0.5, 1, 1)
 expressions = {
 "determined": Color(0.1, 0.4, 1, 1),
-"happy": Color(0.3, 0.7, 1, 1),
-"nervous": Color(0.4, 0.5, 0.8, 1),
 "neutral": Color(0.2, 0.5, 1, 1)
 }
-piece_type = "X"
-default_style = "slam"
-voice_waveform = "triangle"

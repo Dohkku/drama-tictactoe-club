@@ -17,6 +17,9 @@ var _updating_ui: bool = false
 @onready var id_edit: LineEdit = %IDEdit
 @onready var name_edit: LineEdit = %NameEdit
 @onready var color_picker: ColorPickerButton = %ColorPicker
+var portrait_path_edit: LineEdit = null
+var portrait_browse_btn: Button = null
+var image_dialog: FileDialog = null
 
 # Form fields - Style
 @onready var style_option: OptionButton = %StyleOption
@@ -45,6 +48,8 @@ var _updating_ui: bool = false
 
 
 func _ready() -> void:
+	_setup_image_ui()
+
 	# Connect list selection
 	character_list.item_selected.connect(_on_character_selected)
 
@@ -79,6 +84,59 @@ func _ready() -> void:
 	_set_form_enabled(false)
 
 
+func _setup_image_ui() -> void:
+	# Add Image Row to Basic Section
+	var form_vbox = id_edit.get_parent().get_parent()
+	var image_row = HBoxContainer.new()
+	image_row.add_theme_constant_override("separation", 8)
+	form_vbox.add_child(image_row)
+	form_vbox.move_child(image_row, id_edit.get_parent().get_index() + 2) # After NameRow
+	
+	var lbl = Label.new()
+	lbl.text = "Retrato (Imagen):"
+	lbl.custom_minimum_size = Vector2(120, 0)
+	lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	lbl.add_theme_font_size_override("font_size", 14)
+	image_row.add_child(lbl)
+	
+	portrait_path_edit = LineEdit.new()
+	portrait_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	portrait_path_edit.editable = false
+	portrait_path_edit.placeholder_text = "res://path/to/image.png"
+	portrait_path_edit.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9))
+	var edit_style = id_edit.get_theme_stylebox("normal").duplicate()
+	portrait_path_edit.add_theme_stylebox_override("normal", edit_style)
+	image_row.add_child(portrait_path_edit)
+	
+	portrait_browse_btn = Button.new()
+	portrait_browse_btn.text = "..."
+	portrait_browse_btn.custom_minimum_size = Vector2(40, 0)
+	portrait_browse_btn.pressed.connect(_on_portrait_browse_pressed)
+	image_row.add_child(portrait_browse_btn)
+	
+	# Setup FileDialog
+	image_dialog = FileDialog.new()
+	image_dialog.title = "Seleccionar Retrato"
+	image_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	image_dialog.access = FileDialog.ACCESS_RESOURCES
+	image_dialog.filters = PackedStringArray("*.png ; PNG Images", "*.jpg,*.jpeg ; JPEG Images", "*.webp ; WebP Images")
+	image_dialog.file_selected.connect(_on_portrait_selected)
+	add_child(image_dialog)
+
+
+func _on_portrait_browse_pressed() -> void:
+	image_dialog.popup_centered(Vector2i(700, 500))
+
+
+func _on_portrait_selected(path: String) -> void:
+	var ch = _get_current()
+	if ch:
+		ch.portrait_image = load(path)
+		portrait_path_edit.text = path
+		_update_preview()
+		characters_changed.emit()
+
+
 func _setup_option_buttons() -> void:
 	style_option.clear()
 	for s in ["gentle", "slam", "spinning", "dramatic", "nervous"]:
@@ -97,6 +155,7 @@ func _set_form_enabled(enabled: bool) -> void:
 	id_edit.editable = enabled
 	name_edit.editable = enabled
 	color_picker.disabled = !enabled
+	if portrait_browse_btn: portrait_browse_btn.disabled = !enabled
 	style_option.disabled = !enabled
 	pose_edit.editable = enabled
 	direction_option.disabled = !enabled
@@ -167,6 +226,12 @@ func _populate_form() -> void:
 	id_edit.text = ch.character_id
 	name_edit.text = ch.display_name
 	color_picker.color = ch.color
+	
+	if portrait_path_edit:
+		if ch.portrait_image:
+			portrait_path_edit.text = ch.portrait_image.resource_path
+		else:
+			portrait_path_edit.text = ""
 
 	# Style
 	var style_items := ["gentle", "slam", "spinning", "dramatic", "nervous"]
@@ -207,6 +272,7 @@ func _clear_form() -> void:
 	id_edit.text = ""
 	name_edit.text = ""
 	color_picker.color = Color.WHITE
+	if portrait_path_edit: portrait_path_edit.text = ""
 	style_option.selected = 0
 	pose_edit.text = ""
 	direction_option.selected = 1
@@ -565,17 +631,13 @@ func _update_preview() -> void:
 	if preview_slot == null:
 		return
 
-	# Get portrait and name label from the preview slot
-	var portrait: ColorRect = preview_slot.get_node_or_null("VBoxContainer/PortraitRect")
+	# CharacterSlot handles its own rendering (including fallback to color)
+	preview_slot.character_data = ch
+	preview_slot._apply_expression("neutral")
+	
 	var name_lbl: Label = preview_slot.get_node_or_null("VBoxContainer/NameLabel")
-	var expr_lbl: Label = preview_slot.get_node_or_null("VBoxContainer/PortraitRect/ExpressionLabel")
-
-	if portrait:
-		portrait.color = ch.color
 	if name_lbl:
 		name_lbl.text = ch.display_name
-	if expr_lbl:
-		expr_lbl.text = "neutral"
 
 	# Show the preview
 	preview_slot.visible = true
@@ -585,10 +647,11 @@ func _update_preview() -> void:
 func _clear_preview() -> void:
 	if preview_slot == null:
 		return
-	var portrait: ColorRect = preview_slot.get_node_or_null("VBoxContainer/PortraitRect")
+	preview_slot.character_data = null
+	preview_slot.portrait_rect.texture = null
+	preview_slot.portrait_rect.modulate = Color(0.3, 0.3, 0.35)
+	
 	var name_lbl: Label = preview_slot.get_node_or_null("VBoxContainer/NameLabel")
-	if portrait:
-		portrait.color = Color(0.3, 0.3, 0.35)
 	if name_lbl:
 		name_lbl.text = ""
 	preview_slot.modulate.a = 0.3
