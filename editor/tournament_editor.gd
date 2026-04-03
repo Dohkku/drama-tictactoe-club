@@ -29,6 +29,9 @@ const COLOR_INPUT_BG := Color(0.14, 0.15, 0.20)
 ##   {"type": "cutscene"|"match"|"simultaneous", "data": {...}}
 var events: Array = []
 
+## List of available characters (passed from parent editor)
+var available_characters: Array = []
+
 ## Maps event card node -> index in events array (rebuilt on every refresh)
 var _card_index_map: Dictionary = {}
 
@@ -62,6 +65,11 @@ func get_events() -> Array:
 
 func load_events(data: Array) -> void:
 	events = data.duplicate(true)
+	_refresh_list()
+
+
+func set_available_characters(chars: Array) -> void:
+	available_characters = chars
 	_refresh_list()
 
 
@@ -225,9 +233,12 @@ func _create_event_card(event_idx: int) -> PanelContainer:
 			else:
 				title.text = type_label
 		"match":
-			var opp: String = event_data.get("opponent_id", "")
-			if opp != "":
-				title.text = "%s vs %s" % [type_label, opp.capitalize()]
+			var opp_id: String = event_data.get("opponent_id", "")
+			var char_name := _get_character_name(opp_id)
+			if opp_id != "":
+				title.text = "%s vs %s" % [type_label, char_name]
+				var char_color := _get_character_color(opp_id)
+				title.add_theme_color_override("font_color", char_color.lerp(Color.WHITE, 0.4))
 			else:
 				title.text = type_label
 		"simultaneous":
@@ -235,12 +246,10 @@ func _create_event_card(event_idx: int) -> PanelContainer:
 			if matches.size() > 0:
 				var names := []
 				for m in matches:
-					var n: String = m.get("opponent_id", "?")
-					names.append(n.capitalize())
+					names.append(_get_character_name(m.get("opponent_id", "")))
 				title.text = "%s — %s" % [type_label, ", ".join(names)]
 			else:
 				title.text = "%s (sin oponentes)" % type_label
-	title.add_theme_color_override("font_color", COLOR_TEXT)
 	title.add_theme_font_size_override("font_size", 15)
 	content_vbox.add_child(title)
 
@@ -290,8 +299,10 @@ func _build_cutscene_details(parent: VBoxContainer, event_idx: int, data: Dictio
 
 
 func _build_match_details(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
-	_add_line_edit_row(parent, "ID oponente:", data.get("opponent_id", ""),
-		func(text: String): _update_event_data(event_idx, "opponent_id", text))
+	_add_character_dropdown_row(parent, "Oponente:", data.get("opponent_id", ""),
+		func(id: String): 
+			_update_event_data(event_idx, "opponent_id", id)
+			_refresh_list())
 
 	_add_slider_row(parent, "Dificultad IA:", data.get("ai_difficulty", 0.3), 0.0, 1.0, 0.05,
 		func(val: float): _update_event_data(event_idx, "ai_difficulty", val))
@@ -364,8 +375,10 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 	header_hbox.add_child(del_sub_btn)
 
 	# Fields
-	_add_line_edit_row(sub_vbox, "ID oponente:", data.get("opponent_id", ""),
-		func(text: String): _update_sub_match_data(event_idx, sub_idx, "opponent_id", text))
+	_add_character_dropdown_row(sub_vbox, "Oponente:", data.get("opponent_id", ""),
+		func(id: String): 
+			_update_sub_match_data(event_idx, sub_idx, "opponent_id", id)
+			_refresh_list())
 
 	_add_slider_row(sub_vbox, "Dificultad IA:", data.get("ai_difficulty", 0.3), 0.0, 1.0, 0.05,
 		func(val: float): _update_sub_match_data(event_idx, sub_idx, "ai_difficulty", val))
@@ -389,6 +402,52 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 # ═════════════════════════════════════════════════════════════════════════════
 # Row Helpers (shared by match and sub-match builders)
 # ═════════════════════════════════════════════════════════════════════════════
+
+func _add_character_dropdown_row(parent: Control, label_text: String, current_id: String, on_change: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+
+	var lbl := Label.new()
+	lbl.text = label_text
+	lbl.custom_minimum_size = Vector2(130, 0)
+	lbl.add_theme_color_override("font_color", COLOR_TEXT_DIM)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(lbl)
+
+	var opt := OptionButton.new()
+	opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	opt.custom_minimum_size = Vector2(0, 28)
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = COLOR_INPUT_BG
+	style.set_corner_radius_all(3)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	opt.add_theme_stylebox_override("normal", style)
+	opt.add_theme_color_override("font_color", COLOR_TEXT)
+
+	# Add "None" option
+	opt.add_item("(ninguno)", 0)
+	opt.set_item_metadata(0, "")
+	
+	var select_idx := 0
+	for i in range(available_characters.size()):
+		var ch = available_characters[i]
+		var id = ch.get("character_id")
+		var name = ch.get("display_name")
+		opt.add_item(name if name != "" else id, i + 1)
+		opt.set_item_metadata(i + 1, id)
+		if id == current_id:
+			select_idx = i + 1
+
+	opt.select(select_idx)
+	opt.item_selected.connect(func(idx: int):
+		on_change.call(opt.get_item_metadata(idx)))
+	row.add_child(opt)
+
 
 func _add_line_edit_row(parent: Control, label_text: String, value: String, on_change: Callable) -> void:
 	var row := HBoxContainer.new()
@@ -661,3 +720,20 @@ func _update_sub_match_data(event_idx: int, sub_idx: int, key: String, value: Va
 		var matches: Array = events[event_idx]["data"].get("matches", [])
 		if sub_idx >= 0 and sub_idx < matches.size():
 			matches[sub_idx][key] = value
+
+
+# ─── New Helpers ──────────────────────────────────────────────────────────────
+
+func _get_character_name(id: String) -> String:
+	for ch in available_characters:
+		if ch.get("character_id") == id:
+			var n = ch.get("display_name")
+			return n if n != "" else id
+	return id if id != "" else "???"
+
+
+func _get_character_color(id: String) -> Color:
+	for ch in available_characters:
+		if ch.get("character_id") == id:
+			return ch.get("color")
+	return COLOR_TEXT

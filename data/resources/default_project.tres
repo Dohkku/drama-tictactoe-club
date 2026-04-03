@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="ProjectData" format=3]
+
+[ext_resource type="Resource" path="res://characters/data/akira.tres" id="1_miu0a"]
+[ext_resource type="Resource" path="res://characters/data/mei.tres" id="2_eka5k"]
+[ext_resource type="Resource" path="res://characters/data/player.tres" id="3_q0uei"]
+[ext_resource type="Script" path="res://data/tournament_event.gd" id="4_tpq56"]
+[ext_resource type="Script" path="res://match_system/match_config.gd" id="5_ixqy3"]
+[ext_resource type="Script" path="res://data/project_data.gd" id="6_0mhrx"]
+
+[sub_resource type="Resource" id="Resource_jm47l"]
+script = ExtResource("4_tpq56")
+event_type = "cutscene"
+event_name = "Prologue"
+cutscene_script_path = "res://scene_scripts/scripts/prologue.dscn"
+
+[sub_resource type="Resource" id="Resource_fug3p"]
+script = ExtResource("5_ixqy3")
+match_id = "match_01"
+opponent_id = "akira"
+ai_difficulty = 0.3
+intro_script = "res://scene_scripts/scripts/match_01_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/match_01_reactions.dscn"
+opponent_style = "spinning"
+
+[sub_resource type="Resource" id="Resource_bebnh"]
+script = ExtResource("4_tpq56")
+event_name = "First Duel"
+match_config = SubResource("Resource_fug3p")
+order_index = 1
+
+[sub_resource type="Resource" id="Resource_ykg8p"]
+script = ExtResource("5_ixqy3")
+match_id = "sim_akira"
+opponent_id = "akira"
+ai_difficulty = 0.4
+intro_script = "res://scene_scripts/scripts/sim_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/match_01_reactions.dscn"
+opponent_style = "spinning"
+turns_per_visit = 2
+
+[sub_resource type="Resource" id="Resource_4w4yh"]
+script = ExtResource("5_ixqy3")
+match_id = "sim_mei"
+opponent_id = "mei"
+intro_script = "res://scene_scripts/scripts/sim_intro_mei.dscn"
+reactions_script = "res://scene_scripts/scripts/match_02_reactions.dscn"
+
+[sub_resource type="Resource" id="Resource_gyvob"]
+script = ExtResource("4_tpq56")
+event_type = "simultaneous"
+event_name = "Club Challenge"
+simultaneous_configs = Array[Resource]([SubResource("Resource_ykg8p"), SubResource("Resource_4w4yh")])
+order_index = 2
+
+[resource]
+script = ExtResource("6_0mhrx")
+project_name = "Drama Tic Tac Toe Club"
+characters = Array[Resource]([ExtResource("1_miu0a"), ExtResource("2_eka5k"), ExtResource("3_q0uei")])
+events = Array[Resource]([SubResource("Resource_jm47l"), SubResource("Resource_bebnh"), SubResource("Resource_gyvob")])

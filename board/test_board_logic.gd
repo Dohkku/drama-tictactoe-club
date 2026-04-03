@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BL = preload("res://board/board_logic.gd")
+const GR = preload("res://board/game_rules.gd")
 
 func _init():
 	print("=== Testing BoardLogic ===")
@@ -8,10 +9,10 @@ func _init():
 
 	# Test 1: Basic moves
 	print("\n--- Test 1: Basic moves ---")
-	assert(board.make_move(4) == true, "Center move should succeed")
+	assert(board.make_move(4).success == true, "Center move should succeed")
 	assert(board.cells[4] == BL.Piece.X, "Cell 4 should be X")
 	assert(board.current_turn == BL.Piece.O, "Turn should switch to O")
-	assert(board.make_move(4) == false, "Duplicate move should fail")
+	assert(board.make_move(4).success == false, "Duplicate move should fail")
 	print("PASS: Basic moves work")
 
 	# Test 2: Win detection
@@ -61,6 +62,31 @@ func _init():
 	assert(0 not in valid, "Cell 0 should not be valid")
 	assert(4 not in valid, "Cell 4 should not be valid")
 	print("PASS: Valid moves work")
+
+	# Test 6: Piece rotation (new feature)
+	print("\n--- Test 6: Piece rotation ---")
+	var rotating_rules = GR.new()
+	rotating_rules.max_pieces_per_player = 3
+	rotating_rules.overflow_mode = "rotate"
+	var rot_board = BL.new(rotating_rules)
+	
+	rot_board.make_move(0) # X1
+	rot_board.make_move(1) # O1
+	rot_board.make_move(2) # X2
+	rot_board.make_move(3) # O2
+	rot_board.make_move(4) # X3
+	rot_board.make_move(5) # O3
+	
+	# Current state: X at [0, 2, 4], O at [1, 3, 5]
+	assert(rot_board.cells[0] == BL.Piece.X, "X still has first piece")
+	
+	# X places 4th piece, 1st (at 0) should disappear
+	var move_result = rot_board.make_move(8) # X4
+	assert(move_result.success == true, "4th move should succeed")
+	assert(move_result.removed_cell == 0, "Cell 0 should have been removed")
+	assert(rot_board.cells[0] == BL.Piece.EMPTY, "Cell 0 should be empty now")
+	assert(rot_board.cells[8] == BL.Piece.X, "Cell 8 should be X")
+	print("PASS: Piece rotation works")
 
 	print("\n=== All BoardLogic tests PASSED ===")
 	quit()

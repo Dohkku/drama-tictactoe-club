@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="CharacterData" format=3]
+
+[ext_resource type="Script" path="res://characters/character_data.gd" id="1_6v4kc"]
+
+[resource]
+script = ExtResource("1_6v4kc")
+character_id = "akira"
+display_name = "Akira"
+color = Color(0.9, 0.2, 0.2, 1)
+expressions = {
+"angry": Color(0.8, 0.1, 0.1, 1),
+"confident": Color(1, 0.4, 0.1, 1),
+"intense": Color(0.7, 0.05, 0.05, 1),
+"neutral": Color(0.9, 0.2, 0.2, 1),
+"shocked": Color(1, 0.6, 0.5, 1),
+"smirk": Color(0.95, 0.3, 0.15, 1),
+"surprised": Color(1, 0.5, 0.3, 1),
+"sweating": Color(0.8, 0.4, 0.4, 1),
+"triumphant": Color(1, 0.25, 0, 1)
+}
+default_style = "spinning"
+poses = {
+"arms_crossed": {
+"energy": 0.4,
+"openness": 0.2
+},
+"confident": {
+"energy": 0.5,
+"openness": 0.8
+},
+"defeated": {
+"energy": 0.1,
+"openness": 0.3
+},
+"excited": {
+"energy": 0.9,
+"openness": 0.9
+},
+"idle": {
+"energy": 0.3,
+"openness": 0.5
+},
+"leaning_forward": {
+"energy": 0.7,
+"openness": 0.6
+},
+"tense": {
+"energy": 0.8,
+"openness": 0.1
+}
+}
+voice_pitch = 180.0
+voice_waveform = "square"
