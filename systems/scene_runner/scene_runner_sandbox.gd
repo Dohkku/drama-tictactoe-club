@@ -36,6 +36,7 @@ var _paused: bool = false
 
 func _ready() -> void:
 	_build_ui()
+	_load_characters()
 	_scan_scripts()
 	_connect_events()
 
@@ -160,7 +161,9 @@ func _on_stop_pressed() -> void:
 func _on_pause_pressed() -> void:
 	if not _running or _paused:
 		return
-	get_tree().paused = true
+	# Pause the stage subtree only, not the whole tree
+	stage.process_mode = Node.PROCESS_MODE_DISABLED
+	dialogue_box.process_mode = Node.PROCESS_MODE_DISABLED
 	_paused = true
 	_update_status("Paused")
 	_update_button_states()
@@ -170,7 +173,8 @@ func _on_pause_pressed() -> void:
 func _on_resume_pressed() -> void:
 	if not _paused:
 		return
-	get_tree().paused = false
+	stage.process_mode = Node.PROCESS_MODE_INHERIT
+	dialogue_box.process_mode = Node.PROCESS_MODE_INHERIT
 	_paused = false
 	_update_status("Running")
 	_update_button_states()
@@ -345,9 +349,6 @@ func _build_ui() -> void:
 	stage = CinematicStageScene.instantiate()
 	stage.set_anchors_preset(Control.PRESET_FULL_RECT)
 	stage_container.add_child(stage)
-
-	# Load and register characters
-	_load_characters()
 
 	# Show position markers for debugging
 	stage.set_show_markers(true)
