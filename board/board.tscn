@@ -27,6 +27,21 @@ theme_override_font_sizes/font_size = 14
 text = "Tu turno — X"
 horizontal_alignment = 1
 
+[node name="AbilityBar" type="HBoxContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DoublePlayButton" type="Button" parent="VBoxContainer/AbilityBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Doble Jugada"
+
+[node name="StealButton" type="Button" parent="VBoxContainer/AbilityBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Robo"
+
 [node name="OpponentHandArea" type="Control" parent="VBoxContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 50)
@@ -34,17 +49,27 @@ custom_minimum_size = Vector2(0, 50)
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 0
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 0
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 8
 
-[node name="AspectRatioContainer" type="AspectRatioContainer" parent="VBoxContainer/MarginContainer"]
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="GridContainer" type="GridContainer" parent="VBoxContainer/MarginContainer/AspectRatioContainer"]
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="VBoxContainer/MarginContainer/CenterContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 100)
+
+[node name="BoardFrame" type="PanelContainer" parent="VBoxContainer/MarginContainer/CenterContainer/AspectRatioContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer/MarginContainer/CenterContainer/AspectRatioContainer/BoardFrame"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

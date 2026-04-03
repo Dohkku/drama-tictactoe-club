@@ -1,12 +1,19 @@
 extends Control
 
+## Board facade: orchestrates modules and exposes the public API.
+## All external callers (MatchManager, SceneRunner, BoardEditor) use this interface.
+
 const BoardLogicScript = preload("res://board/board_logic.gd")
 const GameRulesScript = preload("res://board/game_rules.gd")
 const AIPlayerScript = preload("res://board/ai_player.gd")
 const CellScript = preload("res://board/cell.gd")
-const PieceScript = preload("res://board/piece.gd")
 const PlacementStyleScript = preload("res://board/placement_style.gd")
+const BoardPiecesScript = preload("res://board/board_pieces.gd")
+const BoardGameControllerScript = preload("res://board/board_game_controller.gd")
+const BoardAbilityControllerScript = preload("res://board/board_ability_controller.gd")
+const BoardStateManagerScript = preload("res://board/board_state_manager.gd")
 
+# --- Core state ---
 var logic: RefCounted
 var ai: RefCounted
 var cells: Array[Control] = []
@@ -15,19 +22,9 @@ var ai_piece: int = 2
 var input_enabled: bool = true
 var _animating: bool = false
 
-var player_pieces: Array[Control] = []
-var opponent_pieces: Array[Control] = []
-var cell_to_piece: Dictionary = {}  # cell_index -> piece node
-var _player_next: int = 0
-var _opponent_next: int = 0
-var _reflow_request_id: int = 0
-
 var player_style: Resource = null
 var opponent_style: Resource = null
 var _next_move_style_override: Resource = null
-
-var player_abilities: Array = []
-var opponent_abilities: Array = []
 var _skip_turn_switch: bool = false
 var pre_move_hook_enabled: bool = false
 var external_input_control: bool = false
@@ -40,13 +37,26 @@ var opponent_expressions: Dictionary = {}
 var current_player_emotion: String = "neutral"
 var current_opponent_emotion: String = "neutral"
 
-var game_rules: Resource = null  # GameRules — set before _ready or call setup_rules()
+var game_rules: Resource = null
 
+# --- Modules ---
+var pieces: RefCounted       # BoardPieces
+var game_controller: RefCounted  # BoardGameController
+var abilities: RefCounted    # BoardAbilityController
+var state_manager: RefCounted    # BoardStateManager
+
+# --- Node references ---
 @onready var grid: GridContainer = %GridContainer
+@onready var board_frame: PanelContainer = %BoardFrame
 @onready var status_label: Label = %StatusLabel
 @onready var piece_layer: Control = %PieceLayer
 @onready var opponent_hand_area: Control = $"VBoxContainer/OpponentHandArea"
 @onready var player_hand_area: Control = $"VBoxContainer/PlayerHandArea"
+@onready var ability_bar: HBoxContainer = %AbilityBar
+@onready var double_play_button: Button = %DoublePlayButton
+@onready var steal_button: Button = %StealButton
+
+var _board_config: Resource = null
 
 
 func _ready() -> void:
@@ -59,6 +69,15 @@ func _ready() -> void:
 	player_style = PlacementStyleScript.slam()
 	opponent_style = PlacementStyleScript.gentle()
 
+	# Initialize modules
+	pieces = BoardPiecesScript.new(self)
+	game_controller = BoardGameControllerScript.new(self)
+	abilities = BoardAbilityControllerScript.new(self)
+	state_manager = BoardStateManagerScript.new(self)
+
+	abilities.setup_defaults()
+	abilities.connect_ui()
+
 	_create_cells()
 	_connect_signals()
 
@@ -70,23 +89,37 @@ func _ready() -> void:
 	resized.connect(_on_resized)
 
 
-func setup_rules(rules: Resource) -> void:
-	game_rules = rules
-
+# --- Cell management ---
 
 func _create_cells() -> void:
 	var total = game_rules.get_total_cells()
-	grid.columns = game_rules.board_size
+	var board_size = game_rules.board_size
+	grid.columns = board_size
 	for i in range(total):
 		var cell = Control.new()
 		cell.set_script(CellScript)
 		cell.cell_index = i
-		cell.custom_minimum_size = Vector2(10, 10)  # Tiny minimum; actual size from container
+		cell.custom_minimum_size = Vector2(10, 10)
 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		# Checkerboard: determine if dark cell based on row+col parity
+		var row = i / board_size
+		var col = i % board_size
+		cell.is_dark_cell = ((row + col) % 2 == 1)
+		if _board_config:
+			_apply_config_to_cell(cell)
 		cell.cell_clicked.connect(_on_cell_clicked)
 		grid.add_child(cell)
 		cells.append(cell)
+
+
+func _apply_config_to_cell(cell: Control) -> void:
+	cell.color_empty = _board_config.cell_color_empty
+	cell.color_alt = _board_config.cell_color_alt
+	cell.checkerboard = _board_config.checkerboard_enabled
+	cell.color_hover = _board_config.cell_color_hover
+	cell.color_line = _board_config.cell_line_color
+	cell.line_width = _board_config.cell_line_width
 
 
 func _connect_signals() -> void:
@@ -95,325 +128,85 @@ func _connect_signals() -> void:
 
 
 func _start_game() -> void:
-	logic.reset()
-	_skip_turn_switch = false
-	_next_move_style_override = null
-	_player_next = 0
-	_opponent_next = 0
-	cell_to_piece.clear()
-
-	for p in player_pieces:
-		if is_instance_valid(p):
-			p.queue_free()
-	for p in opponent_pieces:
-		if is_instance_valid(p):
-			p.queue_free()
-	player_pieces.clear()
-	opponent_pieces.clear()
-
-	for c in cells:
-		c.clear()
-
-	for ab in player_abilities:
-		ab.reset()
-	for ab in opponent_abilities:
-		ab.reset()
-
-	_create_all_pieces()
-
-	input_enabled = true
-	_animating = false
-	_update_input_state()
-	_update_status("Tu turno — X")
-	EventBus.game_started.emit()
-
-
-func _create_all_pieces() -> void:
-	var cell_size = _get_cell_size()
-	var piece_size = cell_size * 0.85
-
-	var player_count = game_rules.get_pieces_for(player_piece)
-	for i in range(player_count):
-		var p = _make_piece_node(player_piece, true, piece_size)
-		piece_layer.add_child(p)
-		player_pieces.append(p)
-
-	var opponent_count = game_rules.get_pieces_for(ai_piece)
-	for i in range(opponent_count):
-		var p = _make_piece_node(ai_piece, false, piece_size)
-		piece_layer.add_child(p)
-		opponent_pieces.append(p)
-
-	_position_hand_pieces(false)  # No animation on initial layout
-
-
-func _make_piece_node(piece_type: int, is_player: bool, sz: Vector2) -> Control:
-	var p = Control.new()
-	p.set_script(PieceScript)
-	p.size = sz
-	p.pivot_offset = sz / 2.0
-	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var color = player_color if is_player else opponent_color
-	var expressions = player_expressions if is_player else opponent_expressions
-	p.setup(piece_type, "player" if is_player else "opponent", color, expressions)
-	p.set_emotion(current_player_emotion if is_player else current_opponent_emotion)
-	return p
-
-
-func _position_hand_pieces(animate: bool = true) -> void:
-	var grid_rect = _get_grid_rect_in_layer()
-	var player_hand_rect = _get_control_rect_in_layer(player_hand_area)
-	var opponent_hand_rect = _get_control_rect_in_layer(opponent_hand_area)
-	var hand_band_h: float = max(24.0, min(player_hand_rect.size.y, opponent_hand_rect.size.y) - 4.0)
-	if hand_band_h <= 24.0:
-		hand_band_h = 50.0
-	var cell_size = _get_cell_size()
-	var hand_h: float = clamp(min(cell_size.y * 0.42, hand_band_h), 24.0, 96.0)
-	var piece_size = Vector2(hand_h, hand_h)
-	var gap = 4.0
-
-	# Player hand: centered in PlayerHandArea below the grid
-	var player_y = player_hand_rect.position.y + (player_hand_rect.size.y - hand_h) / 2.0
-	var max_y = size.y - piece_size.y - 2.0
-	player_y = min(player_y, max_y)
-	var player_available: Array[Control] = []
-	for p in player_pieces:
-		if is_instance_valid(p) and p not in cell_to_piece.values():
-			player_available.append(p)
-	var player_start_x = grid_rect.position.x + (grid_rect.size.x - player_available.size() * (piece_size.x + gap)) / 2.0
-	for i in range(player_available.size()):
-		var p = player_available[i]
-		var target_pos = Vector2(player_start_x + i * (piece_size.x + gap), player_y)
-		_move_piece_to_hand(p, target_pos, piece_size, animate)
-
-	# Opponent hand: centered in OpponentHandArea above the grid
-	var opponent_y = opponent_hand_rect.position.y + (opponent_hand_rect.size.y - hand_h) / 2.0
-	opponent_y = max(opponent_y, 2.0)
-	var opponent_available: Array[Control] = []
-	for p in opponent_pieces:
-		if is_instance_valid(p) and p not in cell_to_piece.values():
-			opponent_available.append(p)
-	var opponent_start_x = grid_rect.position.x + (grid_rect.size.x - opponent_available.size() * (piece_size.x + gap)) / 2.0
-	for i in range(opponent_available.size()):
-		var p = opponent_available[i]
-		var target_pos = Vector2(opponent_start_x + i * (piece_size.x + gap), opponent_y)
-		_move_piece_to_hand(p, target_pos, piece_size, animate)
-
-
-func _move_piece_to_hand(p: Control, target_pos: Vector2, piece_size: Vector2, animate: bool) -> void:
-	p.size = piece_size
-	p.pivot_offset = piece_size / 2.0
-	if not animate or p.position.is_zero_approx():
-		p.position = target_pos
-		return
-	var tw = p.create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tw.tween_property(p, "position", target_pos, 0.35)
+	game_controller.start_game()
 
 
 func _on_cell_clicked(index: int) -> void:
-	if not input_enabled or _animating or logic.game_over:
-		return
-	if logic.current_turn != player_piece:
-		return
-
-	await _do_move(index, true)
-
-	if auto_ai_enabled and not logic.game_over and logic.current_turn == ai_piece:
-		await _do_ai_turn()
-
-
-func _do_move(index: int, is_player: bool) -> void:
-	var piece_type = logic.current_turn
-	var move_result = logic.make_move(index)
-	if not move_result.success:
-		return
-
-	_animating = true
-	input_enabled = false
-	_update_input_state()
-
-	# Handle rotation: remove old piece visually
-	if move_result.removed_cell >= 0:
-		var removed_idx = move_result.removed_cell
-		cells[removed_idx].set_occupied(false)
-		if cell_to_piece.has(removed_idx):
-			var old_piece = cell_to_piece[removed_idx]
-			cell_to_piece.erase(removed_idx)
-			# Fade out and return to hand
-			var fade = old_piece.create_tween()
-			fade.tween_property(old_piece, "modulate:a", 0.3, 0.2)
-			await fade.finished
-			# Move back to hand area (will be repositioned by _position_hand_pieces)
-			old_piece.modulate.a = 1.0
-			# Decrement the "next" counter so this piece can be reused
-			if is_player:
-				_player_next = max(0, _player_next - 1)
-			else:
-				_opponent_next = max(0, _opponent_next - 1)
-
-	cells[index].set_occupied(true)
-
-	# Pick the next available piece from hand
-	var piece_node: Control
-	if is_player:
-		piece_node = player_pieces[_player_next]
-		_player_next += 1
-	else:
-		piece_node = opponent_pieces[_opponent_next]
-		_opponent_next += 1
-
-	cell_to_piece[index] = piece_node
-
-	# Target position
-	var target_pos = _get_cell_pos_in_layer(index)
-	var cell_size = _get_cell_size()
-	var piece_size = cell_size * 0.85
-	var offset = (cell_size - piece_size) / 2.0
-	var final_pos = target_pos + offset
-
-	# Style
-	var style = _next_move_style_override if _next_move_style_override else (player_style if is_player else opponent_style)
-	_next_move_style_override = null
-
-	# All pieces for effects
-	var all_nodes: Array = []
-	for p in player_pieces + opponent_pieces:
-		if is_instance_valid(p):
-			all_nodes.append(p)
-
-	# Animate movement
-	await piece_node.play_move_to(final_pos, piece_size, style, all_nodes)
-
-	_animating = false
-	_position_hand_pieces()
-
-	# Signals
-	var piece_str = logic.piece_to_string(piece_type)
-	EventBus.move_made.emit(index, piece_str)
-	EventBus.board_state_changed.emit(logic.cells.duplicate())
-
-	var patterns = logic.detect_patterns(index, piece_type)
-	for pattern in patterns:
-		EventBus.specific_pattern.emit(pattern)
-
-	if logic.game_over:
-		await _handle_game_over()
-	elif _skip_turn_switch:
-		_skip_turn_switch = false
-		input_enabled = true
-		_update_input_state()
-		_update_status("¡Turno extra!")
-	else:
-		EventBus.turn_changed.emit(logic.piece_to_string(logic.current_turn))
-		if not is_player and not external_input_control:
-			input_enabled = true
-			_update_input_state()
-			_update_status("Tu turno — X")
-
-
-func _handle_game_over() -> void:
-	var result: String
-	if logic.winner != 0:
-		var winner_str = logic.piece_to_string(logic.winner)
-		EventBus.game_won.emit(winner_str)
-		if logic.winner == player_piece:
-			_update_status("¡Ganaste!")
-			result = "win"
-		else:
-			_update_status("Perdiste...")
-			result = "lose"
-	else:
-		_update_status("¡Empate!")
-		EventBus.game_draw.emit()
-		result = "draw"
-
-	# Wait for last piece animation to fully settle before signaling match end
-	await get_tree().create_timer(0.8).timeout
-	EventBus.match_ended.emit(result)
-
-
-func trigger_ai_turn() -> void:
-	## Public method for external controllers (e.g., simultaneous match manager)
-	if logic.game_over or logic.current_turn != ai_piece:
-		return
-	await _do_ai_turn()
-
-
-func _do_ai_turn() -> void:
-	_update_status("Oponente pensando...")
-	if pre_move_hook_enabled:
-		EventBus.before_ai_move.emit()
-		await EventBus.pre_move_complete
-	await get_tree().create_timer(0.4).timeout
-	var move = ai.choose_move(logic)
-	if move >= 0:
-		await _do_move(move, false)
-
-
-# --- Coordinates ---
-
-func _get_grid_rect_in_layer() -> Rect2:
-	var gp = grid.global_position - piece_layer.global_position
-	return Rect2(gp, grid.size)
-
-func _get_control_rect_in_layer(control: Control) -> Rect2:
-	var gp = control.global_position - piece_layer.global_position
-	return Rect2(gp, control.size)
-
-func _get_cell_pos_in_layer(index: int) -> Vector2:
-	return cells[index].global_position - piece_layer.global_position
-
-func _get_cell_size() -> Vector2:
-	if cells.is_empty() or cells[0].size == Vector2.ZERO:
-		return Vector2(80, 80)
-	return cells[0].size
-
-func _on_resized() -> void:
-	_schedule_piece_reflow()
-
-func _on_layout_transition_finished() -> void:
-	_schedule_piece_reflow()
-
-func _schedule_piece_reflow() -> void:
-	if not is_inside_tree():
-		return
-	if size.x < 10 or size.y < 10:
-		return  # Board collapsed (fullscreen cinematic)
-	_reflow_request_id += 1
-	var request_id := _reflow_request_id
-	_run_piece_reflow(request_id)
-
-func _run_piece_reflow(request_id: int) -> void:
-	if size.x < 10 or size.y < 10:
-		return  # Board collapsed (fullscreen cinematic)
-	await get_tree().process_frame
-	if request_id != _reflow_request_id:
-		return
-	_apply_piece_layout_snap()
-	await get_tree().process_frame
-	if request_id != _reflow_request_id:
-		return
-	_apply_piece_layout_snap()
-
-func _apply_piece_layout_snap() -> void:
-	_position_hand_pieces(false)  # Snap on resize/layout changes, don't animate
-	for cell_idx in cell_to_piece:
-		var p = cell_to_piece[cell_idx]
-		if is_instance_valid(p):
-			var target = _get_cell_pos_in_layer(cell_idx)
-			var cell_size = _get_cell_size()
-			var ps = cell_size * 0.85
-			p.position = target + (cell_size - ps) / 2.0
-			p.size = ps
-			p.pivot_offset = ps / 2.0
-			p.queue_redraw()
+	game_controller.handle_cell_click(index)
 
 
 # --- Public API ---
 
+func apply_board_config(config: Resource) -> void:
+	## Apply a BoardConfig resource to update visual settings.
+	_board_config = config
+	var margin_node = $VBoxContainer/MarginContainer
+	if margin_node:
+		margin_node.add_theme_constant_override("margin_left", config.margin_h)
+		margin_node.add_theme_constant_override("margin_right", config.margin_h)
+		margin_node.add_theme_constant_override("margin_top", config.margin_v)
+		margin_node.add_theme_constant_override("margin_bottom", config.margin_v)
+	var aspect_node = $VBoxContainer/MarginContainer/CenterContainer/AspectRatioContainer
+	if aspect_node:
+		if config.max_board_size > 0:
+			var s: int = config.max_board_size
+			aspect_node.custom_minimum_size = Vector2(s, s)
+		else:
+			aspect_node.custom_minimum_size = Vector2(100, 100)
+	if opponent_hand_area:
+		opponent_hand_area.custom_minimum_size.y = config.hand_area_height
+	if player_hand_area:
+		player_hand_area.custom_minimum_size.y = config.hand_area_height
+	# Apply board border
+	_apply_board_border(config)
+	player_color = config.default_player_color
+	opponent_color = config.default_opponent_color
+	for cell in cells:
+		_apply_config_to_cell(cell)
+		cell.queue_redraw()
+	for p in pieces.player_pieces:
+		if is_instance_valid(p):
+			p.piece_color = player_color
+			p.queue_redraw()
+	for p in pieces.opponent_pieces:
+		if is_instance_valid(p):
+			p.piece_color = opponent_color
+			p.queue_redraw()
+	if is_inside_tree() and not cells.is_empty():
+		call_deferred("_deferred_snap_layout")
+
+
+func _apply_board_border(config: Resource) -> void:
+	if not board_frame:
+		return
+	if config.board_border_enabled:
+		var style = StyleBoxFlat.new()
+		style.bg_color = config.board_bg_color
+		style.border_color = config.board_border_color
+		var bw = int(config.board_border_width)
+		style.border_width_left = bw
+		style.border_width_right = bw
+		style.border_width_top = bw
+		style.border_width_bottom = bw
+		var cr = max(2, bw / 3)
+		style.set_corner_radius_all(cr)
+		style.content_margin_left = bw
+		style.content_margin_right = bw
+		style.content_margin_top = bw
+		style.content_margin_bottom = bw
+		board_frame.add_theme_stylebox_override("panel", style)
+	else:
+		var empty_style = StyleBoxFlat.new()
+		empty_style.bg_color = Color.TRANSPARENT
+		board_frame.add_theme_stylebox_override("panel", empty_style)
+
+
+func _deferred_snap_layout() -> void:
+	pieces.snap_layout()
+
+
 func full_reset(new_rules: Resource = null) -> void:
 	## Tear down and rebuild the board with (optionally) new rules.
-	## Used by MatchManager when switching between matches.
 	if new_rules:
 		game_rules = new_rules
 
@@ -424,17 +217,7 @@ func full_reset(new_rules: Resource = null) -> void:
 	cells.clear()
 
 	# Clear existing pieces
-	for p in player_pieces:
-		if is_instance_valid(p):
-			p.queue_free()
-	for p in opponent_pieces:
-		if is_instance_valid(p):
-			p.queue_free()
-	player_pieces.clear()
-	opponent_pieces.clear()
-	cell_to_piece.clear()
-	_player_next = 0
-	_opponent_next = 0
+	pieces.clear_all_pieces()
 
 	# Rebuild
 	logic = BoardLogicScript.new(game_rules)
@@ -446,108 +229,63 @@ func full_reset(new_rules: Resource = null) -> void:
 	_start_game()
 
 
+func setup_rules(rules: Resource) -> void:
+	game_rules = rules
+
+
 func set_player_style(s: Resource) -> void:
 	player_style = s
+
 
 func set_opponent_style(s: Resource) -> void:
 	opponent_style = s
 
+
 func override_next_style(s: Resource) -> void:
 	_next_move_style_override = s
+
 
 func set_piece_emotion(is_player: bool, emotion: String) -> void:
 	if is_player:
 		current_player_emotion = emotion
 	else:
 		current_opponent_emotion = emotion
-	var arr = player_pieces if is_player else opponent_pieces
+	var arr = pieces.player_pieces if is_player else pieces.opponent_pieces
 	for p in arr:
 		if is_instance_valid(p):
 			p.set_emotion(emotion)
 
-func apply_ability(ability: Resource, is_player: bool) -> Dictionary:
-	var board_state = {
-		"move_count": logic.move_count,
-		"current_turn": logic.current_turn,
-		"cells": logic.cells.duplicate(),
-	}
-	if not ability.can_use(logic, board_state):
-		return {}
-	var result = ability.apply(logic, board_state)
-	if result.get("skip_turn_switch", false):
-		_skip_turn_switch = true
-	return result
 
-func _update_input_state() -> void:
-	for cell in cells:
-		cell.set_input_enabled(input_enabled)
+func trigger_ai_turn() -> void:
+	await game_controller.trigger_ai_turn()
 
-func _update_status(text: String) -> void:
-	if status_label:
-		status_label.text = text
 
 func save_board_state() -> Dictionary:
-	var placed = {}
-	for cell_idx in cell_to_piece:
-		var p = cell_to_piece[cell_idx]
-		placed[cell_idx] = {"type": p.piece_type, "is_player": p.character_id == "player"}
-	return {
-		"logic": logic.get_state(),
-		"placed_pieces": placed,
-		"player_next": _player_next,
-		"opponent_next": _opponent_next,
-	}
+	return state_manager.save()
 
 
 func load_board_state(state: Dictionary) -> void:
-	# Clear visual pieces
-	for p in player_pieces:
-		if is_instance_valid(p): p.queue_free()
-	for p in opponent_pieces:
-		if is_instance_valid(p): p.queue_free()
-	player_pieces.clear()
-	opponent_pieces.clear()
-	cell_to_piece.clear()
+	await state_manager.load_state(state)
 
-	# Clear all cell visual states
-	for c in cells:
-		c.clear()
 
-	# Restore logic state
-	logic.load_state(state.logic)
-	_player_next = state.player_next
-	_opponent_next = state.opponent_next
+func apply_ability(ability: Resource, is_player: bool) -> Dictionary:
+	return abilities.apply_ability(ability, is_player)
 
-	# Recreate piece nodes
-	_create_all_pieces()
-	await get_tree().process_frame
 
-	# Place pieces on cells without animation
-	for cell_idx in state.placed_pieces:
-		var info = state.placed_pieces[cell_idx]
-		var piece_node: Control = null
-		var arr = player_pieces if info.is_player else opponent_pieces
-		for p in arr:
-			if p not in cell_to_piece.values():
-				piece_node = p
-				break
-		if piece_node:
-			cell_to_piece[cell_idx] = piece_node
-			cells[cell_idx].set_occupied(true)
-			var target = _get_cell_pos_in_layer(cell_idx)
-			var cs = _get_cell_size()
-			var ps = cs * 0.85
-			piece_node.position = target + (cs - ps) / 2.0
-			piece_node.size = ps
-			piece_node.pivot_offset = ps / 2.0
+# --- Resize handling ---
 
-	_position_hand_pieces(false)
-	_animating = false
-	input_enabled = false
-	_update_input_state()
-	_update_status("Tu turno — X" if logic.current_turn == player_piece else "Oponente pensando...")
+func _on_resized() -> void:
+	pieces.schedule_reflow()
+
+
+func _on_layout_transition_finished() -> void:
+	pieces.schedule_reflow()
+
+
+func _update_input_state() -> void:
+	game_controller._update_input_state()
 
 
 func _on_input_toggle(enabled: bool) -> void:
 	input_enabled = enabled
-	_update_input_state()
+	game_controller._update_input_state()

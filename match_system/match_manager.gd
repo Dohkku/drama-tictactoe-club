@@ -5,6 +5,7 @@ extends RefCounted
 
 const SceneParserScript = preload("res://scene_scripts/parser/scene_parser.gd")
 const GameRulesScript = preload("res://board/game_rules.gd")
+const BoardConfigScript = preload("res://data/board_config.gd")
 const PlacementStyleScript = preload("res://board/placement_style.gd")
 
 var _runner: RefCounted   # SceneRunner
@@ -13,6 +14,7 @@ var _stage: Control       # CinematicStage
 var _dialogue_box: Control # DialogueBox
 var _events: Array = []
 var _current: int = -1
+var _project_board_config: Resource = null  # Project-level default BoardConfig
 
 # Simultaneous match state
 signal _sim_resolved()
@@ -20,11 +22,12 @@ var _sim_result: Dictionary = {}
 var _sim_reactions: Dictionary = {}  # opponent_id -> reactions dict
 
 
-func setup(runner: RefCounted, board: Control, stage: Control) -> void:
+func setup(runner: RefCounted, board: Control, stage: Control, project_board_config: Resource = null) -> void:
 	_runner = runner
 	_board = board
 	_stage = stage
 	_dialogue_box = runner._dialogue_box
+	_project_board_config = project_board_config
 
 
 func add_match(config: Resource) -> void:
@@ -48,6 +51,10 @@ func get_event_count() -> int:
 
 
 func start() -> void:
+	if _events.is_empty():
+		push_warning("MatchManager: no events to play")
+		EventBus.scene_script_finished.emit("tournament_complete")
+		return
 	_current = 0
 	await _play_event(_events[0])
 
@@ -78,7 +85,7 @@ func _play_cutscene(script_path: String) -> void:
 # ==== Regular Match ====
 
 func _play_match(config: Resource) -> void:
-	_configure_board(config)
+	await _configure_board(config)
 	await _stage.get_tree().create_timer(0.3).timeout
 
 	_runner.clear_reactions()
@@ -133,7 +140,7 @@ func _play_simultaneous(configs: Array) -> void:
 	# Run intros for each opponent
 	for i in range(boards.size()):
 		var config = boards[i].config
-		_configure_board(config)
+		await _configure_board(config)
 		await _stage.get_tree().create_timer(0.3).timeout
 		await _stage.get_tree().process_frame
 
@@ -197,7 +204,9 @@ func _play_simultaneous(configs: Array) -> void:
 			if entry.state:
 				await _board.load_board_state(entry.state)
 			else:
-				await _board.full_reset(_resolve_rules(config.game_rules_preset))
+				var sim_board_cfg = _resolve_board_config(config)
+				await _board.full_reset(sim_board_cfg.get_rules())
+				_board.apply_board_config(sim_board_cfg)
 				await _stage.get_tree().process_frame
 
 		# --- If AI has a pending move from last visit, resolve it now ---
@@ -386,12 +395,32 @@ func _configure_board_visuals(config: Resource) -> void:
 
 
 func _configure_board(config: Resource) -> void:
-	var rules = _resolve_rules(config.game_rules_preset)
+	var board_cfg = _resolve_board_config(config)
 	_configure_board_visuals(config)
-	_board.full_reset(rules)
+	await _board.full_reset(board_cfg.get_rules())
+	_board.apply_board_config(board_cfg)
 
 
-func _resolve_rules(preset: String) -> Resource:
+func _resolve_board_config(config: Resource) -> Resource:
+	## Resolve the BoardConfig for a match.
+	## Priority: per-match board_config > legacy preset > project default.
+	if config.board_config != null:
+		return config.board_config
+
+	# Backward compat: if a non-default preset is set, create a BoardConfig from it
+	if config.game_rules_preset != "standard" and config.game_rules_preset != "":
+		var cfg = _project_board_config.copy_config() if _project_board_config else BoardConfigScript.create_default()
+		cfg.game_rules = _resolve_rules_legacy(config.game_rules_preset)
+		return cfg
+
+	# Use project default
+	if _project_board_config:
+		return _project_board_config
+	return BoardConfigScript.create_default()
+
+
+func _resolve_rules_legacy(preset: String) -> Resource:
+	## DEPRECATED: resolve rules from a preset string. Used for backward compat only.
 	match preset:
 		"rotating_3":
 			return GameRulesScript.rotating_3()

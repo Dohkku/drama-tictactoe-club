@@ -3,6 +3,7 @@ extends Control
 const ProjectDataScript = preload("res://data/project_data.gd")
 const MatchConfigScript = preload("res://match_system/match_config.gd")
 const TournamentEventScript = preload("res://data/tournament_event.gd")
+const BoardConfigScript = preload("res://data/board_config.gd")
 
 @onready var back_button: Button = %BackButton
 @onready var project_name_label: Label = %ProjectNameLabel
@@ -13,6 +14,7 @@ const TournamentEventScript = preload("res://data/tournament_event.gd")
 @onready var character_editor: HSplitContainer = %CharacterEditor
 @onready var tournament_editor = %TournamentEditor
 @onready var scene_editor = %SceneEditor
+@onready var board_editor = %BoardEditor
 @onready var top_bar_hbox: HBoxContainer = $Background/VBoxContainer/TopBar/HBox
 
 var play_button: Button = null
@@ -133,6 +135,10 @@ func _collect_data() -> void:
 			if te:
 				current_project.events.append(te)
 
+	# Collect board config
+	if board_editor:
+		current_project.board_config = board_editor.get_config()
+
 
 func _apply_data() -> void:
 	if current_project == null:
@@ -141,6 +147,16 @@ func _apply_data() -> void:
 	# Apply characters
 	if character_editor:
 		character_editor.set_characters(current_project.characters)
+
+	# Migrate: ensure board_config exists with game_rules
+	if current_project.board_config == null:
+		current_project.board_config = BoardConfigScript.create_default()
+	else:
+		current_project.board_config.get_rules()
+
+	# Apply board config
+	if board_editor:
+		board_editor.set_config(current_project.board_config)
 
 	# Apply tournament events
 	if tournament_editor:
@@ -184,31 +200,42 @@ func _dict_to_tournament_event(dict: Dictionary) -> Resource:
 			te.cutscene_script_path = data.get("script_path", "")
 		"match":
 			te.event_name = "vs %s" % data.get("opponent_id", "???")
-			var mc = MatchConfigScript.new()
-			mc.match_id = data.get("opponent_id", "match")
-			mc.opponent_id = data.get("opponent_id", "")
-			mc.ai_difficulty = data.get("ai_difficulty", 0.3)
-			mc.game_rules_preset = data.get("game_rules_preset", "standard")
-			mc.intro_script = data.get("intro_script", "")
-			mc.reactions_script = data.get("reactions_script", "")
-			mc.player_style = data.get("player_style", "slam")
-			mc.opponent_style = data.get("opponent_style", "gentle")
+			var mc = _dict_to_match_config(data)
 			te.match_config = mc
 		"simultaneous":
 			te.event_name = "Simultánea"
 			var matches: Array = data.get("matches", [])
 			for m in matches:
-				var mc = MatchConfigScript.new()
+				var mc = _dict_to_match_config(m)
 				mc.match_id = "sim_%s" % m.get("opponent_id", "")
-				mc.opponent_id = m.get("opponent_id", "")
-				mc.ai_difficulty = m.get("ai_difficulty", 0.3)
-				mc.game_rules_preset = m.get("game_rules_preset", "standard")
-				mc.intro_script = m.get("intro_script", "")
-				mc.reactions_script = m.get("reactions_script", "")
-				mc.player_style = m.get("player_style", "slam")
-				mc.opponent_style = m.get("opponent_style", "gentle")
 				te.simultaneous_configs.append(mc)
 	return te
+
+
+func _dict_to_match_config(data: Dictionary) -> Resource:
+	var mc = MatchConfigScript.new()
+	mc.match_id = data.get("opponent_id", "match")
+	mc.opponent_id = data.get("opponent_id", "")
+	mc.ai_difficulty = data.get("ai_difficulty", 0.3)
+	mc.game_rules_preset = data.get("game_rules_preset", "standard")
+	mc.intro_script = data.get("intro_script", "")
+	mc.reactions_script = data.get("reactions_script", "")
+	mc.player_style = data.get("player_style", "slam")
+	mc.opponent_style = data.get("opponent_style", "gentle")
+
+	# Build per-match BoardConfig from custom rules if enabled
+	if data.get("custom_rules", false):
+		var rules_data: Dictionary = data.get("board_rules", {})
+		if not rules_data.is_empty():
+			var board_cfg = BoardConfigScript.create_default()
+			var rules = board_cfg.get_rules()
+			rules.board_size = rules_data.get("board_size", 3)
+			rules.win_length = rules_data.get("win_length", 3)
+			rules.max_pieces_per_player = rules_data.get("max_pieces", -1)
+			rules.overflow_mode = rules_data.get("overflow_mode", "rotate")
+			rules.allow_draw = rules_data.get("allow_draw", true)
+			mc.board_config = board_cfg
+	return mc
 
 
 func _tournament_event_to_dict(te: Resource) -> Dictionary:
@@ -219,26 +246,35 @@ func _tournament_event_to_dict(te: Resource) -> Dictionary:
 			var mc = te.match_config
 			if mc == null:
 				return {"type": "match", "data": {}}
-			return {"type": "match", "data": {
-				"opponent_id": mc.opponent_id,
-				"ai_difficulty": mc.ai_difficulty,
-				"game_rules_preset": mc.game_rules_preset,
-				"intro_script": mc.intro_script,
-				"reactions_script": mc.reactions_script,
-				"player_style": mc.player_style,
-				"opponent_style": mc.opponent_style,
-			}}
+			return {"type": "match", "data": _match_config_to_dict(mc)}
 		"simultaneous":
 			var matches: Array = []
 			for mc in te.simultaneous_configs:
-				matches.append({
-					"opponent_id": mc.opponent_id,
-					"ai_difficulty": mc.ai_difficulty,
-					"game_rules_preset": mc.game_rules_preset,
-					"intro_script": mc.intro_script,
-					"reactions_script": mc.reactions_script,
-					"player_style": mc.player_style,
-					"opponent_style": mc.opponent_style,
-				})
+				matches.append(_match_config_to_dict(mc))
 			return {"type": "simultaneous", "data": {"matches": matches}}
 	return {}
+
+
+func _match_config_to_dict(mc: Resource) -> Dictionary:
+	var dict := {
+		"opponent_id": mc.opponent_id,
+		"ai_difficulty": mc.ai_difficulty,
+		"game_rules_preset": mc.game_rules_preset,
+		"intro_script": mc.intro_script,
+		"reactions_script": mc.reactions_script,
+		"player_style": mc.player_style,
+		"opponent_style": mc.opponent_style,
+		"custom_rules": mc.board_config != null,
+	}
+	if mc.board_config != null:
+		var rules = mc.board_config.get_rules()
+		dict["board_rules"] = {
+			"board_size": rules.board_size,
+			"win_length": rules.win_length,
+			"max_pieces": rules.max_pieces_per_player,
+			"overflow_mode": rules.overflow_mode,
+			"allow_draw": rules.allow_draw,
+		}
+	else:
+		dict["board_rules"] = {}
+	return dict

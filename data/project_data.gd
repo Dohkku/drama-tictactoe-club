@@ -7,3 +7,4 @@ extends Resource
 @export var project_name: String = "Mi Proyecto"
 @export var characters: Array[Resource] = []  # Array of CharacterData
 @export var events: Array[Resource] = []  # Array of TournamentEvent
+@export var board_config: Resource = null  # BoardConfig

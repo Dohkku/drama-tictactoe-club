@@ -300,15 +300,14 @@ func _build_cutscene_details(parent: VBoxContainer, event_idx: int, data: Dictio
 
 func _build_match_details(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
 	_add_character_dropdown_row(parent, "Oponente:", data.get("opponent_id", ""),
-		func(id: String): 
+		func(id: String):
 			_update_event_data(event_idx, "opponent_id", id)
 			_refresh_list())
 
 	_add_slider_row(parent, "Dificultad IA:", data.get("ai_difficulty", 0.3), 0.0, 1.0, 0.05,
 		func(val: float): _update_event_data(event_idx, "ai_difficulty", val))
 
-	_add_option_row(parent, "Reglas:", RULES_OPTIONS, data.get("game_rules_preset", "standard"),
-		func(idx: int): _update_event_data(event_idx, "game_rules_preset", RULES_OPTIONS[idx]))
+	_build_board_rules_section(parent, event_idx, data)
 
 	_add_line_edit_row(parent, "Script intro:", data.get("intro_script", ""),
 		func(text: String): _update_event_data(event_idx, "intro_script", text))
@@ -376,15 +375,14 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 
 	# Fields
 	_add_character_dropdown_row(sub_vbox, "Oponente:", data.get("opponent_id", ""),
-		func(id: String): 
+		func(id: String):
 			_update_sub_match_data(event_idx, sub_idx, "opponent_id", id)
 			_refresh_list())
 
 	_add_slider_row(sub_vbox, "Dificultad IA:", data.get("ai_difficulty", 0.3), 0.0, 1.0, 0.05,
 		func(val: float): _update_sub_match_data(event_idx, sub_idx, "ai_difficulty", val))
 
-	_add_option_row(sub_vbox, "Reglas:", RULES_OPTIONS, data.get("game_rules_preset", "standard"),
-		func(idx: int): _update_sub_match_data(event_idx, sub_idx, "game_rules_preset", RULES_OPTIONS[idx]))
+	_build_board_rules_section_sub(sub_vbox, event_idx, sub_idx, data)
 
 	_add_line_edit_row(sub_vbox, "Script intro:", data.get("intro_script", ""),
 		func(text: String): _update_sub_match_data(event_idx, sub_idx, "intro_script", text))
@@ -397,6 +395,124 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 
 	_add_option_row(sub_vbox, "Estilo oponente:", STYLE_OPTIONS, data.get("opponent_style", "gentle"),
 		func(idx: int): _update_sub_match_data(event_idx, sub_idx, "opponent_style", STYLE_OPTIONS[idx]))
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Board Rules Section (per-match custom board config)
+# ═════════════════════════════════════════════════════════════════════════════
+
+func _build_board_rules_section(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
+	## Build expandable board rules section for a regular match.
+	var has_custom = data.get("custom_rules", false)
+	var rules_data: Dictionary = data.get("board_rules", {})
+
+	var custom_check := CheckBox.new()
+	custom_check.text = "  Reglas de tablero personalizadas"
+	custom_check.button_pressed = has_custom
+	custom_check.add_theme_color_override("font_color", COLOR_TEXT_DIM)
+	parent.add_child(custom_check)
+
+	var rules_container := VBoxContainer.new()
+	rules_container.visible = has_custom
+	rules_container.add_theme_constant_override("separation", 4)
+	parent.add_child(rules_container)
+
+	custom_check.toggled.connect(func(on: bool):
+		rules_container.visible = on
+		_update_event_data(event_idx, "custom_rules", on)
+		if not on:
+			_update_event_data(event_idx, "board_rules", {}))
+
+	if not has_custom:
+		# Show preset dropdown as fallback
+		_add_option_row(parent, "Preset reglas:", RULES_OPTIONS, data.get("game_rules_preset", "standard"),
+			func(idx: int): _update_event_data(event_idx, "game_rules_preset", RULES_OPTIONS[idx]))
+
+	_build_rules_controls(rules_container, rules_data, func(key: String, val):
+		var rd: Dictionary = events[event_idx]["data"].get("board_rules", {})
+		rd[key] = val
+		_update_event_data(event_idx, "board_rules", rd))
+
+
+func _build_board_rules_section_sub(parent: VBoxContainer, event_idx: int, sub_idx: int, data: Dictionary) -> void:
+	## Build expandable board rules section for a simultaneous sub-match.
+	var has_custom = data.get("custom_rules", false)
+	var rules_data: Dictionary = data.get("board_rules", {})
+
+	var custom_check := CheckBox.new()
+	custom_check.text = "  Reglas de tablero personalizadas"
+	custom_check.button_pressed = has_custom
+	custom_check.add_theme_color_override("font_color", COLOR_TEXT_DIM)
+	parent.add_child(custom_check)
+
+	var rules_container := VBoxContainer.new()
+	rules_container.visible = has_custom
+	rules_container.add_theme_constant_override("separation", 4)
+	parent.add_child(rules_container)
+
+	custom_check.toggled.connect(func(on: bool):
+		rules_container.visible = on
+		_update_sub_match_data(event_idx, sub_idx, "custom_rules", on)
+		if not on:
+			_update_sub_match_data(event_idx, sub_idx, "board_rules", {}))
+
+	if not has_custom:
+		_add_option_row(parent, "Preset reglas:", RULES_OPTIONS, data.get("game_rules_preset", "standard"),
+			func(idx: int): _update_sub_match_data(event_idx, sub_idx, "game_rules_preset", RULES_OPTIONS[idx]))
+
+	_build_rules_controls(rules_container, rules_data, func(key: String, val):
+		var matches: Array = events[event_idx]["data"].get("matches", [])
+		if sub_idx < matches.size():
+			var rd: Dictionary = matches[sub_idx].get("board_rules", {})
+			rd[key] = val
+			matches[sub_idx]["board_rules"] = rd)
+
+
+func _build_rules_controls(parent: VBoxContainer, rules_data: Dictionary, on_change: Callable) -> void:
+	## Shared controls for board rules configuration.
+	_add_spin_row(parent, "Tamaño tablero:", rules_data.get("board_size", 3), 3, 7, 1,
+		func(val: float): on_change.call("board_size", int(val)))
+
+	_add_spin_row(parent, "Fichas para ganar:", rules_data.get("win_length", 3), 3, 7, 1,
+		func(val: float): on_change.call("win_length", int(val)))
+
+	_add_spin_row(parent, "Máx fichas/jugador:", rules_data.get("max_pieces", -1), -1, 20, 1,
+		func(val: float): on_change.call("max_pieces", int(val)))
+
+	_add_option_row(parent, "Al exceder máx:", ["rotate", "block"],
+		rules_data.get("overflow_mode", "rotate"),
+		func(idx: int): on_change.call("overflow_mode", ["rotate", "block"][idx]))
+
+	var allow_draw_check := CheckBox.new()
+	allow_draw_check.text = "  Permitir empate"
+	allow_draw_check.button_pressed = rules_data.get("allow_draw", true)
+	allow_draw_check.add_theme_color_override("font_color", COLOR_TEXT_DIM)
+	allow_draw_check.toggled.connect(func(on: bool): on_change.call("allow_draw", on))
+	parent.add_child(allow_draw_check)
+
+
+func _add_spin_row(parent: Control, label_text: String, value: float,
+		min_val: float, max_val: float, step: float, on_change: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+
+	var lbl := Label.new()
+	lbl.text = label_text
+	lbl.custom_minimum_size = Vector2(130, 0)
+	lbl.add_theme_color_override("font_color", COLOR_TEXT_DIM)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(lbl)
+
+	var spin := SpinBox.new()
+	spin.min_value = min_val
+	spin.max_value = max_val
+	spin.step = step
+	spin.value = value
+	spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spin.custom_minimum_size = Vector2(80, 28)
+	spin.value_changed.connect(on_change)
+	row.add_child(spin)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -670,6 +786,8 @@ func _make_default_match_data() -> Dictionary:
 		"opponent_id": "",
 		"ai_difficulty": 0.3,
 		"game_rules_preset": "standard",
+		"custom_rules": false,
+		"board_rules": {},
 		"intro_script": "",
 		"reactions_script": "",
 		"player_style": "slam",

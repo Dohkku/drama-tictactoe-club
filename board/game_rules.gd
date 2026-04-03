@@ -117,3 +117,18 @@ static func big_board() -> Resource:
 	r.board_size = 5
 	r.win_length = 4
 	return r
+
+
+func duplicate_rules() -> Resource:
+	## Deep-copy this GameRules resource.
+	var r = load("res://board/game_rules.gd").new()
+	r.board_size = board_size
+	r.win_length = win_length
+	r.max_pieces_per_player = max_pieces_per_player
+	r.overflow_mode = overflow_mode
+	r.allow_overwrite = allow_overwrite
+	r.allow_draw = allow_draw
+	r.custom_win_patterns = custom_win_patterns.duplicate(true)
+	r.pieces_per_player = pieces_per_player.duplicate()
+	r.flags = flags.duplicate(true)
+	return r

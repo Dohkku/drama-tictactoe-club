@@ -7,10 +7,14 @@ signal cell_clicked(index: int)
 var is_occupied: bool = false
 var hovering: bool = false
 var input_enabled: bool = true
+var is_dark_cell: bool = false  # True if this cell uses the alternate color (checkerboard)
 
-const COLOR_EMPTY := Color(0.15, 0.15, 0.2)
-const COLOR_HOVER := Color(0.25, 0.25, 0.35)
-const COLOR_LINE := Color(0.3, 0.3, 0.4)
+var color_empty := Color(0.92, 0.88, 0.82)
+var color_alt := Color(0.25, 0.27, 0.32)
+var checkerboard := false
+var color_hover := Color(0.85, 0.80, 0.72)
+var color_line := Color(0.6, 0.5, 0.4)
+var line_width := 2.0
 
 
 func _ready() -> void:
@@ -20,9 +24,10 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
-	var bg_color := COLOR_HOVER if (hovering and not is_occupied and input_enabled) else COLOR_EMPTY
+	var base_color := color_alt if (checkerboard and is_dark_cell) else color_empty
+	var bg_color := color_hover if (hovering and not is_occupied and input_enabled) else base_color
 	draw_rect(rect, bg_color)
-	draw_rect(rect, COLOR_LINE, false, 2.0)
+	draw_rect(rect, color_line, false, line_width)
 
 
 func _gui_input(event: InputEvent) -> void:
