@@ -36,12 +36,20 @@ var win_line_width_spin: SpinBox
 var win_line_auto_color_check: CheckBox
 var log_lines: Array[String] = []
 
+# Piece selection (dormant — infrastructure for future ability-based pieces)
+# Flow: click piece in hand → selected_piece = piece → click cell → place selected_piece
+# Activate by calling piece.set_selectable(true) on hand pieces
+var selected_piece: Control = null
+
 # UI references
 var grid: GridContainer
 var piece_layer: Control
 var player_hand: Control
 var opponent_hand: Control
 var board_frame: PanelContainer
+var board_aspect: AspectRatioContainer
+var hand_align: int = 1  # 0=left, 1=center, 2=right
+var hand_compact: bool = true  # true=shift pieces, false=keep fixed positions
 var log_label: RichTextLabel
 var status_label: Label
 var style_option: OptionButton
@@ -203,30 +211,60 @@ func _position_hand_pieces() -> void:
 	if cells.is_empty():
 		return
 	var cell_size = _get_cell_size()
-	var piece_h = max(24.0, min(cell_size.y * 0.42, 40.0))
+	var piece_h: float = cell_size.y * 0.85  # Same scale as board pieces
 
 	# Player hand (below board)
-	var hand_rect = player_hand.get_global_rect()
-	var start_x = hand_rect.position.x - piece_layer.global_position.x + 8.0
-	var y = hand_rect.position.y - piece_layer.global_position.y + 4.0
-	for i in range(player_next, player_pieces.size()):
-		var p = player_pieces[i]
-		if not is_instance_valid(p):
-			continue
-		p.size = Vector2(piece_h, piece_h)
-		p.position = Vector2(start_x + (i - player_next) * (piece_h + 4.0), y)
-		p.pivot_offset = p.size / 2.0
-
+	_layout_hand(player_pieces, player_next, player_hand, piece_h)
 	# Opponent hand (above board)
-	hand_rect = opponent_hand.get_global_rect()
-	start_x = hand_rect.position.x - piece_layer.global_position.x + 8.0
-	y = hand_rect.position.y - piece_layer.global_position.y + 4.0
-	for i in range(opponent_next, opponent_pieces.size()):
-		var p = opponent_pieces[i]
+	_layout_hand(opponent_pieces, opponent_next, opponent_hand, piece_h)
+
+
+func _layout_hand(pieces: Array[Control], next_idx: int, hand: Control, piece_sz: float) -> void:
+	var hand_rect: Rect2 = hand.get_global_rect()
+	var hand_local_x: float = hand_rect.position.x - piece_layer.global_position.x
+	var hand_width: float = hand_rect.size.x
+	var y: float = hand_rect.position.y - piece_layer.global_position.y + (hand_rect.size.y - piece_sz) / 2.0
+	var spacing: float = piece_sz + 4.0
+	var total_count: int = pieces.size()
+
+	# Determine which slots to show and how many visible pieces
+	var visible_count: int = 0
+	if hand_compact:
+		visible_count = total_count - next_idx
+	else:
+		visible_count = total_count
+
+	# Calculate start X based on alignment
+	var row_width: float = visible_count * spacing - 4.0 if visible_count > 0 else 0.0
+	var start_x: float = hand_local_x
+	match hand_align:
+		0:  # Left
+			start_x = hand_local_x + 8.0
+		1:  # Center
+			start_x = hand_local_x + (hand_width - row_width) / 2.0
+		2:  # Right
+			start_x = hand_local_x + hand_width - row_width - 8.0
+
+	for i in range(total_count):
+		var p: Control = pieces[i]
 		if not is_instance_valid(p):
 			continue
-		p.size = Vector2(piece_h, piece_h)
-		p.position = Vector2(start_x + (i - opponent_next) * (piece_h + 4.0), y)
+		if not hand.visible or i < next_idx:
+			if i < next_idx and cell_to_piece.values().has(p):
+				continue  # Already placed on board
+			if not hand.visible:
+				if not cell_to_piece.values().has(p):
+					p.visible = false
+			continue
+
+		p.visible = true
+		p.size = Vector2(piece_sz, piece_sz)
+		var slot: int
+		if hand_compact:
+			slot = i - next_idx
+		else:
+			slot = i
+		p.position = Vector2(start_x + slot * spacing, y)
 		p.pivot_offset = p.size / 2.0
 
 
@@ -449,6 +487,48 @@ func _build_ui() -> void:
 	board_size_spin = _spin(left, "Tamaño", 3, 7, 3)
 	max_pieces_spin = _spin(left, "Máx fichas", -1, 10, -1)
 
+	var scale_h := HBoxContainer.new()
+	left.add_child(scale_h)
+	var scale_lbl := Label.new()
+	scale_lbl.text = "Escala"
+	scale_lbl.custom_minimum_size = Vector2(80, 0)
+	scale_lbl.add_theme_font_size_override("font_size", 11)
+	scale_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65))
+	scale_h.add_child(scale_lbl)
+	var scale_slider := HSlider.new()
+	scale_slider.min_value = 150.0
+	scale_slider.max_value = 600.0
+	scale_slider.step = 10.0
+	scale_slider.value = 300.0
+	scale_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scale_slider.value_changed.connect(func(v: float): _on_board_scale_changed(v))
+	scale_h.add_child(scale_slider)
+
+	_lbl(left, "Fichas en espera", 11, Color(0.55, 0.55, 0.65))
+	var hand_vis_option := OptionButton.new()
+	hand_vis_option.add_item("Ambas (arriba/abajo)")
+	hand_vis_option.add_item("Solo J1 (abajo)")
+	hand_vis_option.add_item("Solo J2 (arriba)")
+	hand_vis_option.add_item("Ninguna")
+	hand_vis_option.select(0)
+	hand_vis_option.item_selected.connect(func(idx: int): _on_hand_visibility_changed(idx))
+	left.add_child(hand_vis_option)
+
+	var hand_align_option := OptionButton.new()
+	hand_align_option.add_item("Izquierda")
+	hand_align_option.add_item("Centro")
+	hand_align_option.add_item("Derecha")
+	hand_align_option.select(1)
+	hand_align_option.item_selected.connect(func(idx: int): hand_align = idx; _position_hand_pieces())
+	left.add_child(hand_align_option)
+
+	var compact_check := CheckBox.new()
+	compact_check.text = "Compactar al usar"
+	compact_check.button_pressed = true
+	compact_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	compact_check.toggled.connect(func(on: bool): hand_compact = on; _position_hand_pieces())
+	left.add_child(compact_check)
+
 	ai_check = CheckBox.new()
 	ai_check.text = "IA oponente"
 	ai_check.button_pressed = true
@@ -634,7 +714,7 @@ func _build_ui() -> void:
 	_lbl(center, "Tablero", 14, Color(0.7, 0.7, 0.8))
 
 	opponent_hand = Control.new()
-	opponent_hand.custom_minimum_size = Vector2(0, 50)
+	opponent_hand.custom_minimum_size = Vector2(0, 90)
 	center.add_child(opponent_hand)
 
 	var board_center := CenterContainer.new()
@@ -642,14 +722,14 @@ func _build_ui() -> void:
 	board_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	center.add_child(board_center)
 
-	var aspect := AspectRatioContainer.new()
-	aspect.custom_minimum_size = Vector2(300, 300)
-	board_center.add_child(aspect)
+	board_aspect = AspectRatioContainer.new()
+	board_aspect.custom_minimum_size = Vector2(300, 300)
+	board_center.add_child(board_aspect)
 
 	board_frame = PanelContainer.new()
 	board_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	aspect.add_child(board_frame)
+	board_aspect.add_child(board_frame)
 	_apply_border()
 
 	grid = GridContainer.new()
@@ -658,7 +738,7 @@ func _build_ui() -> void:
 	board_frame.add_child(grid)
 
 	player_hand = Control.new()
-	player_hand.custom_minimum_size = Vector2(0, 50)
+	player_hand.custom_minimum_size = Vector2(0, 90)
 	center.add_child(player_hand)
 
 	# Piece layer overlays the entire center area
@@ -684,6 +764,31 @@ func _build_ui() -> void:
 	log_label.add_theme_font_size_override("normal_font_size", 11)
 	log_label.add_theme_color_override("default_color", Color(0.65, 0.65, 0.7))
 	right_col.add_child(log_label)
+
+
+func _on_board_scale_changed(val: float) -> void:
+	if board_aspect:
+		board_aspect.custom_minimum_size = Vector2(val, val)
+	await get_tree().process_frame
+	_position_hand_pieces()
+
+
+func _on_hand_visibility_changed(idx: int) -> void:
+	match idx:
+		0:  # Ambas
+			player_hand.visible = true
+			opponent_hand.visible = true
+		1:  # Solo J1 abajo
+			player_hand.visible = true
+			opponent_hand.visible = false
+		2:  # Solo J2 arriba
+			player_hand.visible = false
+			opponent_hand.visible = true
+		3:  # Ninguna
+			player_hand.visible = false
+			opponent_hand.visible = false
+	await get_tree().process_frame
+	_position_hand_pieces()
 
 
 func _on_body_shape_changed(is_player: bool, idx: int) -> void:

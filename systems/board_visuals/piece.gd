@@ -5,9 +5,16 @@ var character_id: String = ""
 var piece_color: Color = Color.WHITE
 var effect_player: Node2D = null
 
+# Selection infrastructure (dormant — enable via set_selectable)
+var selectable: bool = false
+var selected: bool = false
+# Visual deformation (squash/stretch) — affects drawing, not the Control transform
+var visual_scale: Vector2 = Vector2.ONE
+
 signal phase_started(phase_name: String)
 signal phase_completed(phase_name: String)
 signal move_completed()
+signal piece_clicked(piece: Control)
 
 const _SHADOW_OFFSET := Vector2(2.0, 2.0)
 const _SHADOW_ALPHA := 0.22
@@ -32,6 +39,10 @@ func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var piece_radius: float = minf(size.x, size.y) * 0.35
 
+	# Apply visual deformation (squash/stretch) around center
+	if visual_scale != Vector2.ONE:
+		draw_set_transform(center * (Vector2.ONE - visual_scale), 0.0, visual_scale)
+
 	var body_col: Color = design.body_color if design.body_color.a > 0.01 else piece_color
 	var sym_col: Color = design.symbol_color if design.symbol_color.a > 0.01 else piece_color
 
@@ -50,6 +61,17 @@ func _draw() -> void:
 
 	# 5. Symbol on top
 	_draw_design(center, piece_radius, sym_col)
+
+	# 6. Selection highlight (dormant infrastructure)
+	if selected:
+		var sel_col := Color(1.0, 1.0, 0.4, 0.6)
+		_draw_body_border(center, piece_radius * 1.08, sel_col)
+		var glow_col := Color(1.0, 1.0, 0.4, 0.15)
+		_draw_body(center, piece_radius * 1.15, glow_col)
+
+	# Reset transform
+	if visual_scale != Vector2.ONE:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 # ── Body shapes ──
@@ -283,8 +305,21 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 	if effect_player and effect_player.has_method("start_trail"):
 		effect_player.start_trail(self)
 
-	# 3. ARC TO TARGET
+	# 3. ARC TO TARGET — with optional stretch in movement direction
 	phase_started.emit("arc")
+	if style.arc_stretch > 0.0 and travel_dist > 1.0:
+		var dir := travel.normalized()
+		var stretch_x: float = 1.0 + style.arc_stretch * absf(dir.x)
+		var stretch_y: float = 1.0 + style.arc_stretch * absf(dir.y)
+		var squish_x: float = 1.0 / stretch_y  # Preserve volume
+		var squish_y: float = 1.0 / stretch_x
+		visual_scale = Vector2(maxf(squish_x, stretch_x), maxf(squish_y, stretch_y))
+		if absf(dir.x) > absf(dir.y):
+			visual_scale = Vector2(1.0 + style.arc_stretch, 1.0 - style.arc_stretch * 0.5)
+		else:
+			visual_scale = Vector2(1.0 - style.arc_stretch * 0.5, 1.0 + style.arc_stretch)
+		queue_redraw()
+
 	var arc_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK).set_parallel(true)
 	arc_tween.tween_property(self, "position", target_pos, style.arc_duration)
 	arc_tween.tween_property(self, "size", target_size, style.arc_duration)
@@ -301,11 +336,14 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 		effect_player.stop_trail()
 		effect_player.play_impact(target_pos + target_size / 2.0)
 
-	# 4. IMPACT — hookpoint for screen effects
+	# 4. IMPACT — squash on landing + hookpoint for screen effects
 	phase_started.emit("impact")
+	if style.impact_squash > 0.0:
+		visual_scale = Vector2(1.0 + style.impact_squash, 1.0 - style.impact_squash * 0.7)
+		queue_redraw()
 	phase_completed.emit("impact")
 
-	# 5. SETTLE
+	# 5. SETTLE — spring bounce back to normal
 	phase_started.emit("settle")
 	if style.spin_rotations > 0:
 		var spin_settle := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
@@ -322,6 +360,30 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 			shake_tw.tween_property(self, "position", target_pos + offset, style.settle_duration * 0.2)
 			await shake_tw.finished
 
+	# Spring bounces for visual_scale (springy jelly effect)
+	if style.spring_bounces > 0 and (style.impact_squash > 0.0 or style.arc_stretch > 0.0):
+		var bounce_dur: float = style.settle_duration / float(style.spring_bounces)
+		for b in style.spring_bounces:
+			var intensity: float = 1.0 - float(b) / float(style.spring_bounces)
+			var overshoot_x: float = 1.0 - style.impact_squash * 0.3 * intensity
+			var overshoot_y: float = 1.0 + style.impact_squash * 0.4 * intensity
+			if b % 2 == 1:
+				var tmp: float = overshoot_x
+				overshoot_x = overshoot_y
+				overshoot_y = tmp
+			var spring_tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+			spring_tw.tween_method(func(v: Vector2): visual_scale = v; queue_redraw(),
+				visual_scale, Vector2(overshoot_x, overshoot_y), bounce_dur)
+			await spring_tw.finished
+		# Final settle to 1,1
+		var final_spring := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		final_spring.tween_method(func(v: Vector2): visual_scale = v; queue_redraw(),
+			visual_scale, Vector2.ONE, bounce_dur)
+		await final_spring.finished
+	else:
+		visual_scale = Vector2.ONE
+		queue_redraw()
+
 	var settle_tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD).set_parallel(true)
 	settle_tween.tween_property(self, "scale", Vector2.ONE, style.settle_duration)
 	settle_tween.tween_property(self, "position", target_pos, style.settle_duration)
@@ -329,11 +391,37 @@ func play_move_to(target_pos: Vector2, target_size: Vector2, style: Resource, al
 
 	scale = Vector2.ONE
 	rotation = 0.0
+	visual_scale = Vector2.ONE
 	position = target_pos
 	size = target_size
 	pivot_offset = size / 2.0
+	queue_redraw()
 	phase_completed.emit("settle")
 	move_completed.emit()
+
+
+# ── Selection infrastructure ──
+
+func set_selectable(val: bool) -> void:
+	selectable = val
+	mouse_filter = Control.MOUSE_FILTER_STOP if val else Control.MOUSE_FILTER_IGNORE
+	if not val and selected:
+		set_selected(false)
+
+
+func set_selected(val: bool) -> void:
+	if selected == val:
+		return
+	selected = val
+	queue_redraw()
+
+
+func _gui_input(event: InputEvent) -> void:
+	if not selectable:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		piece_clicked.emit(self)
+		accept_event()
 
 
 func _notification(what: int) -> void:
