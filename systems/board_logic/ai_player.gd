@@ -8,6 +8,8 @@ var difficulty: float = 0.5
 var max_search_depth_override: int = -1
 
 const WIN_SCORE := 10000
+const MAX_NODES := 8000  # Hard cut to prevent freezes
+var _nodes_visited := 0
 
 
 func choose_move(board) -> int:
@@ -30,6 +32,7 @@ func _minimax_best_move(board) -> int:
 	var best_move := -1
 	var ai_piece: int = board.current_turn
 	var max_depth := _resolve_max_depth(board)
+	_nodes_visited = 0
 
 	for move in board.get_valid_moves():
 		var snapshot = board.get_state()
@@ -49,9 +52,10 @@ func _minimax_best_move(board) -> int:
 
 func _minimax(board, depth: int, ai_piece: int, max_depth: int) -> int:
 	## Paranoid search: maximize when it's AI's turn, minimize for ALL other players.
+	_nodes_visited += 1
 	if board.game_over:
 		return _score_game_over(board, ai_piece, depth)
-	if depth >= max_depth:
+	if depth >= max_depth or _nodes_visited >= MAX_NODES:
 		return _evaluate_position(board, ai_piece)
 
 	var is_ai_turn: bool = (board.current_turn == ai_piece)
@@ -142,24 +146,37 @@ func _resolve_max_depth(board) -> int:
 
 	var cell_count = board.cells.size()
 	var np = board.rules.num_players
+	var empty_count := 0
+	for c in board.cells:
+		if c == 0:
+			empty_count += 1
 
-	# More players = shallower search (branching factor stays same but game tree is deeper)
-	var base_depth: int
+	# 2-player 3x3 standard: solve completely
 	if cell_count <= 9 and np == 2 and board.rules.max_pieces_per_player <= 0:
-		return 9  # Solve 3x3 2-player completely
-	elif cell_count <= 9:
+		return 9
+
+	var base_depth: int
+	if cell_count <= 9:
 		base_depth = 5
 	elif cell_count <= 16:
 		base_depth = 4
 	else:
 		base_depth = 3
 
-	# Reduce depth for more players (game tree grows)
-	if np > 2:
-		base_depth = max(2, base_depth - (np - 2))
+	# Aggressive reduction for more players
+	if np >= 5:
+		base_depth = 2
+	elif np >= 3:
+		base_depth = max(2, base_depth - np + 1)
 
 	if board.rules.max_pieces_per_player > 0:
-		base_depth = min(base_depth, 4)
+		base_depth = min(base_depth, 3)
 
-	var bonus = int(round(difficulty * 2.0))
-	return clampi(base_depth + bonus, 2, 7)
+	# Cap based on branching factor: empty_cells ^ depth should stay under ~10k nodes
+	if empty_count > 15:
+		base_depth = min(base_depth, 2)
+	elif empty_count > 9:
+		base_depth = min(base_depth, 3)
+
+	var bonus = int(round(difficulty * 1.5))
+	return clampi(base_depth + bonus, 1, 6)
