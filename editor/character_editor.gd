@@ -119,7 +119,7 @@ func _setup_image_ui() -> void:
 	image_dialog.title = "Seleccionar Retrato"
 	image_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	image_dialog.access = FileDialog.ACCESS_RESOURCES
-	image_dialog.filters = PackedStringArray("*.png ; PNG Images", "*.jpg,*.jpeg ; JPEG Images", "*.webp ; WebP Images")
+	image_dialog.filters = PackedStringArray(["*.png ; PNG Images", "*.jpg,*.jpeg ; JPEG Images", "*.webp ; WebP Images"])
 	image_dialog.file_selected.connect(_on_portrait_selected)
 	add_child(image_dialog)
 
