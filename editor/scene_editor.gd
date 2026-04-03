@@ -4,7 +4,7 @@ extends HSplitContainer
 ## Left: file list + CodeEdit + command palette.
 ## Right: live preview with SubViewport + CinematicStage + playback controls.
 
-const CinematicStageScene = preload("res://cinematic/cinematic_stage.tscn")
+const CinematicStageScene = preload("res://systems/cinematic/cinematic_stage.tscn")
 const CharacterDataScript = preload("res://characters/character_data.gd")
 const SceneParserScript = preload("res://scene_scripts/parser/scene_parser.gd")
 const SCRIPTS_DIR := "res://scene_scripts/scripts/"

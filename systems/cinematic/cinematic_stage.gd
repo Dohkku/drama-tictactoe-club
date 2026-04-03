@@ -1,9 +1,9 @@
 extends Control
 
-const CharacterSlotScene = preload("res://cinematic/character_slot.tscn")
-const CameraEffectsScript = preload("res://cinematic/camera_effects.gd")
-const CinematicCameraScript = preload("res://cinematic/cinematic_camera.gd")
-const SpeedLinesEffectScript = preload("res://cinematic/speed_lines_effect.gd")
+const CharacterSlotScene = preload("res://systems/cinematic/character_slot.tscn")
+const CameraEffectsScript = preload("res://systems/cinematic/camera_effects.gd")
+const CinematicCameraScript = preload("res://systems/cinematic/cinematic_camera.gd")
+const SpeedLinesEffectScript = preload("res://systems/cinematic/speed_lines_effect.gd")
 
 ## Named stage positions as fractions of stage width (0.0 = left edge, 1.0 = right edge)
 const POSITIONS = {

@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://board/board.tscn" id="2"]
-[ext_resource type="PackedScene" path="res://cinematic/cinematic_stage.tscn" id="3"]
-[ext_resource type="Script" path="res://cinematic/dialogue_box.gd" id="4"]
+[ext_resource type="PackedScene" path="res://systems/cinematic/cinematic_stage.tscn" id="3"]
+[ext_resource type="Script" path="res://systems/cinematic/dialogue_box.gd" id="4"]
 [ext_resource type="Script" path="res://ui/panel_highlight.gd" id="5"]
 [ext_resource type="Script" path="res://ui/panel_separator.gd" id="6"]
 

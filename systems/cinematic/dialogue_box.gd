@@ -1,7 +1,7 @@
 extends PanelContainer
 
-const DialogueTextProcessorScript = preload("res://cinematic/dialogue_text_processor.gd")
-const DialogueAudioScript = preload("res://cinematic/dialogue_audio.gd")
+const DialogueTextProcessorScript = preload("res://systems/cinematic/dialogue_text_processor.gd")
+const DialogueAudioScript = preload("res://systems/cinematic/dialogue_audio.gd")
 
 var is_active: bool = false
 var is_typing: bool = false

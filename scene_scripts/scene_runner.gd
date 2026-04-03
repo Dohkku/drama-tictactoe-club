@@ -5,7 +5,7 @@ extends RefCounted
 ## Needs references to the stage, board, and dialogue box nodes.
 
 const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
-const CinematicCameraScript = preload("res://cinematic/cinematic_camera.gd")
+const CinematicCameraScript = preload("res://systems/cinematic/cinematic_camera.gd")
 
 var _stage: Control       # CinematicStage
 var _board: Control       # Board (can be null for pure cutscenes)

@@ -1,10 +1,10 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://cinematic/cinematic_stage.gd" id="1"]
+[ext_resource type="Script" path="res://systems/cinematic/cinematic_stage.gd" id="1"]
 
-[ext_resource type="Script" path="res://cinematic/background_manager.gd" id="2"]
+[ext_resource type="Script" path="res://systems/cinematic/background_manager.gd" id="2"]
 
-[ext_resource type="Script" path="res://cinematic/speed_lines_effect.gd" id="3"]
+[ext_resource type="Script" path="res://systems/cinematic/speed_lines_effect.gd" id="3"]
 
 [node name="CinematicStage" type="Control"]
 clip_contents = true
