@@ -1,8 +1,8 @@
 class_name AIPlayer
 extends RefCounted
 
-## AI player using paranoid minimax search.
-## For N players: maximizes own score, treats ALL other players as adversaries.
+## AI using paranoid minimax: maximizes own score, treats all other players
+## as a unified adversary (minimizes). Safe for 2-6 players with node cap.
 
 var difficulty: float = 0.5
 var max_search_depth_override: int = -1

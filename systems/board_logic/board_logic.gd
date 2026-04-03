@@ -2,7 +2,8 @@ class_name BoardLogic
 extends RefCounted
 
 ## Pure game logic for N-player tic-tac-toe.
-## Players: 0 = empty, -1 = blocked, 1..N = players.
+## Cells: 0 = empty, -1 = blocked, 1..N = players.
+## Returns MoveResult from make_move() with typed events for other systems.
 
 const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
 const MoveResultScript = preload("res://systems/board_logic/move_result.gd")
@@ -13,13 +14,15 @@ const BLOCKED := -1
 const PIECE_LABELS := ["", "X", "O", "△", "□", "◇", "★"]
 const PIECE_COLORS := [
 	Color.TRANSPARENT,
-	Color(0.3, 0.6, 1.0),   # Player 1: Blue
-	Color(1.0, 0.3, 0.3),   # Player 2: Red
-	Color(0.3, 0.9, 0.4),   # Player 3: Green
-	Color(0.8, 0.3, 0.9),   # Player 4: Purple
-	Color(1.0, 0.6, 0.2),   # Player 5: Orange
-	Color(0.2, 0.9, 0.9),   # Player 6: Cyan
+	Color(0.3, 0.6, 1.0),
+	Color(1.0, 0.3, 0.3),
+	Color(0.3, 0.9, 0.4),
+	Color(0.8, 0.3, 0.9),
+	Color(1.0, 0.6, 0.2),
+	Color(0.2, 0.9, 0.9),
 ]
+
+enum SpecialEffect { NONE, EXTRA_TURN, SKIP_NEXT }
 
 var rules: Resource
 var cells: Array[int] = []
@@ -28,12 +31,12 @@ var game_over: bool = false
 var winner: int = EMPTY
 var move_count: int = 0
 var winning_pattern: Array[int] = []
-var move_history: Dictionary = {}
+var move_history: Dictionary = {}     # {player_id: Array[int]}
 var global_history: Array[Dictionary] = []
 var _undo_stack: Array[Dictionary] = []
 var _redo_stack: Array[Dictionary] = []
 var _win_patterns: Array = []
-var _skip_next_turn: bool = false
+var _pending_effect: int = SpecialEffect.NONE
 
 
 func _init(custom_rules: Resource = null) -> void:
@@ -42,12 +45,10 @@ func _init(custom_rules: Resource = null) -> void:
 
 
 func _setup() -> void:
-	var total = rules.get_total_cells()
-	cells.resize(total)
+	cells.resize(rules.get_total_cells())
 	cells.fill(EMPTY)
-	# Mark blocked cells
 	for idx in rules.blocked_cells:
-		if idx >= 0 and idx < total:
+		if idx >= 0 and idx < cells.size():
 			cells[idx] = BLOCKED
 	_win_patterns = rules.get_win_patterns()
 	move_history.clear()
@@ -57,42 +58,51 @@ func _setup() -> void:
 	winning_pattern.clear()
 	_undo_stack.clear()
 	_redo_stack.clear()
-	_skip_next_turn = false
+	_pending_effect = SpecialEffect.NONE
 
 
+## Execute a move. Returns MoveResult with success/failure and all events.
 func make_move(index: int) -> RefCounted:
-	## Returns MoveResult with success status and all events that occurred.
 	var result = MoveResultScript.new()
+	result.player = current_turn
+	result.cell = index
 
-	if game_over or index < 0 or index >= cells.size():
+	# Validate
+	if game_over:
+		result.fail_reason = "game_over"
+		return result
+	if index < 0 or index >= cells.size():
+		result.fail_reason = "out_of_bounds"
 		return result
 	if cells[index] == BLOCKED:
+		result.fail_reason = "blocked"
 		return result
 	if cells[index] != EMPTY and not rules.allow_overwrite:
+		result.fail_reason = "occupied"
 		return result
 
+	# Save for undo
 	_undo_stack.append(get_state())
 	_redo_stack.clear()
 
-	var piece = current_turn
-	result.player = piece
-	result.cell = index
+	var piece := current_turn
 	var history: Array = move_history.get(piece, [])
 
-	# Rotation
+	# Rotation: remove oldest if at max
 	if rules.max_pieces_per_player > 0 and history.size() >= rules.max_pieces_per_player:
-		if rules.overflow_mode == "rotate":
-			var oldest = history.pop_front()
+		if rules.overflow_mode == GameRulesScript.OVERFLOW_ROTATE:
+			var oldest: int = history.pop_front()
 			cells[oldest] = EMPTY
 			result.removed_cell = oldest
 			result.add_event(MoveResultScript.PIECE_ROTATED, {
-				"player": piece, "removed_cell": oldest, "new_cell": index
+				"player": piece, "removed_cell": oldest, "new_cell": index,
 			})
-		elif rules.overflow_mode == "block":
+		else:  # block
 			_undo_stack.pop_back()
+			result.fail_reason = "max_pieces_blocked"
 			return result
 
-	# Place piece
+	# Place
 	cells[index] = piece
 	history.append(index)
 	move_history[piece] = history
@@ -100,7 +110,7 @@ func make_move(index: int) -> RefCounted:
 	result.success = true
 	result.add_event(MoveResultScript.PIECE_PLACED, {"player": piece, "cell": index})
 
-	# Record global history
+	# Global history
 	global_history.append({
 		"player": piece, "cell": index,
 		"move_number": move_count, "removed_cell": result.removed_cell,
@@ -109,16 +119,13 @@ func make_move(index: int) -> RefCounted:
 	# Special cell effects
 	var special = rules.get_special_cell(index)
 	if not special.is_empty():
-		var effect = _apply_special_cell(special, piece)
-		result.add_event(MoveResultScript.SPECIAL_CELL, {
-			"cell": index, "type": special.get("type", ""), "effect": effect
-		})
+		_apply_special_cell(result, special, piece)
 
-	# Detect positional events
+	# Detect positional events (near wins, forks, center/corner)
 	_detect_events(result, index, piece)
 
-	# Check win/draw
-	var win_pat = _find_winning_pattern(piece)
+	# Check victory
+	var win_pat := _find_winning_pattern(piece)
 	if not win_pat.is_empty():
 		game_over = true
 		winner = piece
@@ -126,110 +133,112 @@ func make_move(index: int) -> RefCounted:
 		result.is_win = true
 		result.winning_pattern = win_pat
 		result.add_event(MoveResultScript.WIN, {"player": piece, "pattern": win_pat})
-	elif _check_most_pieces_win():
-		pass  # handled inside _check_most_pieces_win
+	elif rules.win_condition == GameRulesScript.WIN_MOST_PIECES and _is_board_full():
+		_resolve_most_pieces(result)
 	elif _check_draw():
 		game_over = true
 		winner = EMPTY
 		result.is_draw = true
 		result.add_event(MoveResultScript.DRAW, {})
 	else:
-		var prev_turn = current_turn
-		_advance_turn()
-		result.add_event(MoveResultScript.TURN_CHANGED, {"from": prev_turn, "to": current_turn})
+		var prev := current_turn
+		_advance_turn(result)
+		result.add_event(MoveResultScript.TURN_CHANGED, {"from": prev, "to": current_turn})
 
 	return result
 
 
+func _apply_special_cell(result: RefCounted, special: Dictionary, piece: int) -> void:
+	var cell_type: String = special.get("type", "")
+	match cell_type:
+		GameRulesScript.SPECIAL_BONUS:
+			_pending_effect = SpecialEffect.EXTRA_TURN
+			result.add_event(MoveResultScript.BONUS_TURN, {"player": piece})
+			result.add_event(MoveResultScript.SPECIAL_CELL, {
+				"cell": result.cell, "type": cell_type, "effect": "extra_turn",
+			})
+		GameRulesScript.SPECIAL_TRAP:
+			_pending_effect = SpecialEffect.SKIP_NEXT
+			result.add_event(MoveResultScript.SKIP_TURN, {"player": piece})
+			result.add_event(MoveResultScript.SPECIAL_CELL, {
+				"cell": result.cell, "type": cell_type, "effect": "skip_opponent",
+			})
+		# "wild" has no active effect — handled in _find_winning_pattern
+
+
+func _advance_turn(result: RefCounted) -> void:
+	match _pending_effect:
+		SpecialEffect.EXTRA_TURN:
+			_pending_effect = SpecialEffect.NONE
+			# Don't advance — same player goes again
+		SpecialEffect.SKIP_NEXT:
+			_pending_effect = SpecialEffect.NONE
+			# Advance twice: skip the next player
+			current_turn = (current_turn % rules.num_players) + 1
+			current_turn = (current_turn % rules.num_players) + 1
+		_:
+			current_turn = (current_turn % rules.num_players) + 1
+
+
 func _detect_events(result: RefCounted, index: int, piece: int) -> void:
-	var w = rules.get_width()
-	var h = rules.get_height()
+	var w: int = rules.get_width()
+	var h: int = rules.get_height()
 
 	# Center
 	if w % 2 == 1 and h % 2 == 1:
-		var center = (h / 2) * w + (w / 2)
-		if index == center:
+		if index == (h / 2) * w + (w / 2):
 			result.add_event(MoveResultScript.CENTER_TAKEN, {"player": piece})
 
 	# Corner
-	var corners = rules.get_corners()
-	if index in corners:
+	if index in rules.get_corners():
 		result.add_event(MoveResultScript.CORNER_TAKEN, {"player": piece})
 
-	# Near wins for all players
+	# Near wins + forks (cached per player to avoid duplicate work)
 	for p in get_all_players():
-		var nears = get_near_wins(p)
+		var nears := get_near_wins(p)
 		for nw in nears:
 			result.add_event(MoveResultScript.NEAR_WIN, {
-				"player": p, "pattern": nw.pattern, "missing_cell": nw.missing_cell
+				"player": p, "pattern": nw.pattern, "missing_cell": nw.missing_cell,
 			})
-
-	# Forks
-	for p in get_all_players():
-		var fork_count = get_near_wins(p).size()
-		if fork_count >= 2:
-			result.add_event(MoveResultScript.FORK, {"player": p, "count": fork_count})
+		if nears.size() >= 2:
+			result.add_event(MoveResultScript.FORK, {"player": p, "count": nears.size()})
 
 
-func _apply_special_cell(special: Dictionary, piece: int) -> String:
-	var cell_type = special.get("type", "")
-	match cell_type:
-		"bonus":
-			_skip_next_turn = true  # Will skip the advance_turn
-			return "extra_turn"
-		"trap":
-			# After this player's turn, skip the NEXT player
-			# Handled in _advance_turn
-			_skip_next_turn = true
-			return "skip_opponent"
-	return ""
-
-
-func _advance_turn() -> void:
-	current_turn = (current_turn % rules.num_players) + 1
-	if _skip_next_turn:
-		_skip_next_turn = false
-		# Skip this player's turn (advance again)
-		current_turn = (current_turn % rules.num_players) + 1
-
-
-func _check_most_pieces_win() -> bool:
-	if rules.win_condition != "most_pieces":
-		return false
-	# Check if board is full (excluding blocked)
-	for c in cells:
-		if c == EMPTY:
-			return false
-	# Count pieces per player
+func _resolve_most_pieces(result: RefCounted) -> void:
 	var counts := {}
 	for p in get_all_players():
 		counts[p] = 0
 	for c in cells:
 		if c > 0 and counts.has(c):
 			counts[c] += 1
-	# Find max
-	var max_count := 0
-	var max_player := 0
+	var best_player := 0
+	var best_count := 0
 	for p in counts:
-		if counts[p] > max_count:
-			max_count = counts[p]
-			max_player = p
+		if counts[p] > best_count:
+			best_count = counts[p]
+			best_player = p
 	game_over = true
-	winner = max_player
-	winning_pattern.clear()
+	winner = best_player
+	result.is_win = true
+	result.add_event(MoveResultScript.WIN, {"player": best_player, "pattern": []})
+
+
+func _is_board_full() -> bool:
+	for c in cells:
+		if c == EMPTY:
+			return false
 	return true
 
 
-# --- Public API ---
+# ── Public API ──
 
 func undo() -> bool:
 	if _undo_stack.is_empty():
 		return false
 	_redo_stack.append(get_state())
 	load_state(_undo_stack.pop_back())
-	if not global_history.is_empty():
-		global_history.pop_back()
 	return true
+
 
 func redo() -> bool:
 	if _redo_stack.is_empty():
@@ -238,11 +247,14 @@ func redo() -> bool:
 	load_state(_redo_stack.pop_back())
 	return true
 
+
 func can_undo() -> bool:
 	return not _undo_stack.is_empty()
 
+
 func can_redo() -> bool:
 	return not _redo_stack.is_empty()
+
 
 func get_valid_moves() -> Array[int]:
 	var moves: Array[int] = []
@@ -253,12 +265,14 @@ func get_valid_moves() -> Array[int]:
 			moves.append(i)
 	return moves
 
+
 func reset() -> void:
-	_setup()
 	current_turn = 1
 	game_over = false
 	winner = EMPTY
 	move_count = 0
+	_setup()
+
 
 func get_state() -> Dictionary:
 	var hist_copy := {}
@@ -273,8 +287,9 @@ func get_state() -> Dictionary:
 		"move_history": hist_copy,
 		"winning_pattern": winning_pattern.duplicate(),
 		"global_history": global_history.duplicate(true),
-		"skip_next_turn": _skip_next_turn,
+		"pending_effect": _pending_effect,
 	}
+
 
 func load_state(state: Dictionary) -> void:
 	cells.assign(state.cells)
@@ -283,23 +298,26 @@ func load_state(state: Dictionary) -> void:
 	winner = state.winner
 	move_count = state.move_count
 	winning_pattern.assign(state.get("winning_pattern", []))
-	_skip_next_turn = state.get("skip_next_turn", false)
+	_pending_effect = state.get("pending_effect", SpecialEffect.NONE)
 	move_history.clear()
 	for p in state.get("move_history", {}):
 		move_history[p] = (state.move_history[p] as Array).duplicate()
 	global_history = state.get("global_history", []).duplicate(true)
-	if move_history.is_empty() and state.has("move_history_x"):
-		move_history[1] = (state.move_history_x as Array).duplicate()
-		move_history[2] = (state.move_history_o as Array).duplicate()
+
 
 func piece_to_string(piece: int) -> String:
-	if piece == BLOCKED: return "■"
-	if piece >= 0 and piece < PIECE_LABELS.size(): return PIECE_LABELS[piece]
+	if piece == BLOCKED:
+		return "■"
+	if piece >= 0 and piece < PIECE_LABELS.size():
+		return PIECE_LABELS[piece]
 	return "P%d" % piece
 
+
 static func piece_color(piece: int) -> Color:
-	if piece >= 0 and piece < PIECE_COLORS.size(): return PIECE_COLORS[piece]
+	if piece >= 0 and piece < PIECE_COLORS.size():
+		return PIECE_COLORS[piece]
 	return Color.WHITE
+
 
 func get_all_players() -> Array[int]:
 	var players: Array[int] = []
@@ -307,6 +325,8 @@ func get_all_players() -> Array[int]:
 		players.append(p)
 	return players
 
+
+## Returns near-win situations: [{pattern: Array[int], missing_cell: int}]
 func get_near_wins(piece: int) -> Array[Dictionary]:
 	var results: Array[Dictionary] = []
 	for pattern in _win_patterns:
@@ -323,19 +343,18 @@ func get_near_wins(piece: int) -> Array[Dictionary]:
 			results.append({"pattern": Array(pattern, TYPE_INT, "", null), "missing_cell": empty_cell})
 	return results
 
+
+## Legacy compat: returns string pattern names for the scene runner.
 func detect_patterns(last_move: int, piece: int) -> Array[String]:
-	## Legacy compatibility — returns string pattern names.
 	var patterns: Array[String] = []
-	var w = rules.get_width()
-	var h = rules.get_height()
+	var w: int = rules.get_width()
+	var h: int = rules.get_height()
 	if w % 2 == 1 and h % 2 == 1:
-		var center = (h / 2) * w + (w / 2)
-		if last_move == center:
+		if last_move == (h / 2) * w + (w / 2):
 			patterns.append("center_taken_by_%d" % piece)
 			if rules.num_players == 2:
 				patterns.append("center_taken_by_%s" % ("player" if piece == 1 else "opponent"))
-	var corners = rules.get_corners()
-	if last_move in corners:
+	if last_move in rules.get_corners():
 		patterns.append("corner_taken_by_%d" % piece)
 		if rules.num_players == 2:
 			patterns.append("corner_taken_by_%s" % ("player" if piece == 1 else "opponent"))
@@ -343,19 +362,15 @@ func detect_patterns(last_move: int, piece: int) -> Array[String]:
 		if not get_near_wins(p).is_empty():
 			patterns.append("player_%d_near_win" % p)
 	if rules.num_players == 2:
-		if not get_near_wins(1).is_empty(): patterns.append("player_near_win")
-		if not get_near_wins(2).is_empty(): patterns.append("opponent_near_win")
+		if not get_near_wins(1).is_empty():
+			patterns.append("player_near_win")
+		if not get_near_wins(2).is_empty():
+			patterns.append("opponent_near_win")
 	if get_near_wins(piece).size() >= 2:
 		patterns.append("player_%d_fork" % piece)
 		if rules.num_players == 2:
 			patterns.append("%s_fork" % ("player" if piece == 1 else "opponent"))
 	patterns.append("move_count_%d" % move_count)
-	if rules.max_pieces_per_player > 0:
-		var hist: Array = move_history.get(piece, [])
-		if hist.size() >= rules.max_pieces_per_player:
-			patterns.append("player_%d_piece_rotated" % piece)
-			if rules.num_players == 2:
-				patterns.append("%s_piece_rotated" % ("player" if piece == 1 else "opponent"))
 	return patterns
 
 
@@ -363,11 +378,10 @@ func _find_winning_pattern(piece: int) -> Array[int]:
 	for pattern in _win_patterns:
 		var all_match := true
 		for idx in pattern:
-			var cell_val = cells[idx]
-			# "wild" special cells count as any player
-			if cell_val == piece:
+			var cv := cells[idx]
+			if cv == piece:
 				continue
-			if rules.get_special_cell(idx).get("type", "") == "wild" and cell_val > 0:
+			if rules.get_special_cell(idx).get("type", "") == GameRulesScript.SPECIAL_WILD and cv > 0:
 				continue
 			all_match = false
 			break
@@ -377,18 +391,14 @@ func _find_winning_pattern(piece: int) -> Array[int]:
 			return result
 	return [] as Array[int]
 
-func _check_winner(piece: int) -> bool:
-	return not _find_winning_pattern(piece).is_empty()
 
 func _check_draw() -> bool:
-	if not rules.allow_draw: return false
-	if rules.win_condition == "most_pieces": return false
-	for cell in cells:
-		if cell == EMPTY: return false
-	return true
+	if not rules.allow_draw:
+		return false
+	if rules.win_condition == GameRulesScript.WIN_MOST_PIECES:
+		return false
+	return _is_board_full()
 
-func _has_near_win(piece: int) -> bool:
-	return not get_near_wins(piece).is_empty()
 
 func _count_near_wins(piece: int) -> int:
 	return get_near_wins(piece).size()
