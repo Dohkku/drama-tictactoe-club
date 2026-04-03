@@ -14,6 +14,7 @@ const PieceDesignScript = preload("res://systems/board_visuals/piece_design.gd")
 const PieceEffectScript = preload("res://systems/board_visuals/piece_effect.gd")
 const PieceEffectPlayerScript = preload("res://systems/board_visuals/piece_effect_player.gd")
 const ScreenEffectsScript = preload("res://systems/board_visuals/screen_effects.gd")
+const BoardAudioScript = preload("res://systems/board_visuals/board_audio.gd")
 
 var logic: RefCounted
 var ai: RefCounted
@@ -28,6 +29,11 @@ var _animating: bool = false
 
 var current_style: Resource
 var screen_fx: Control = null
+var board_audio: Node = null
+var _win_line_node: Control = null
+var win_line_color_picker: ColorPickerButton
+var win_line_width_spin: SpinBox
+var win_line_auto_color_check: CheckBox
 var log_lines: Array[String] = []
 
 # UI references
@@ -80,6 +86,9 @@ func _ready() -> void:
 	opponent_design = _all_designs[1]  # O
 	player_effect = _all_effects[0]  # none
 	opponent_effect = _all_effects[0]  # none
+	board_audio = Node.new()
+	board_audio.set_script(BoardAudioScript)
+	add_child(board_audio)
 	_build_ui()
 	_new_game()
 
@@ -110,6 +119,9 @@ func _new_game() -> void:
 
 
 func _clear_board() -> void:
+	if _win_line_node and is_instance_valid(_win_line_node):
+		_win_line_node.queue_free()
+		_win_line_node = null
 	for c in cells:
 		if is_instance_valid(c):
 			c.queue_free()
@@ -290,7 +302,21 @@ func _do_move(index: int, is_player: bool) -> void:
 	if piece_node.effect_player and piece_node.effect_player.effect:
 		eff = piece_node.effect_player.effect
 	var pn: Control = piece_node
+	var cur_style_name: String = STYLES[style_option.selected]
 	var _on_phase := func(phase_name: String) -> void:
+		# Audio hooks
+		if board_audio:
+			match phase_name:
+				"lift":
+					board_audio.play_sfx("lift")
+				"arc":
+					board_audio.play_sfx("whoosh")
+				"impact":
+					if cur_style_name == "slam" or cur_style_name == "dramatic":
+						board_audio.play_sfx("impact_heavy")
+					else:
+						board_audio.play_sfx("impact_light")
+		# Visual effect hooks (impact only)
 		if phase_name != "impact" or eff == null:
 			return
 		if eff.board_shake_intensity > 0.0:
@@ -312,8 +338,25 @@ func _do_move(index: int, is_player: bool) -> void:
 	_log("%s → celda %d" % [label, index])
 
 	if result.is_win:
+		# Win line
+		var win_positions := PackedVector2Array()
+		for idx in result.winning_pattern:
+			win_positions.append(cells[idx].get_center_position())
+		var win_color: Color
+		if win_line_auto_color_check.button_pressed:
+			win_color = PLAYER_COLOR if logic.winner == 1 else OPPONENT_COLOR
+		else:
+			win_color = win_line_color_picker.color
+		var win_width: float = float(win_line_width_spin.value)
+		_win_line_node = screen_fx.play_win_line(win_positions, win_color, win_width)
+		# Audio
+		if board_audio:
+			board_audio.play_sfx("win")
+			board_audio.duck_bgm(0.5)
 		_log("[color=green]VICTORIA: %s[/color]" % ("J1" if logic.winner == 1 else "J2"))
 	elif result.is_draw:
+		if board_audio:
+			board_audio.play_sfx("draw")
 		_log("[color=yellow]EMPATE[/color]")
 
 	_update_status()
@@ -478,6 +521,54 @@ func _build_ui() -> void:
 	opponent_effect_option.select(0)
 	opponent_effect_option.item_selected.connect(func(idx: int): _on_effect_changed(false, idx))
 	left.add_child(opponent_effect_option)
+
+	left.add_child(HSeparator.new())
+	_lbl(left, "Audio", 13, Color(0.6, 0.6, 0.75))
+
+	var bgm_check := CheckBox.new()
+	bgm_check.text = "Música de fondo"
+	bgm_check.button_pressed = false
+	bgm_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	bgm_check.toggled.connect(func(on: bool):
+		if on: board_audio.play_bgm()
+		else: board_audio.stop_bgm()
+	)
+	left.add_child(bgm_check)
+
+	var sfx_h := HBoxContainer.new()
+	left.add_child(sfx_h)
+	var sfx_lbl := Label.new()
+	sfx_lbl.text = "Vol. SFX"
+	sfx_lbl.custom_minimum_size = Vector2(80, 0)
+	sfx_lbl.add_theme_font_size_override("font_size", 11)
+	sfx_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65))
+	sfx_h.add_child(sfx_lbl)
+	var sfx_slider := HSlider.new()
+	sfx_slider.min_value = 0.0
+	sfx_slider.max_value = 1.0
+	sfx_slider.step = 0.05
+	sfx_slider.value = 0.7
+	sfx_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sfx_slider.value_changed.connect(func(v: float): board_audio.set_sfx_volume(v))
+	sfx_h.add_child(sfx_slider)
+
+	var sound_theme := OptionButton.new()
+	sound_theme.add_item("Clásico")
+	sound_theme.add_item("Retro")
+	sound_theme.add_item("Suave")
+	sound_theme.select(0)
+	sound_theme.item_selected.connect(func(idx: int): board_audio.apply_theme(idx))
+	left.add_child(sound_theme)
+
+	left.add_child(HSeparator.new())
+	_lbl(left, "Línea victoria", 13, Color(0.6, 0.6, 0.75))
+	win_line_auto_color_check = CheckBox.new()
+	win_line_auto_color_check.text = "Color automático"
+	win_line_auto_color_check.button_pressed = true
+	win_line_auto_color_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	left.add_child(win_line_auto_color_check)
+	win_line_color_picker = _color_picker(left, "Color línea", Color(1.0, 0.9, 0.2))
+	win_line_width_spin = _spin(left, "Grosor", 2, 16, 6)
 
 	left.add_child(HSeparator.new())
 	_lbl(left, "Config visual", 13, Color(0.6, 0.6, 0.75))
@@ -651,17 +742,27 @@ func _on_design_changed(is_player: bool, idx: int) -> void:
 func _shake_board(intensity: float, duration: float) -> void:
 	if not board_frame:
 		return
-	var original_pos: Vector2 = board_frame.position
-	var steps: int = int(duration / 0.03)
+	# Shake both board_frame and piece_layer together so pieces stay aligned
+	var orig_board: Vector2 = board_frame.position
+	var orig_pieces: Vector2 = piece_layer.position
+	var steps: int = maxi(3, int(duration / 0.03))
+	var step_dur: float = duration / float(steps)
+
+	var tween := create_tween()
 	for i in steps:
 		var offset := Vector2(
 			randf_range(-intensity, intensity),
 			randf_range(-intensity, intensity)
 		)
-		var tw := board_frame.create_tween()
-		tw.tween_property(board_frame, "position", original_pos + offset, 0.03)
-		await tw.finished
-	board_frame.position = original_pos
+		tween.tween_callback(func():
+			board_frame.position = orig_board + offset
+			piece_layer.position = orig_pieces + offset
+		)
+		tween.tween_interval(step_dur)
+	tween.tween_callback(func():
+		board_frame.position = orig_board
+		piece_layer.position = orig_pieces
+	)
 
 
 func _apply_colors() -> void:
