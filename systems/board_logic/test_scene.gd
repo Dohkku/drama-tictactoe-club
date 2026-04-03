@@ -51,6 +51,13 @@ func _new_game() -> void:
 	for i in range(rules.num_players):
 		rules.pieces_per_player[i] = -1
 
+	# Validate rules
+	var errors = rules.validate()
+	for err in errors:
+		_log("[color=red]Error: %s[/color]" % err)
+	if not errors.is_empty():
+		_log("[color=red]Corrige las reglas y pulsa Reset.[/color]")
+
 	board = BoardLogicScript.new(rules)
 
 	# Setup AI players from config
@@ -139,6 +146,13 @@ func _do_player_move(index: int) -> void:
 		if not p.begins_with("move_count_"):
 			_log("  Patrón: %s" % p)
 
+	# Show near-win details
+	for p_id in board.get_all_players():
+		var near = board.get_near_wins(p_id)
+		for nw in near:
+			var c = BoardLogicScript.piece_color(p_id).to_html(false)
+			_log("  [color=#%s]J%d casi gana: falta celda %d[/color]" % [c, p_id, nw.missing_cell])
+
 	_update_display()
 
 	if board.game_over:
@@ -176,8 +190,12 @@ func _show_game_result() -> void:
 		_log("[color=#%s]VICTORIA de J%d (%s)[/color]" % [
 			color_hex, board.winner, board.piece_to_string(board.winner)
 		])
+		if not board.winning_pattern.is_empty():
+			_log("  Línea ganadora: celdas %s" % str(board.winning_pattern))
 	else:
 		_log("[color=yellow]EMPATE[/color]")
+	# Show global history summary
+	_log("  Historial: %d movimientos totales" % board.global_history.size())
 
 
 func _update_display() -> void:
@@ -191,12 +209,20 @@ func _update_display() -> void:
 			btn.text = board.piece_to_string(cell_val)
 			btn.add_theme_color_override("font_color", BoardLogicScript.piece_color(cell_val))
 
-	# Highlight valid moves
+	# Highlight cells: winning pattern or valid moves
 	var valid = board.get_valid_moves()
 	for i in range(cell_buttons.size()):
 		var btn: Button = cell_buttons[i]
 		var style: StyleBoxFlat = btn.get_theme_stylebox("normal").duplicate()
-		if not board.game_over and i in valid and ai_players.get(board.current_turn) == null:
+		if board.game_over and i in board.winning_pattern:
+			# Winning cells glow with winner's color
+			style.bg_color = BoardLogicScript.piece_color(board.winner).darkened(0.5)
+			style.border_color = BoardLogicScript.piece_color(board.winner)
+			style.border_width_bottom = 3
+			style.border_width_top = 3
+			style.border_width_left = 3
+			style.border_width_right = 3
+		elif not board.game_over and i in valid and ai_players.get(board.current_turn) == null:
 			style.border_color = BoardLogicScript.piece_color(board.current_turn).darkened(0.3)
 		else:
 			style.border_color = Color(0.25, 0.25, 0.35)
@@ -333,6 +359,34 @@ func _build_ui() -> void:
 	left.add_child(player_config_container)
 
 	left.add_child(HSeparator.new())
+
+	var undo_redo_hbox := HBoxContainer.new()
+	undo_redo_hbox.add_theme_constant_override("separation", 6)
+	left.add_child(undo_redo_hbox)
+
+	var undo_btn := Button.new()
+	undo_btn.text = "Undo"
+	undo_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	undo_btn.custom_minimum_size = Vector2(0, 34)
+	undo_btn.pressed.connect(func():
+		if board.undo():
+			_log("[color=gray]Undo[/color]")
+			_update_display()
+		else:
+			_log("Nada que deshacer."))
+	undo_redo_hbox.add_child(undo_btn)
+
+	var redo_btn := Button.new()
+	redo_btn.text = "Redo"
+	redo_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	redo_btn.custom_minimum_size = Vector2(0, 34)
+	redo_btn.pressed.connect(func():
+		if board.redo():
+			_log("[color=gray]Redo[/color]")
+			_update_display()
+		else:
+			_log("Nada que rehacer."))
+	undo_redo_hbox.add_child(redo_btn)
 
 	var reset_btn := Button.new()
 	reset_btn.text = "RESET / NUEVA PARTIDA"

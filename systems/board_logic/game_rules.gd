@@ -100,6 +100,26 @@ func _generate_standard_patterns() -> Array:
 	return patterns
 
 
+## Validate rules. Returns array of error strings (empty = valid).
+func validate() -> Array[String]:
+	var errors: Array[String] = []
+	if num_players < 2:
+		errors.append("Mínimo 2 jugadores (actual: %d)" % num_players)
+	if num_players > 6:
+		errors.append("Máximo 6 jugadores (actual: %d)" % num_players)
+	if board_size < 3:
+		errors.append("Tamaño mínimo 3 (actual: %d)" % board_size)
+	if win_length > board_size:
+		errors.append("Fichas para ganar (%d) no puede ser mayor que tamaño (%d)" % [win_length, board_size])
+	if win_length < 3:
+		errors.append("Mínimo 3 en raya para ganar (actual: %d)" % win_length)
+	if num_players > get_total_cells():
+		errors.append("Más jugadores (%d) que celdas (%d)" % [num_players, get_total_cells()])
+	if max_pieces_per_player > 0 and max_pieces_per_player < win_length:
+		errors.append("Máx fichas (%d) menor que fichas para ganar (%d) — imposible ganar" % [max_pieces_per_player, win_length])
+	return errors
+
+
 ## Presets
 
 static func standard() -> Resource:

@@ -26,8 +26,18 @@ var game_over: bool = false
 var winner: int = EMPTY
 var move_count: int = 0
 
+## Cells that formed the winning line (empty if no winner yet)
+var winning_pattern: Array[int] = []
+
 ## Move history per player: { player_id: Array[int] of cell indices }
 var move_history: Dictionary = {}
+
+## Global ordered history: [{player: int, cell: int, move_number: int, removed_cell: int}]
+var global_history: Array[Dictionary] = []
+
+## Undo stack: array of full states for undo/redo
+var _undo_stack: Array[Dictionary] = []
+var _redo_stack: Array[Dictionary] = []
 
 var _win_patterns: Array = []
 
@@ -48,10 +58,14 @@ func _setup() -> void:
 	move_history.clear()
 	for p in range(1, rules.num_players + 1):
 		move_history[p] = [] as Array[int]
+	global_history.clear()
+	winning_pattern.clear()
+	_undo_stack.clear()
+	_redo_stack.clear()
 
 
 func make_move(index: int) -> Dictionary:
-	## Returns {success: bool, removed_cell: int (-1 if none)}
+	## Returns {success, removed_cell, winning_pattern (if game won)}
 	var result = {"success": false, "removed_cell": -1}
 
 	if game_over:
@@ -60,6 +74,10 @@ func make_move(index: int) -> Dictionary:
 		return result
 	if cells[index] != EMPTY and not rules.allow_overwrite:
 		return result
+
+	# Save state for undo before modifying
+	_undo_stack.append(get_state())
+	_redo_stack.clear()
 
 	var piece = current_turn
 	var history: Array = move_history.get(piece, [])
@@ -71,6 +89,7 @@ func make_move(index: int) -> Dictionary:
 			cells[oldest] = EMPTY
 			result.removed_cell = oldest
 		elif rules.overflow_mode == "block":
+			_undo_stack.pop_back()  # Remove saved state since move failed
 			return result
 
 	cells[index] = piece
@@ -78,9 +97,20 @@ func make_move(index: int) -> Dictionary:
 	move_history[piece] = history
 	move_count += 1
 
-	if _check_winner(piece):
+	# Record in global history
+	global_history.append({
+		"player": piece,
+		"cell": index,
+		"move_number": move_count,
+		"removed_cell": result.removed_cell,
+	})
+
+	var win_pat = _find_winning_pattern(piece)
+	if not win_pat.is_empty():
 		game_over = true
 		winner = piece
+		winning_pattern = win_pat
+		result["winning_pattern"] = win_pat
 	elif _check_draw():
 		game_over = true
 		winner = EMPTY
@@ -89,6 +119,37 @@ func make_move(index: int) -> Dictionary:
 
 	result.success = true
 	return result
+
+
+## Undo the last move. Returns true if successful.
+func undo() -> bool:
+	if _undo_stack.is_empty():
+		return false
+	_redo_stack.append(get_state())
+	var prev = _undo_stack.pop_back()
+	load_state(prev)
+	# Remove last global_history entry (it's part of the state but we restore separately)
+	if not global_history.is_empty():
+		global_history.pop_back()
+	return true
+
+
+## Redo a previously undone move. Returns true if successful.
+func redo() -> bool:
+	if _redo_stack.is_empty():
+		return false
+	_undo_stack.append(get_state())
+	var next = _redo_stack.pop_back()
+	load_state(next)
+	return true
+
+
+func can_undo() -> bool:
+	return not _undo_stack.is_empty()
+
+
+func can_redo() -> bool:
+	return not _redo_stack.is_empty()
 
 
 func _advance_turn() -> void:
@@ -113,9 +174,13 @@ func reset() -> void:
 	game_over = false
 	winner = EMPTY
 	move_count = 0
+	winning_pattern.clear()
 	move_history.clear()
 	for p in range(1, rules.num_players + 1):
 		move_history[p] = [] as Array[int]
+	global_history.clear()
+	_undo_stack.clear()
+	_redo_stack.clear()
 
 
 func get_state() -> Dictionary:
@@ -129,6 +194,8 @@ func get_state() -> Dictionary:
 		"winner": winner,
 		"move_count": move_count,
 		"move_history": hist_copy,
+		"winning_pattern": winning_pattern.duplicate(),
+		"global_history": global_history.duplicate(true),
 	}
 
 
@@ -138,11 +205,13 @@ func load_state(state: Dictionary) -> void:
 	game_over = state.game_over
 	winner = state.winner
 	move_count = state.move_count
+	winning_pattern.assign(state.get("winning_pattern", []))
 	move_history.clear()
 	var hist: Dictionary = state.get("move_history", {})
 	for p in hist:
 		move_history[p] = (hist[p] as Array).duplicate()
-	# Backward compat: old saves with move_history_x / move_history_o
+	global_history = state.get("global_history", []).duplicate(true)
+	# Backward compat
 	if move_history.is_empty() and state.has("move_history_x"):
 		move_history[1] = (state.move_history_x as Array).duplicate()
 		move_history[2] = (state.move_history_o as Array).duplicate()
@@ -167,16 +236,34 @@ func get_all_players() -> Array[int]:
 	return players
 
 
+## Returns all near-win situations for a player.
+## Each entry: {pattern: Array[int], missing_cell: int}
+func get_near_wins(piece: int) -> Array[Dictionary]:
+	var results: Array[Dictionary] = []
+	for pattern in _win_patterns:
+		var piece_count := 0
+		var empty_count := 0
+		var empty_cell := -1
+		for idx in pattern:
+			if cells[idx] == piece:
+				piece_count += 1
+			elif cells[idx] == EMPTY:
+				empty_count += 1
+				empty_cell = idx
+		if piece_count == rules.win_length - 1 and empty_count == 1:
+			results.append({"pattern": Array(pattern, TYPE_INT, "", null), "missing_cell": empty_cell})
+	return results
+
+
 func detect_patterns(last_move: int, piece: int) -> Array[String]:
 	var patterns: Array[String] = []
 	var s = rules.board_size
 
-	# Center taken (only for odd-sized boards)
+	# Center taken
 	if s % 2 == 1:
 		var center = (s * s) / 2
 		if last_move == center:
 			patterns.append("center_taken_by_%d" % piece)
-			# 2-player compat
 			if rules.num_players == 2:
 				patterns.append("center_taken_by_%s" % ("player" if piece == 1 else "opponent"))
 
@@ -187,11 +274,11 @@ func detect_patterns(last_move: int, piece: int) -> Array[String]:
 		if rules.num_players == 2:
 			patterns.append("corner_taken_by_%s" % ("player" if piece == 1 else "opponent"))
 
-	# Near win per player
+	# Near win per player (with detail)
 	for p in get_all_players():
-		if _has_near_win(p):
+		var near = get_near_wins(p)
+		if not near.is_empty():
 			patterns.append("player_%d_near_win" % p)
-	# 2-player compat
 	if rules.num_players == 2:
 		if _has_near_win(1):
 			patterns.append("player_near_win")
@@ -199,7 +286,8 @@ func detect_patterns(last_move: int, piece: int) -> Array[String]:
 			patterns.append("opponent_near_win")
 
 	# Fork
-	if _count_near_wins(piece) >= 2:
+	var near_count = get_near_wins(piece).size()
+	if near_count >= 2:
 		patterns.append("player_%d_fork" % piece)
 		if rules.num_players == 2:
 			patterns.append("%s_fork" % ("player" if piece == 1 else "opponent"))
@@ -207,10 +295,10 @@ func detect_patterns(last_move: int, piece: int) -> Array[String]:
 	# Move count
 	patterns.append("move_count_%d" % move_count)
 
-	# Rotation happened
+	# Rotation
 	if rules.max_pieces_per_player > 0:
-		var history: Array = move_history.get(piece, [])
-		if history.size() >= rules.max_pieces_per_player:
+		var hist: Array = move_history.get(piece, [])
+		if hist.size() >= rules.max_pieces_per_player:
 			patterns.append("player_%d_piece_rotated" % piece)
 			if rules.num_players == 2:
 				patterns.append("%s_piece_rotated" % ("player" if piece == 1 else "opponent"))
@@ -218,7 +306,8 @@ func detect_patterns(last_move: int, piece: int) -> Array[String]:
 	return patterns
 
 
-func _check_winner(piece: int) -> bool:
+## Find the winning pattern for a piece. Returns the cell indices or empty array.
+func _find_winning_pattern(piece: int) -> Array[int]:
 	for pattern in _win_patterns:
 		var all_match := true
 		for idx in pattern:
@@ -226,8 +315,14 @@ func _check_winner(piece: int) -> bool:
 				all_match = false
 				break
 		if all_match:
-			return true
-	return false
+			var result: Array[int] = []
+			result.assign(pattern)
+			return result
+	return [] as Array[int]
+
+
+func _check_winner(piece: int) -> bool:
+	return not _find_winning_pattern(piece).is_empty()
 
 
 func _check_draw() -> bool:
@@ -240,19 +335,8 @@ func _check_draw() -> bool:
 
 
 func _has_near_win(piece: int) -> bool:
-	return _count_near_wins(piece) > 0
+	return not get_near_wins(piece).is_empty()
 
 
 func _count_near_wins(piece: int) -> int:
-	var count := 0
-	for pattern in _win_patterns:
-		var piece_count := 0
-		var empty_count := 0
-		for idx in pattern:
-			if cells[idx] == piece:
-				piece_count += 1
-			elif cells[idx] == EMPTY:
-				empty_count += 1
-		if piece_count == rules.win_length - 1 and empty_count == 1:
-			count += 1
-	return count
+	return get_near_wins(piece).size()
