@@ -1,0 +1,65 @@
+# Finale — After the simultaneous round
+
+@scene finale
+
+[fullscreen]
+[wait 0.5]
+
+[enter mei center_left left]
+[enter akira center_right right]
+[look_at mei player]
+[look_at akira player]
+
+[pose mei idle]
+[pose akira arms_crossed]
+
+mei "calm" -> player: Bueno... el torneo ha terminado.
+
+[if flag player_wins]
+[pose akira defeated]
+akira "surprised": No puedo creerlo... Has sobrevivido a todo.
+[pose mei thinking]
+mei "respect" -> player: Impresionante. De verdad.
+[else]
+akira "smirk": No estuvo mal, novato. Para ser tu primer día.
+mei "calm": Has mostrado potencial.
+[end_if]
+
+[wait 0.3]
+
+[pose akira idle]
+[look_at akira mei]
+akira "neutral" -> mei: Oye, Mei...
+
+[look_at mei akira]
+mei "calm" -> akira: ¿Qué?
+
+[look_at akira player]
+[pose akira excited]
+akira "confident" -> player: Bienvenido al Club de Tres en Raya.
+
+[shake 0.3 0.15]
+player "determined": ¡Gracias!
+
+mei "calm": A partir de ahora, las cosas se ponen interesantes.
+
+[close_up akira 1.3 0.4]
+[pose akira leaning_forward]
+akira "intense" -> player: La próxima vez... no seré tan blando.
+
+[camera_reset 0.3]
+
+[close_up mei 1.2 0.3]
+mei "analytical" -> player: Y yo tendré nuevas estrategias.
+
+[camera_reset 0.3]
+
+player "determined": (Este club... va a ser increíble.)
+
+[wait 0.5]
+
+[exit akira right]
+[exit mei left]
+
+[wait 1.0]
+@end

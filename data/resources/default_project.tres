@@ -6,54 +6,127 @@
 [ext_resource type="Script" path="res://data/tournament_event.gd" id="4_tpq56"]
 [ext_resource type="Script" path="res://match_system/match_config.gd" id="5_ixqy3"]
 [ext_resource type="Script" path="res://data/project_data.gd" id="6_0mhrx"]
+[ext_resource type="Script" path="res://data/board_config.gd" id="7_bcfg1"]
+[ext_resource type="Script" path="res://board/game_rules.gd" id="8_grls1"]
 
-[sub_resource type="Resource" id="Resource_jm47l"]
+[sub_resource type="Resource" id="Resource_rules"]
+script = ExtResource("8_grls1")
+board_size = 3
+win_length = 3
+
+[sub_resource type="Resource" id="Resource_bcfg"]
+script = ExtResource("7_bcfg1")
+game_rules = SubResource("Resource_rules")
+max_board_size = 420
+cell_color_empty = Color(0.88, 0.85, 0.78, 1)
+cell_color_alt = Color(0.22, 0.25, 0.3, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.75, 0.72, 0.65, 1)
+cell_line_color = Color(0.4, 0.35, 0.3, 1)
+cell_line_width = 1.5
+board_border_enabled = true
+board_border_color = Color(0.45, 0.35, 0.25, 1)
+board_border_width = 10.0
+hand_area_height = 50
+piece_cell_ratio = 0.85
+default_player_color = Color(0.2, 0.5, 1, 1)
+default_opponent_color = Color(0.9, 0.2, 0.2, 1)
+board_bg_color = Color(0.3, 0.28, 0.24, 1)
+
+[sub_resource type="Resource" id="Resource_evt0"]
 script = ExtResource("4_tpq56")
 event_type = "cutscene"
 event_name = "Prologue"
 cutscene_script_path = "res://scene_scripts/scripts/prologue.dscn"
+order_index = 0
 
-[sub_resource type="Resource" id="Resource_fug3p"]
+[sub_resource type="Resource" id="Resource_mc1"]
 script = ExtResource("5_ixqy3")
 match_id = "match_01"
 opponent_id = "akira"
 ai_difficulty = 0.3
 intro_script = "res://scene_scripts/scripts/match_01_intro.dscn"
 reactions_script = "res://scene_scripts/scripts/match_01_reactions.dscn"
+player_style = "slam"
 opponent_style = "spinning"
 
-[sub_resource type="Resource" id="Resource_bebnh"]
+[sub_resource type="Resource" id="Resource_evt1"]
 script = ExtResource("4_tpq56")
-event_name = "First Duel"
-match_config = SubResource("Resource_fug3p")
+event_type = "match"
+event_name = "vs Akira"
+match_config = SubResource("Resource_mc1")
 order_index = 1
 
-[sub_resource type="Resource" id="Resource_ykg8p"]
+[sub_resource type="Resource" id="Resource_evt2"]
+script = ExtResource("4_tpq56")
+event_type = "cutscene"
+event_name = "Interlude"
+cutscene_script_path = "res://scene_scripts/scripts/interlude.dscn"
+order_index = 2
+
+[sub_resource type="Resource" id="Resource_mc2"]
+script = ExtResource("5_ixqy3")
+match_id = "match_02"
+opponent_id = "mei"
+ai_difficulty = 0.5
+intro_script = "res://scene_scripts/scripts/match_02_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/match_02_reactions.dscn"
+player_style = "slam"
+opponent_style = "gentle"
+
+[sub_resource type="Resource" id="Resource_evt3"]
+script = ExtResource("4_tpq56")
+event_type = "match"
+event_name = "vs Mei"
+match_config = SubResource("Resource_mc2")
+order_index = 3
+
+[sub_resource type="Resource" id="Resource_evt4"]
+script = ExtResource("4_tpq56")
+event_type = "cutscene"
+event_name = "Reto Final"
+cutscene_script_path = "res://scene_scripts/scripts/pre_simultaneous.dscn"
+order_index = 4
+
+[sub_resource type="Resource" id="Resource_sim_akira"]
 script = ExtResource("5_ixqy3")
 match_id = "sim_akira"
 opponent_id = "akira"
 ai_difficulty = 0.4
 intro_script = "res://scene_scripts/scripts/sim_intro.dscn"
 reactions_script = "res://scene_scripts/scripts/match_01_reactions.dscn"
+player_style = "slam"
 opponent_style = "spinning"
 turns_per_visit = 2
 
-[sub_resource type="Resource" id="Resource_4w4yh"]
+[sub_resource type="Resource" id="Resource_sim_mei"]
 script = ExtResource("5_ixqy3")
 match_id = "sim_mei"
 opponent_id = "mei"
+ai_difficulty = 0.5
 intro_script = "res://scene_scripts/scripts/sim_intro_mei.dscn"
 reactions_script = "res://scene_scripts/scripts/match_02_reactions.dscn"
+player_style = "slam"
+opponent_style = "gentle"
+turns_per_visit = 2
 
-[sub_resource type="Resource" id="Resource_gyvob"]
+[sub_resource type="Resource" id="Resource_evt5"]
 script = ExtResource("4_tpq56")
 event_type = "simultaneous"
-event_name = "Club Challenge"
-simultaneous_configs = Array[Resource]([SubResource("Resource_ykg8p"), SubResource("Resource_4w4yh")])
-order_index = 2
+event_name = "Ronda Simultanea"
+simultaneous_configs = Array[Resource]([SubResource("Resource_sim_akira"), SubResource("Resource_sim_mei")])
+order_index = 5
+
+[sub_resource type="Resource" id="Resource_evt6"]
+script = ExtResource("4_tpq56")
+event_type = "cutscene"
+event_name = "Finale"
+cutscene_script_path = "res://scene_scripts/scripts/finale.dscn"
+order_index = 6
 
 [resource]
 script = ExtResource("6_0mhrx")
 project_name = "Drama Tic Tac Toe Club"
 characters = Array[Resource]([ExtResource("1_miu0a"), ExtResource("2_eka5k"), ExtResource("3_q0uei")])
-events = Array[Resource]([SubResource("Resource_jm47l"), SubResource("Resource_bebnh"), SubResource("Resource_gyvob")])
+events = Array[Resource]([SubResource("Resource_evt0"), SubResource("Resource_evt1"), SubResource("Resource_evt2"), SubResource("Resource_evt3"), SubResource("Resource_evt4"), SubResource("Resource_evt5"), SubResource("Resource_evt6")])
+board_config = SubResource("Resource_bcfg")

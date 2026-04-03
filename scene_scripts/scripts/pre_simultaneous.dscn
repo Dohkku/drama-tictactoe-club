@@ -1,0 +1,57 @@
+# Pre-simultaneous — Setup for the final challenge
+
+@scene pre_simultaneous
+
+[fullscreen]
+[wait 0.3]
+
+[enter akira center_right right]
+[enter mei center_left left]
+[look_at akira player]
+[look_at mei player]
+
+[pose akira arms_crossed]
+akira "intense" -> player: Última prueba, novato.
+
+mei "calm" -> player: El reto final del club.
+
+[pose akira excited]
+akira "confident": ¡Ronda simultánea! Jugarás contra los dos al mismo tiempo.
+
+player "nervous": ¿Los dos... a la vez?
+
+[close_up mei 1.2 0.3]
+mei "analytical": Tendrás que dividir tu atención. Rotarás entre nuestros tableros.
+
+[camera_reset 0.3]
+
+[close_up akira 1.3 0.3]
+[pose akira leaning_forward]
+akira "smirk": Y no vamos a ser amables.
+
+[camera_reset 0.3]
+
+[pose mei idle]
+[pose akira idle]
+
+player "determined": (Puedo hacerlo. He llegado hasta aquí.)
+
+[choose]
+> Vamos allá -> confident_final
+> Esto es una locura -> nervous_final
+[end_choose]
+
+[if flag confident_final]
+akira "excited": ¡ASÍ SE HABLA!
+mei "calm": Interesante confianza.
+[else]
+akira "smirk": ¿Locura? Esto es el CLUB.
+mei "analytical": La locura es una perspectiva. Concéntrate.
+[end_if]
+
+[exit akira right]
+[exit mei left]
+
+[wait 0.3]
+[split]
+@end

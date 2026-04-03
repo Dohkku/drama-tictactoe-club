@@ -1,0 +1,45 @@
+# Interlude — Between match 1 and match 2
+# Mei appears to analyze the player after the first match.
+
+@scene interlude
+
+[fullscreen]
+[wait 0.3]
+
+[enter mei center left]
+[pose mei thinking]
+[look_at mei player]
+
+mei "analytical" -> player: Así que superaste a Akira...
+
+player "determined": No fue fácil.
+
+mei "calm": No debería haberlo sido. Akira es fuerte, aunque impulsivo.
+
+[pose mei arms_crossed]
+[close_up mei 1.2 0.3]
+mei "analytical" -> player: Pero yo no soy como él.
+
+[camera_reset 0.3]
+
+mei "calm" -> player: Akira juega con el corazón. Se emociona, se frustra, comete errores.
+
+[pose mei leaning_forward]
+mei "focused" -> player: Yo juego con la cabeza. Cada movimiento es un cálculo.
+
+player "nervous": (Esto va a ser muy diferente...)
+
+[pose mei idle]
+mei "calm": La siguiente partida será diferente. Tablero clásico, pero no esperes la misma energía.
+
+[wait 0.3]
+mei "analytical" -> player: ¿Preparado?
+
+player "determined": Siempre.
+
+[pose mei idle]
+mei "calm": Bien. Al tablero.
+
+[wait 0.3]
+[split]
+@end
