@@ -1,7 +1,8 @@
 class_name AIPlayer
 extends RefCounted
 
-const BL = preload("res://systems/board_logic/board_logic.gd")
+## AI player using paranoid minimax search.
+## For N players: maximizes own score, treats ALL other players as adversaries.
 
 var difficulty: float = 0.5
 var max_search_depth_override: int = -1
@@ -14,6 +15,7 @@ func choose_move(board) -> int:
 	if valid_moves.is_empty():
 		return -1
 
+	# Random chance based on difficulty (lower difficulty = more random)
 	if randf() > difficulty:
 		return valid_moves[randi() % valid_moves.size()]
 
@@ -35,7 +37,7 @@ func _minimax_best_move(board) -> int:
 		if not move_result.success:
 			board.load_state(snapshot)
 			continue
-		var score := _minimax(board, 1, false, ai_piece, max_depth)
+		var score := _minimax(board, 1, ai_piece, max_depth)
 		board.load_state(snapshot)
 
 		if score > best_score:
@@ -45,30 +47,34 @@ func _minimax_best_move(board) -> int:
 	return best_move
 
 
-func _minimax(board, depth: int, is_maximizing: bool, ai_piece: int, max_depth: int) -> int:
+func _minimax(board, depth: int, ai_piece: int, max_depth: int) -> int:
+	## Paranoid search: maximize when it's AI's turn, minimize for ALL other players.
 	if board.game_over:
 		return _score_game_over(board, ai_piece, depth)
 	if depth >= max_depth:
 		return _evaluate_position(board, ai_piece)
 
-	if is_maximizing:
+	var is_ai_turn: bool = (board.current_turn == ai_piece)
+
+	if is_ai_turn:
 		var best := -WIN_SCORE * 2
 		for move in board.get_valid_moves():
 			var snapshot = board.get_state()
 			var move_result = board.make_move(move)
 			if move_result.success:
-				best = maxi(best, _minimax(board, depth + 1, false, ai_piece, max_depth))
+				best = maxi(best, _minimax(board, depth + 1, ai_piece, max_depth))
 			board.load_state(snapshot)
 		if best <= -WIN_SCORE * 2:
 			return _evaluate_position(board, ai_piece)
 		return best
 	else:
+		# Any opponent's turn: minimize AI's score (paranoid assumption)
 		var best := WIN_SCORE * 2
 		for move in board.get_valid_moves():
 			var snapshot = board.get_state()
 			var move_result = board.make_move(move)
 			if move_result.success:
-				best = mini(best, _minimax(board, depth + 1, true, ai_piece, max_depth))
+				best = mini(best, _minimax(board, depth + 1, ai_piece, max_depth))
 			board.load_state(snapshot)
 		if best >= WIN_SCORE * 2:
 			return _evaluate_position(board, ai_piece)
@@ -76,31 +82,31 @@ func _minimax(board, depth: int, is_maximizing: bool, ai_piece: int, max_depth: 
 
 
 func _score_game_over(board, ai_piece: int, depth: int) -> int:
-	var opponent_piece = BL.Piece.X if ai_piece == BL.Piece.O else BL.Piece.O
 	if board.winner == ai_piece:
 		return WIN_SCORE - depth
-	if board.winner == opponent_piece:
+	if board.winner != 0:  # Some other player won = bad for AI
 		return depth - WIN_SCORE
-	return 0
+	return 0  # Draw
 
 
 func _evaluate_position(board, ai_piece: int) -> int:
-	var opponent_piece = BL.Piece.X if ai_piece == BL.Piece.O else BL.Piece.O
 	var score := 0
-
-	# Tactical pressure: near wins and near losses.
-	score += board._count_near_wins(ai_piece) * 90
-	score -= board._count_near_wins(opponent_piece) * 110
-
-	# Strategic pressure: open lines with only one owner.
 	var win_length: int = board.rules.win_length
+
+	# Tactical: near wins for AI vs near wins for any opponent
+	score += board._count_near_wins(ai_piece) * 90
+	for p in board.get_all_players():
+		if p != ai_piece:
+			score -= board._count_near_wins(p) * 110
+
+	# Strategic: line control
 	for pattern in board.rules.get_win_patterns():
 		var ai_count := 0
 		var opponent_count := 0
 		for idx in pattern:
 			if board.cells[idx] == ai_piece:
 				ai_count += 1
-			elif board.cells[idx] == opponent_piece:
+			elif board.cells[idx] != 0:
 				opponent_count += 1
 
 		if ai_count > 0 and opponent_count > 0:
@@ -110,13 +116,13 @@ func _evaluate_position(board, ai_piece: int) -> int:
 		elif opponent_count > 0:
 			score -= _line_score(opponent_count, win_length)
 
-	# Favor center on odd boards.
-	var size = board.rules.board_size
-	if size % 2 == 1:
-		var center = int((size * size) / 2)
+	# Favor center on odd boards
+	var bsize = board.rules.board_size
+	if bsize % 2 == 1:
+		var center = int((bsize * bsize) / 2)
 		if board.cells[center] == ai_piece:
 			score += 8
-		elif board.cells[center] == opponent_piece:
+		elif board.cells[center] != 0:
 			score -= 8
 
 	return score
@@ -134,26 +140,26 @@ func _resolve_max_depth(board) -> int:
 	if max_search_depth_override > 0:
 		return max_search_depth_override
 
-	# Standard 3x3 tic-tac-toe can be solved to terminal states cheaply.
-	var is_standard_small = (
-		board.cells.size() <= 9
-		and board.rules.max_pieces_per_player <= 0
-		and not board.rules.allow_overwrite
-	)
-	if is_standard_small:
-		return 9
+	var cell_count = board.cells.size()
+	var np = board.rules.num_players
 
+	# More players = shallower search (branching factor stays same but game tree is deeper)
 	var base_depth: int
-	if board.cells.size() <= 9:
-		base_depth = 6
-	elif board.cells.size() <= 16:
+	if cell_count <= 9 and np == 2 and board.rules.max_pieces_per_player <= 0:
+		return 9  # Solve 3x3 2-player completely
+	elif cell_count <= 9:
+		base_depth = 5
+	elif cell_count <= 16:
 		base_depth = 4
 	else:
 		base_depth = 3
 
-	# Rotating/overflow boards can cycle forever; cap a bit lower.
+	# Reduce depth for more players (game tree grows)
+	if np > 2:
+		base_depth = max(2, base_depth - (np - 2))
+
 	if board.rules.max_pieces_per_player > 0:
-		base_depth = min(base_depth, 5)
+		base_depth = min(base_depth, 4)
 
 	var bonus = int(round(difficulty * 2.0))
-	return clampi(base_depth + bonus, 2, 8)
+	return clampi(base_depth + bonus, 2, 7)
