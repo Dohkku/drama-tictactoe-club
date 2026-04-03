@@ -23,8 +23,7 @@ func flash(color: Color, duration: float = 0.1) -> void:
 
 func play_win_line(positions: PackedVector2Array, color: Color = Color.WHITE,
 		width: float = 6.0, duration: float = 0.4, glow: bool = true,
-		pulse: bool = true, pulse_speed: float = 1.5,
-		particles: bool = true) -> Control:
+		pulse: bool = true, pulse_speed: float = 1.5) -> Control:
 	var line := _WinLine.new()
 	var local_pts := PackedVector2Array()
 	for pt in positions:
@@ -35,7 +34,6 @@ func play_win_line(positions: PackedVector2Array, color: Color = Color.WHITE,
 	line.glow_enabled = glow
 	line.pulse_enabled = pulse
 	line.pulse_speed = pulse_speed
-	line.particles_enabled = particles
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	line.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(line)
@@ -108,12 +106,10 @@ class _WinLine extends Control:
 	var glow_enabled: bool = true
 	var pulse_enabled: bool = true
 	var pulse_speed: float = 1.5
-	var particles_enabled: bool = true
 	var _progress: float = 0.0
 	var _total_length: float = 0.0
 	var _pulse_phase: float = 0.0
 	var _draw_complete: bool = false
-	var _particles_spawned: bool = false
 
 	func play(duration: float) -> void:
 		_total_length = 0.0
@@ -123,37 +119,7 @@ class _WinLine extends Control:
 			return
 		var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 		tween.tween_method(_set_progress, 0.0, 1.0, duration)
-		tween.tween_callback(_on_draw_complete)
-
-	func _on_draw_complete() -> void:
-		_draw_complete = true
-		if particles_enabled and not _particles_spawned:
-			_spawn_particles()
-			_particles_spawned = true
-
-	func _spawn_particles() -> void:
-		# Sparkle particles along each cell point
-		for pt in points:
-			var p := CPUParticles2D.new()
-			p.position = pt
-			p.emitting = true
-			p.one_shot = false
-			p.amount = 8
-			p.lifetime = 0.8
-			p.explosiveness = 0.0
-			p.direction = Vector2(0, -1)
-			p.spread = 180.0
-			p.initial_velocity_min = 10.0
-			p.initial_velocity_max = 30.0
-			p.scale_amount_min = 1.5
-			p.scale_amount_max = 3.0
-			p.gravity = Vector2.ZERO
-			p.color = line_color
-			var gradient := Gradient.new()
-			gradient.set_color(0, line_color)
-			gradient.set_color(1, Color(line_color, 0.0))
-			p.color_ramp = gradient
-			add_child(p)
+		tween.tween_callback(func(): _draw_complete = true)
 
 	func _process(delta: float) -> void:
 		if _draw_complete and pulse_enabled:
