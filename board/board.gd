@@ -24,7 +24,7 @@ var ai: RefCounted
 var cells: Array[Control] = []
 var player_piece: int = 1
 var ai_piece: int = 2
-var input_enabled: bool = true
+var input_enabled: bool = false  # Starts disabled — MatchManager/SceneRunner enables when ready
 var _animating: bool = false
 
 var player_style: Resource = null
@@ -152,6 +152,8 @@ func _start_game() -> void:
 
 
 func _on_cell_clicked(index: int) -> void:
+	if not input_enabled or _animating or logic.game_over:
+		return
 	game_controller.handle_cell_click(index)
 
 
@@ -227,6 +229,8 @@ func _deferred_snap_layout() -> void:
 
 func full_reset(new_rules: Resource = null) -> void:
 	## Tear down and rebuild the board with (optionally) new rules.
+	input_enabled = false
+	_animating = false
 	if new_rules:
 		game_rules = new_rules
 
