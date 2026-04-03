@@ -25,7 +25,9 @@ var _character_registry: Dictionary = {}    # character_id -> CharacterData reso
 var _character_positions: Dictionary = {}   # character_id -> position name
 var _character_depth: Dictionary = {}       # character_id -> float (1.0 = normal, >1 = closer, <1 = farther)
 var _camera_active: bool = false            # True during close_up/pull_back to avoid resize conflicts
+var show_position_markers: bool = false
 var camera_effects: Node = null
+var _markers_overlay: Control = null
 var _camera = null   # CinematicCamera instance
 var _speed_lines = null  # SpeedLinesEffect node
 
@@ -113,7 +115,6 @@ func exit_character(character_id: String, direction: String = "") -> void:
 	characters_on_stage.erase(character_id)
 	_character_positions.erase(character_id)
 	_character_depth.erase(character_id)
-	_reposition_all()  # Re-adapt sizes after removal
 	EventBus.character_exited.emit(character_id)
 
 
@@ -384,28 +385,21 @@ func _calc_slot_position(fraction: float) -> Vector2:
 func _calc_slot_size() -> Vector2:
 	var layer_size = character_layer.size
 	# Height-based sizing: aspect ratio is ALWAYS preserved
-	var h = layer_size.y * CHAR_HEIGHT_RATIO
-	var w = h * CHAR_ASPECT
-
-	# Scale down if too many characters for available width
-	var char_count = max(1, characters_on_stage.size())
-	var max_w = layer_size.x / max(char_count, 2.0) * 0.85
+	var h: float = layer_size.y * CHAR_HEIGHT_RATIO
+	var w: float = h * CHAR_ASPECT
+	# Clamp width but always keep aspect ratio
+	var max_w: float = layer_size.x * 0.35
 	if w > max_w:
 		w = max_w
 		h = w / CHAR_ASPECT
-
 	return Vector2(w, h)
 
 
 func _reposition_all() -> void:
-	var count = characters_on_stage.size()
 	for id in characters_on_stage:
 		var slot = characters_on_stage[id]
 		var pos_name = _character_positions.get(id, "center")
 		var fraction = POSITIONS.get(pos_name, 0.5)
-		# Auto-center when only one character on stage
-		if count == 1:
-			fraction = 0.5
 		_apply_slot_position(slot, fraction)
 		var depth = _character_depth.get(id, 1.0)
 		if depth != 1.0:
@@ -415,3 +409,43 @@ func _reposition_all() -> void:
 func _on_layer_resized() -> void:
 	if not _camera_active:
 		_reposition_all()
+	if show_position_markers:
+		_update_markers()
+
+
+func set_show_markers(val: bool) -> void:
+	show_position_markers = val
+	if val:
+		if not _markers_overlay:
+			_markers_overlay = _PositionMarkers.new()
+			_markers_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_markers_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+			# Add to CharacterLayer so markers move with the camera
+			character_layer.add_child(_markers_overlay)
+			character_layer.move_child(_markers_overlay, 0)  # Behind characters
+		_markers_overlay.positions = POSITIONS
+		_markers_overlay.visible = true
+		_markers_overlay.queue_redraw()
+	elif _markers_overlay:
+		_markers_overlay.visible = false
+
+
+func _update_markers() -> void:
+	if _markers_overlay and _markers_overlay.visible:
+		_markers_overlay.queue_redraw()
+
+
+class _PositionMarkers extends Control:
+	var positions: Dictionary = {}
+
+	func _draw() -> void:
+		if size == Vector2.ZERO:
+			return
+		var font: Font = ThemeDB.fallback_font
+		for pos_name in positions:
+			var fraction: float = positions[pos_name]
+			var x: float = size.x * fraction
+			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(1, 1, 1, 0.15), 1.0)
+			var dot_y: float = size.y - 20.0
+			draw_circle(Vector2(x, dot_y), 4.0, Color(1, 1, 1, 0.3))
+			draw_string(font, Vector2(x - 25, size.y - 4), pos_name, HORIZONTAL_ALIGNMENT_LEFT, 60, 8, Color(1, 1, 1, 0.3))

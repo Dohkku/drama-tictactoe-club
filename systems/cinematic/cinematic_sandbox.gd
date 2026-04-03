@@ -254,6 +254,81 @@ func _build_ui() -> void:
 	left.add_child(flash_btn)
 
 	left.add_child(HSeparator.new())
+	_lbl(left, "Transiciones", 13, Color(0.6, 0.6, 0.75))
+
+	_lbl(left, "Fade", 11, Color(0.55, 0.55, 0.65))
+	var fade_row := HBoxContainer.new()
+	fade_row.add_theme_constant_override("separation", 4)
+	left.add_child(fade_row)
+	var ftb := Button.new()
+	ftb.text = "To Black"
+	ftb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ftb.pressed.connect(func(): stage.camera_effects.fade_to_black(0.3); _log("Fade to black"))
+	_style_btn(ftb, Color(0.15, 0.15, 0.2))
+	fade_row.add_child(ftb)
+	var ffb := Button.new()
+	ffb.text = "From Black"
+	ffb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ffb.pressed.connect(func(): stage.camera_effects.fade_from_black(0.3); _log("Fade from black"))
+	_style_btn(ffb, Color(0.25, 0.25, 0.3))
+	fade_row.add_child(ffb)
+
+	var fade_row2 := HBoxContainer.new()
+	fade_row2.add_theme_constant_override("separation", 4)
+	left.add_child(fade_row2)
+	var ftw := Button.new()
+	ftw.text = "To White"
+	ftw.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ftw.pressed.connect(func(): stage.camera_effects.fade_to_white(0.2); _log("Fade to white"))
+	_style_btn(ftw, Color(0.4, 0.4, 0.45))
+	fade_row2.add_child(ftw)
+	var ffw := Button.new()
+	ffw.text = "From White"
+	ffw.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ffw.pressed.connect(func(): stage.camera_effects.fade_from_white(0.3); _log("Fade from white"))
+	_style_btn(ffw, Color(0.45, 0.45, 0.5))
+	fade_row2.add_child(ffw)
+
+	_lbl(left, "Speed lines", 11, Color(0.55, 0.55, 0.65))
+	var speed_row := HBoxContainer.new()
+	speed_row.add_theme_constant_override("separation", 4)
+	left.add_child(speed_row)
+	for dir in ["left", "right", "radial"]:
+		var sb := Button.new()
+		sb.text = dir
+		sb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var d: String = dir
+		sb.pressed.connect(func(): stage.camera_effects.speed_lines(d, 0.3); _log("Speed: %s" % d))
+		_style_btn(sb, Color(0.4, 0.35, 0.2))
+		speed_row.add_child(sb)
+
+	_lbl(left, "Telón cerrar", 11, Color(0.55, 0.55, 0.65))
+	var wipe_in_row := HBoxContainer.new()
+	wipe_in_row.add_theme_constant_override("separation", 4)
+	left.add_child(wipe_in_row)
+	for dir in ["left", "right", "down", "up"]:
+		var wb := Button.new()
+		wb.text = dir
+		wb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var d: String = dir
+		wb.pressed.connect(func(): stage.camera_effects.wipe(d, 0.3); _log("Telón cerrar: %s" % d))
+		_style_btn(wb, Color(0.3, 0.3, 0.45))
+		wipe_in_row.add_child(wb)
+
+	_lbl(left, "Telón abrir", 11, Color(0.55, 0.55, 0.65))
+	var wipe_out_row := HBoxContainer.new()
+	wipe_out_row.add_theme_constant_override("separation", 4)
+	left.add_child(wipe_out_row)
+	for dir in ["left", "right", "down", "up"]:
+		var wb := Button.new()
+		wb.text = dir
+		wb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var d: String = dir
+		wb.pressed.connect(func(): stage.camera_effects.wipe_out(d, 0.3); _log("Telón abrir: %s" % d))
+		_style_btn(wb, Color(0.35, 0.35, 0.5))
+		wipe_out_row.add_child(wb)
+
+	left.add_child(HSeparator.new())
 
 	# Background
 	_lbl(left, "Fondo", 13, Color(0.6, 0.6, 0.75))
@@ -288,6 +363,15 @@ func _build_ui() -> void:
 	_style_btn(title_btn, Color(0.4, 0.3, 0.5))
 	left.add_child(title_btn)
 
+	left.add_child(HSeparator.new())
+	_lbl(left, "Debug", 13, Color(0.6, 0.6, 0.75))
+	var markers_check := CheckBox.new()
+	markers_check.text = "Mostrar posiciones"
+	markers_check.button_pressed = true
+	markers_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	markers_check.toggled.connect(func(on: bool): stage.set_show_markers(on))
+	left.add_child(markers_check)
+
 	var clear_btn := Button.new()
 	clear_btn.text = "LIMPIAR ESCENA"
 	clear_btn.pressed.connect(_on_clear)
@@ -320,6 +404,9 @@ func _build_ui() -> void:
 	# Register characters
 	for c in _characters:
 		stage.register_character(c)
+
+	# Show position markers by default
+	stage.set_show_markers(true)
 
 	# Dialogue box below the stage
 	dialogue_box = DialogueBoxScene.instantiate()

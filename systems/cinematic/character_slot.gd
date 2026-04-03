@@ -59,33 +59,51 @@ func _update_pivot() -> void:
 	pivot_offset = size / 2.0
 
 
-func enter_character(data: Resource, _from_direction: String = "right") -> void:
+func enter_character(data: Resource, from_direction: String = "right") -> void:
 	character_data = data
 	visible = true
 	_apply_expression("neutral")
 	name_label.text = data.display_name
 
-	# Apply defaults from character data
 	if data.get("default_pose"):
 		set_body_state(data.default_pose)
 	if data.get("default_look"):
 		set_look_direction(data.default_look)
 
-	# Fade in at target position
-	modulate.a = 0.0
-	var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(self, "modulate:a", 1.0, 0.2)
-	await tween.finished
 	_base_position = position
+	modulate.a = 0.0
+
+	# Slide in from off-screen
+	var slide_offset: float = 0.0
+	if from_direction == "left":
+		slide_offset = -size.x * 1.5
+	elif from_direction == "right":
+		slide_offset = size.x * 1.5
+	var start_pos := Vector2(position.x + slide_offset, position.y)
+	position = start_pos
+
+	var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD).set_parallel(true)
+	tween.tween_property(self, "modulate:a", 1.0, ENTER_DURATION * 0.6)
+	tween.tween_property(self, "position", _base_position, ENTER_DURATION)
+	await tween.finished
+	position = _base_position
 	entrance_finished.emit()
 
 
-func exit_character(_to_direction: String = "right") -> void:
+func exit_character(to_direction: String = "right") -> void:
 	_stop_body_tween()
 
-	# Fade out at current position
-	var tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(self, "modulate:a", 0.0, 0.2)
+	var slide_offset: float = 0.0
+	if to_direction == "left":
+		slide_offset = -size.x * 1.5
+	elif to_direction == "right":
+		slide_offset = size.x * 1.5
+	var target_pos := Vector2(position.x + slide_offset, position.y)
+
+	var tween := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD).set_parallel(true)
+	tween.tween_property(self, "modulate:a", 0.0, EXIT_DURATION)
+	if slide_offset != 0.0:
+		tween.tween_property(self, "position", target_pos, EXIT_DURATION)
 	await tween.finished
 
 	character_data = null
