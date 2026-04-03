@@ -81,7 +81,7 @@ func position_hand_pieces(animate: bool = true) -> void:
 	if hand_band_h <= 24.0:
 		hand_band_h = 50.0
 	var cell_size = get_cell_size()
-	var hand_h: float = clamp(min(cell_size.y * 0.42, hand_band_h), 24.0, 96.0)
+	var hand_h: float = clamp(cell_size.y * get_piece_ratio(), 24.0, hand_band_h)
 	var piece_size = Vector2(hand_h, hand_h)
 	var gap = 4.0
 

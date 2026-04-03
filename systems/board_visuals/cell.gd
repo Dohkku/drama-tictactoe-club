@@ -7,7 +7,7 @@ signal cell_clicked(index: int)
 var is_occupied: bool = false
 var hovering: bool = false
 var input_enabled: bool = true
-var is_dark_cell: bool = false  # True if this cell uses the alternate color (checkerboard)
+var is_dark_cell: bool = false
 
 var color_empty := Color(0.92, 0.88, 0.82)
 var color_alt := Color(0.25, 0.27, 0.32)
@@ -15,6 +15,10 @@ var checkerboard := false
 var color_hover := Color(0.85, 0.80, 0.72)
 var color_line := Color(0.6, 0.5, 0.4)
 var line_width := 2.0
+
+var _hover_blend: float = 0.0
+var _hover_tween: Tween = null
+const _HOVER_SPEED := 0.12
 
 
 func _ready() -> void:
@@ -25,14 +29,16 @@ func _ready() -> void:
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	var base_color := color_alt if (checkerboard and is_dark_cell) else color_empty
-	var bg_color := color_hover if (hovering and not is_occupied and input_enabled) else base_color
+	var bg_color := base_color
+	if not is_occupied and input_enabled and _hover_blend > 0.0:
+		bg_color = base_color.lerp(color_hover, _hover_blend)
 	draw_rect(rect, bg_color)
 	draw_rect(rect, color_line, false, line_width)
 
 
 func _gui_input(event: InputEvent) -> void:
-	var is_click = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
-	var is_touch = event is InputEventScreenTouch and event.pressed
+	var is_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	var is_touch: bool = event is InputEventScreenTouch and event.pressed
 	if is_click or is_touch:
 		if not is_occupied and input_enabled:
 			cell_clicked.emit(cell_index)
@@ -59,9 +65,21 @@ func set_input_enabled(enabled: bool) -> void:
 
 func _on_mouse_entered() -> void:
 	hovering = true
-	queue_redraw()
+	_tween_hover(1.0)
 
 
 func _on_mouse_exited() -> void:
 	hovering = false
+	_tween_hover(0.0)
+
+
+func _tween_hover(target: float) -> void:
+	if _hover_tween and _hover_tween.is_valid():
+		_hover_tween.kill()
+	_hover_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	_hover_tween.tween_method(_set_hover_blend, _hover_blend, target, _HOVER_SPEED)
+
+
+func _set_hover_blend(val: float) -> void:
+	_hover_blend = val
 	queue_redraw()

@@ -34,6 +34,7 @@ var _win_line_node: Control = null
 var win_line_color_picker: ColorPickerButton
 var win_line_width_spin: SpinBox
 var win_line_auto_color_check: CheckBox
+var placement_offset_max: float = 0.0  # Max random offset as fraction of cell size (0 = perfect center)
 var log_lines: Array[String] = []
 
 # Piece selection (dormant — infrastructure for future ability-based pieces)
@@ -328,6 +329,14 @@ func _do_move(index: int, is_player: bool) -> void:
 	var piece_size = cell_size * 0.85
 	var offset = (cell_size - piece_size) / 2.0
 	var final_pos = target_pos + offset
+	# Random visual offset (imprecision)
+	if placement_offset_max > 0.0:
+		var max_px: float = cell_size.x * placement_offset_max
+		var rand_offset := Vector2(
+			randf_range(-max_px, max_px),
+			randf_range(-max_px, max_px)
+		)
+		final_pos += rand_offset
 
 	# Animate with phase hooks for screen effects
 	var style = current_style
@@ -395,6 +404,10 @@ func _do_move(index: int, is_player: bool) -> void:
 	elif result.is_draw:
 		if board_audio:
 			board_audio.play_sfx("draw")
+		# Visual: board cracks + gray wash
+		if screen_fx and board_frame:
+			var board_global_rect := Rect2(board_frame.global_position, board_frame.size)
+			screen_fx.play_draw_effect(board_global_rect, 1.5)
 		_log("[color=yellow]EMPATE[/color]")
 
 	_update_status()
@@ -650,6 +663,23 @@ func _build_ui() -> void:
 	win_line_color_picker = _color_picker(left, "Color línea", Color(1.0, 0.9, 0.2))
 	win_line_width_spin = _spin(left, "Grosor", 2, 16, 6)
 
+	var offset_h := HBoxContainer.new()
+	left.add_child(offset_h)
+	var offset_lbl := Label.new()
+	offset_lbl.text = "Imprecisión"
+	offset_lbl.custom_minimum_size = Vector2(80, 0)
+	offset_lbl.add_theme_font_size_override("font_size", 11)
+	offset_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65))
+	offset_h.add_child(offset_lbl)
+	var offset_slider := HSlider.new()
+	offset_slider.min_value = 0.0
+	offset_slider.max_value = 0.3
+	offset_slider.step = 0.01
+	offset_slider.value = 0.0
+	offset_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	offset_slider.value_changed.connect(func(v: float): placement_offset_max = v)
+	offset_h.add_child(offset_slider)
+
 	left.add_child(HSeparator.new())
 	_lbl(left, "Config visual", 13, Color(0.6, 0.6, 0.75))
 	checkerboard_check = CheckBox.new()
@@ -770,6 +800,22 @@ func _on_board_scale_changed(val: float) -> void:
 	if board_aspect:
 		board_aspect.custom_minimum_size = Vector2(val, val)
 	await get_tree().process_frame
+	_reflow_all_pieces()
+
+
+func _reflow_all_pieces() -> void:
+	var cell_size: Vector2 = _get_cell_size()
+	var piece_size: Vector2 = cell_size * 0.85
+	for cell_idx in cell_to_piece:
+		var p: Control = cell_to_piece[cell_idx]
+		if not is_instance_valid(p):
+			continue
+		var target_pos: Vector2 = _get_cell_pos_in_layer(cell_idx)
+		var offset: Vector2 = (cell_size - piece_size) / 2.0
+		p.size = piece_size
+		p.position = target_pos + offset
+		p.pivot_offset = piece_size / 2.0
+		p.queue_redraw()
 	_position_hand_pieces()
 
 
