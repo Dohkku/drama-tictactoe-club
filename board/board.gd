@@ -56,8 +56,6 @@ var state_manager: RefCounted    # BoardStateManager
 @onready var opponent_hand_area: Control = $"VBoxContainer/OpponentHandArea"
 @onready var player_hand_area: Control = $"VBoxContainer/PlayerHandArea"
 @onready var ability_bar: HBoxContainer = %AbilityBar
-@onready var double_play_button: Button = %DoublePlayButton
-@onready var steal_button: Button = %StealButton
 
 var _board_config: Resource = null
 var screen_effects: Control = null
@@ -147,6 +145,14 @@ func _apply_config_to_cell(cell: Control) -> void:
 func _connect_signals() -> void:
 	EventBus.board_input_enabled.connect(_on_input_toggle)
 	EventBus.layout_transition_finished.connect(_on_layout_transition_finished)
+	# Reflow pieces on every resize (keeps pieces aligned during layout transitions)
+	resized.connect(_on_board_resized)
+
+
+func _on_board_resized() -> void:
+	if cells.is_empty():
+		return
+	pieces.snap_layout()
 
 
 func _start_game() -> void:

@@ -26,8 +26,9 @@ var characters_on_stage: Dictionary = {}    # character_id -> CharacterSlot node
 var _character_registry: Dictionary = {}    # character_id -> CharacterData resource
 var _character_positions: Dictionary = {}   # character_id -> position name
 var _character_depth: Dictionary = {}       # character_id -> float (1.0 = normal, >1 = closer, <1 = farther)
-var _camera_active: bool = false            # True during close_up/pull_back to avoid resize conflicts
+var _camera_active: bool = false
 var show_position_markers: bool = false
+var _base_stage_size: Vector2 = Vector2.ZERO  # Reference size for consistent character scaling
 var camera_effects: Node = null
 var _markers_overlay: Control = null
 var _camera = null   # CinematicCamera instance
@@ -52,6 +53,11 @@ func _ready() -> void:
 	_speed_lines = speed_lines
 
 	character_layer.resized.connect(_on_layer_resized)
+
+	# Capture base size on first frame for consistent character scaling
+	await get_tree().process_frame
+	if character_layer.size != Vector2.ZERO:
+		_base_stage_size = character_layer.size
 
 	# Initial default background
 	background.set_background(Color(0.95, 0.91, 0.85))
@@ -401,10 +407,12 @@ func _calc_slot_position(fraction: float) -> Vector2:
 
 
 func _calc_slot_size() -> Vector2:
-	var layer_size: Vector2 = character_layer.size
-	var h: float = layer_size.y * CHAR_HEIGHT_RATIO
+	# Use base stage size for consistent character proportions across layout modes
+	var ref_size: Vector2 = _base_stage_size if _base_stage_size != Vector2.ZERO else character_layer.size
+	var h: float = ref_size.y * CHAR_HEIGHT_RATIO
 	var w: float = h * CHAR_ASPECT
-	var max_w: float = layer_size.x * CHAR_MAX_WIDTH_FRAC
+	# Clamp to current layer width so characters don't overflow in split mode
+	var max_w: float = character_layer.size.x * CHAR_MAX_WIDTH_FRAC
 	if w > max_w:
 		w = max_w
 		h = w / CHAR_ASPECT
