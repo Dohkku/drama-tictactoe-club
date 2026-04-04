@@ -1,0 +1,61 @@
+@scene s3_the_club
+
+[background gradient:#0f2027:#2c5364]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora left left]
+[enter ryu right right]
+[wait 0.4]
+
+[expression sora happy]
+[expression ryu neutral]
+
+Sora: ¡Bueno! Creo que ya es hora de que conozcas al resto del club.
+
+[enter akira center_left left]
+[wait 0.3]
+[expression akira neutral]
+[pose akira confident]
+
+[focus akira]
+Akira: Así que este es el famoso novato.
+
+[clear_focus]
+Sora: Akira, sé amable.
+
+[focus akira]
+[expression akira neutral]
+Akira: Yo siempre soy amable. En el tablero es donde no lo soy.
+
+[clear_focus]
+[enter mei center_right right]
+[wait 0.3]
+[expression mei neutral]
+[pose mei thinking]
+
+[focus mei]
+Mei: ...Tiene algo. Lo noto.
+
+[clear_focus]
+Sora: Mei es nuestra estratega. Ve cosas que nadie más ve.
+
+[focus mei]
+Mei: Cada movimiento cuenta una historia. Quiero leer la tuya.
+
+[clear_focus]
+[wait 0.3]
+
+[camera_mode smooth]
+[close_up sora 1.2]
+Sora: Y eso es todo. Bienvenido al club.
+
+[camera_reset]
+[wait 0.3]
+
+[close_up ryu 1.2]
+Ryu: No te acomodes. Aquí todo se gana.
+
+[camera_reset]
+
+[title_card "EL CLUB" "Continuará..."]

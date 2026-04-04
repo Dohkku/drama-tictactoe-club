@@ -1,0 +1,55 @@
+@scene s2_ryu_arrives
+
+[background gradient:#1a1a2e:#16222a]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora left left]
+[expression sora nervous]
+[wait 0.3]
+
+Sora: Ah... ahí viene.
+
+[enter ryu right right]
+[expression ryu cold]
+[pose ryu confident]
+[wait 0.3]
+
+[focus ryu]
+[close_up ryu 1.3]
+
+Ryu: ...
+
+[expression ryu neutral]
+Ryu: Otro novato.
+
+[camera_reset]
+[clear_focus]
+
+[focus sora]
+Sora: ¡No es un novato cualquiera, Ryu! ¡Es bastante bueno!
+
+[clear_focus]
+[focus ryu]
+
+[expression ryu cold]
+Ryu: Eso lo decidiré yo.
+
+[camera_mode snappy]
+[camera_snap_to ryu 1.4]
+[flash #ffffff 0.08]
+
+Ryu → Tú: El tablero revela quién eres. No hay donde esconderse.
+
+[wait 0.5]
+[camera_reset]
+[camera_mode smooth]
+
+[clear_focus]
+[exit sora left]
+[move ryu center]
+[wait 0.2]
+
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu: Empecemos.

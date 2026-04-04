@@ -1,0 +1,49 @@
+@reactions s1_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression sora sad]
+[pose sora defeated]
+[shake 0.3 0.2]
+Sora: ...¿En serio?
+[wait 0.4]
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Sabía que eras bueno! ¡Lo sabía!
+Sora: Ryu no se va a creer esto.
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression sora happy]
+[pose sora excited]
+[flash #ffcc00 0.12]
+Sora: {shake}¡Sí!{/shake}
+[wait 0.3]
+[pose sora idle]
+[expression sora nervous]
+Sora: Oye, no te preocupes. Era tu primera vez.
+Sora: Ya mejorarás... espero.
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression sora thinking]
+[pose sora thinking]
+Sora: Hmm... empate.
+[wait 0.3]
+[expression sora happy]
+Sora: Nada mal para ser tu primera partida aquí.
+@end
+
+@on center_taken
+[expression sora focused]
+@end
+
+@on near_win
+[expression sora nervous]
+[pose sora tense]
+@end

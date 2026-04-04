@@ -1,16 +1,16 @@
-@reactions tech_demo_match2_reactions
+@reactions s2_reactions
 
 @on player_wins
 [fullscreen]
 [board_disable]
 [expression ryu surprised]
 [pose ryu leaning_back]
-[shake 0.5 0.3]
-Ryu: ...Impresionante.
+[shake 0.4 0.3]
+Ryu: ...
 [wait 0.5]
 [expression ryu neutral]
 [pose ryu arms_crossed]
-Ryu: No subestimé a nadie. Simplemente... eres bueno.
+Ryu: Interesante. Puede que Sora tuviera razón sobre ti.
 @end
 
 @on opponent_wins
@@ -20,7 +20,7 @@ Ryu: No subestimé a nadie. Simplemente... eres bueno.
 [pose ryu confident]
 Ryu: Como esperaba.
 [wait 0.3]
-Ryu: Necesitas más práctica.
+Ryu: Vuelve cuando estés preparado de verdad.
 @end
 
 @on draw
@@ -28,10 +28,10 @@ Ryu: Necesitas más práctica.
 [board_disable]
 [expression ryu thinking]
 [pose ryu thinking]
-Ryu: Hmm. Equilibrio perfecto.
+Ryu: Equilibrio. No está mal.
 [wait 0.3]
 [expression ryu neutral]
-Ryu: Quizá la próxima vez sea diferente.
+Ryu: Pero el equilibrio no gana partidas.
 @end
 
 @on near_win

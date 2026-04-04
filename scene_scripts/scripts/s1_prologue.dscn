@@ -1,0 +1,41 @@
+@scene s1_prologue
+
+[background gradient:#0f0c29:#302b63]
+[title_card "EL CLUB" "Capítulo 1: La invitación"]
+[wait 1.5]
+
+[background gradient:#2b1055:#d53369]
+[camera_mode smooth]
+
+[enter sora center right]
+[expression sora happy]
+[pose sora excited]
+[wait 0.3]
+
+Sora: ¡Ey! ¡Tú! Sí, tú.
+Sora: ¿Sabes jugar al tres en raya?
+
+[pose sora idle]
+[expression sora serious]
+Sora: No me mires así. Aquí no es un juego de niños.
+
+[expression sora happy]
+[pose sora leaning_forward]
+Sora: Es {b}EL CLUB{/b}. Donde las mejores mentes del instituto se enfrentan.
+
+[pose sora arms_crossed]
+Sora: Y necesitamos sangre nueva.
+
+[expression sora nervous]
+Sora: Bueno... la verdad es que estamos un poco cortos de miembros...
+
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Pero eso no importa! Lo que importa es que estás aquí.
+Sora: Primera lección: una partida rápida contra mí.
+
+[expression sora focused]
+[pose sora confident]
+Sora → Tú: No me lo pongas fácil, ¿vale?
+
+[wait 0.3]

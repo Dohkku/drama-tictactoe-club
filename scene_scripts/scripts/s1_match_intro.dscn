@@ -1,0 +1,12 @@
+@scene s1_match_intro
+
+[background gradient:#2b1055:#d53369]
+[enter sora center left]
+[expression sora happy]
+[pose sora confident]
+[wait 0.2]
+
+Sora: ¡Aquí vamos!
+
+[split]
+[board_enable]

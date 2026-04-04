@@ -1,0 +1,12 @@
+@scene s2_match_intro
+
+[background gradient:#1a1a2e:#16222a]
+[enter ryu center right]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+[wait 0.2]
+
+Ryu: Sin excusas.
+
+[split]
+[board_enable]
