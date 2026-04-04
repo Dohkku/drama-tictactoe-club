@@ -64,8 +64,22 @@ func _update_pivot() -> void:
 func _draw() -> void:
 	if show_debug_border and character_data:
 		var rect := Rect2(Vector2.ZERO, size)
-		draw_rect(rect, Color(1, 1, 1, 0.15), false, 1.0)
-		draw_rect(rect.grow(-1), Color(0, 0, 0, 0.1), false, 1.0)
+		draw_rect(rect, Color(0, 1, 0, 0.7), false, 2.0)
+		# Corner marks
+		var corner_len: float = minf(size.x, size.y) * 0.1
+		var col := Color(0, 1, 0, 0.9)
+		# Top-left
+		draw_line(Vector2.ZERO, Vector2(corner_len, 0), col, 2.0)
+		draw_line(Vector2.ZERO, Vector2(0, corner_len), col, 2.0)
+		# Top-right
+		draw_line(Vector2(size.x, 0), Vector2(size.x - corner_len, 0), col, 2.0)
+		draw_line(Vector2(size.x, 0), Vector2(size.x, corner_len), col, 2.0)
+		# Bottom-left
+		draw_line(Vector2(0, size.y), Vector2(corner_len, size.y), col, 2.0)
+		draw_line(Vector2(0, size.y), Vector2(0, size.y - corner_len), col, 2.0)
+		# Bottom-right
+		draw_line(Vector2(size.x, size.y), Vector2(size.x - corner_len, size.y), col, 2.0)
+		draw_line(Vector2(size.x, size.y), Vector2(size.x, size.y - corner_len), col, 2.0)
 
 
 func enter_character(data: Resource, from_direction: String = "right") -> void:
@@ -172,74 +186,72 @@ func set_focus(focused: bool) -> void:
 # --- Visual state application ---
 
 func _apply_body_state() -> void:
-	# Reset to base first
+	# Reset to base first — no rotation ever
 	portrait_rect.rotation = 0.0
 	portrait_rect.scale = Vector2.ONE
+	portrait_rect.modulate = Color.WHITE
 	portrait_rect.pivot_offset = portrait_rect.size / 2.0
 
 	match body_state:
 		"idle":
 			pass
 		"thinking":
-			# Slight tilt
-			var tween = create_tween()
-			tween.tween_property(portrait_rect, "rotation", deg_to_rad(-5.0), 0.3)
+			# Darken slightly — introspective
+			var tween := create_tween()
+			tween.tween_property(portrait_rect, "modulate", Color(0.85, 0.85, 0.95), 0.3)
 		"arms_crossed":
-			# Narrower stance
-			portrait_rect.scale = Vector2(0.9, 1.0)
+			portrait_rect.scale = Vector2(0.95, 1.0)
 		"leaning_forward":
-			# Bigger = closer
-			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			var tween := create_tween().set_ease(Tween.EASE_OUT)
 			tween.tween_property(portrait_rect, "scale", Vector2(1.08, 1.08), 0.3)
 		"leaning_back":
-			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			var tween := create_tween().set_ease(Tween.EASE_OUT)
 			tween.tween_property(portrait_rect, "scale", Vector2(0.92, 0.92), 0.3)
 		"excited":
-			# Bouncing loop
+			# Bouncing loop + bright tint
+			portrait_rect.modulate = Color(1.1, 1.1, 1.0)
 			_body_tween = create_tween().set_loops()
 			_body_tween.tween_property(portrait_rect, "position:y", portrait_rect.position.y - 6.0, 0.2).set_ease(Tween.EASE_OUT)
 			_body_tween.tween_property(portrait_rect, "position:y", portrait_rect.position.y, 0.2).set_ease(Tween.EASE_IN)
 		"tense":
-			# Rapid micro-vibration loop
-			var orig = portrait_rect.position
+			# Red tint + micro-vibration
+			portrait_rect.modulate = Color(1.1, 0.9, 0.9)
+			var orig: Vector2 = portrait_rect.position
 			_body_tween = create_tween().set_loops()
 			_body_tween.tween_property(portrait_rect, "position", orig + Vector2(2, 0), 0.05)
 			_body_tween.tween_property(portrait_rect, "position", orig + Vector2(-2, 0), 0.05)
 			_body_tween.tween_property(portrait_rect, "position", orig, 0.05)
 		"confident":
-			# Slightly wider and taller
-			var tween = create_tween().set_ease(Tween.EASE_OUT)
+			var tween := create_tween().set_ease(Tween.EASE_OUT)
 			tween.tween_property(portrait_rect, "scale", Vector2(1.05, 1.05), 0.3)
+			portrait_rect.modulate = Color(1.05, 1.05, 1.1)
 		"defeated":
-			# Shrink and tilt
-			var tween = create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", Vector2(0.85, 0.95), 0.4)
-			tween.parallel().tween_property(portrait_rect, "rotation", deg_to_rad(3.0), 0.4)
+			# Desaturate + shrink — no rotation
+			var tween := create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(portrait_rect, "scale", Vector2(0.88, 0.95), 0.4)
+			tween.parallel().tween_property(portrait_rect, "modulate", Color(0.7, 0.7, 0.75), 0.4)
 
 
 func _apply_look_direction() -> void:
-	# Slight rotation toward the look target direction
-	var angle := 0.0
+	# No rotation — use subtle position shift to indicate direction
+	var offset := Vector2.ZERO
+	var shift: float = size.x * 0.03
 	match look_target:
 		"left":
-			angle = deg_to_rad(-4.0)
+			offset = Vector2(-shift, 0)
 		"right":
-			angle = deg_to_rad(4.0)
+			offset = Vector2(shift, 0)
 		"away":
-			angle = deg_to_rad(8.0)
+			offset = Vector2(0, -shift * 0.5)
 		"center", "":
-			angle = 0.0
-		_:
-			# It's a character_id — resolve direction from stage
-			# We just store it; stage resolves the actual direction
-			pass
+			offset = Vector2.ZERO
 
-	if angle != 0.0:
-		var tween = create_tween().set_ease(Tween.EASE_OUT)
-		tween.tween_property(self, "rotation", angle, 0.25)
-	elif rotation != 0.0:
-		var tween = create_tween().set_ease(Tween.EASE_OUT)
-		tween.tween_property(self, "rotation", 0.0, 0.25)
+	if offset != Vector2.ZERO:
+		var tween := create_tween().set_ease(Tween.EASE_OUT)
+		tween.tween_property(portrait_rect, "position", portrait_rect.position + offset, 0.25)
+	# Always ensure no residual rotation
+	rotation = 0.0
+	portrait_rect.rotation = 0.0
 
 
 func _stop_body_tween() -> void:
