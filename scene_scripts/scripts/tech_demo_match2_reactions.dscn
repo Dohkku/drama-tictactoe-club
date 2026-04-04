@@ -1,0 +1,40 @@
+@reactions tech_demo_match2_reactions
+
+@on player_wins
+[layout fullscreen]
+[board_disable]
+[expression ryu surprised]
+[pose ryu leaning_back]
+[shake 0.5 0.3]
+Ryu: ...Impresionante.
+[wait 0.5]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu: No subestimé a nadie. Simplemente... eres bueno.
+@end
+
+@on opponent_wins
+[layout fullscreen]
+[board_disable]
+[expression ryu cold]
+[pose ryu confident]
+Ryu: Como esperaba.
+[wait 0.3]
+Ryu: Necesitas más práctica.
+@end
+
+@on draw
+[layout fullscreen]
+[board_disable]
+[expression ryu thinking]
+[pose ryu thinking]
+Ryu: Hmm. Equilibrio perfecto.
+[wait 0.3]
+[expression ryu neutral]
+Ryu: Quizá la próxima vez sea diferente.
+@end
+
+@on near_win
+[expression ryu intense]
+[pose ryu leaning_forward]
+@end

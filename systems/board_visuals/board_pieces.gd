@@ -62,10 +62,18 @@ func make_piece_node(piece_type: int, is_player: bool, sz: Vector2) -> Control:
 func clear_all_pieces() -> void:
 	for p in player_pieces:
 		if is_instance_valid(p):
-			p.queue_free()
+			if p.get("effect_player") and is_instance_valid(p.effect_player):
+				p.effect_player.get_parent().remove_child(p.effect_player)
+				p.effect_player.free()
+			p.get_parent().remove_child(p)
+			p.free()
 	for p in opponent_pieces:
 		if is_instance_valid(p):
-			p.queue_free()
+			if p.get("effect_player") and is_instance_valid(p.effect_player):
+				p.effect_player.get_parent().remove_child(p.effect_player)
+				p.effect_player.free()
+			p.get_parent().remove_child(p)
+			p.free()
 	player_pieces.clear()
 	opponent_pieces.clear()
 	cell_to_piece.clear()

@@ -75,7 +75,7 @@ func _ready() -> void:
 	_setup_runner()
 	var loaded := _load_project_data()
 	if not loaded:
-		var default_res: Resource = load("res://data/resources/default_project.tres")
+		var default_res: Resource = load("res://data/resources/tech_demo_project.tres")
 		if default_res:
 			_apply_project_data(default_res)
 		else:

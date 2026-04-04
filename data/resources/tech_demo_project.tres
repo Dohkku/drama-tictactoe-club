@@ -1,0 +1,87 @@
+[gd_resource type="Resource" script_class="ProjectData" format=3]
+
+[ext_resource type="Resource" path="res://characters/data/sora.tres" id="chr_sora"]
+[ext_resource type="Resource" path="res://characters/data/ryu.tres" id="chr_ryu"]
+[ext_resource type="Resource" path="res://characters/data/akira.tres" id="chr_akira"]
+[ext_resource type="Resource" path="res://characters/data/mei.tres" id="chr_mei"]
+[ext_resource type="Resource" path="res://characters/data/player.tres" id="chr_player"]
+[ext_resource type="Script" path="res://data/tournament_event.gd" id="te"]
+[ext_resource type="Script" path="res://match_system/match_config.gd" id="mc"]
+[ext_resource type="Script" path="res://data/project_data.gd" id="pd"]
+[ext_resource type="Script" path="res://data/board_config.gd" id="bc"]
+[ext_resource type="Script" path="res://systems/board_logic/game_rules.gd" id="gr"]
+
+[sub_resource type="Resource" id="rules"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+
+[sub_resource type="Resource" id="board_cfg"]
+script = ExtResource("bc")
+game_rules = SubResource("rules")
+max_board_size = 400
+cell_color_empty = Color(0.88, 0.85, 0.78, 1)
+cell_color_alt = Color(0.22, 0.25, 0.3, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.78, 0.75, 0.68, 1)
+cell_line_color = Color(0.4, 0.35, 0.3, 1)
+cell_line_width = 1.5
+board_border_enabled = true
+board_border_color = Color(0.45, 0.35, 0.25, 1)
+board_border_width = 10.0
+hand_area_height = 80
+piece_cell_ratio = 0.85
+default_player_color = Color(0.2, 0.5, 1, 1)
+default_opponent_color = Color(1.0, 0.4, 0.1, 1)
+board_bg_color = Color(0.3, 0.28, 0.24, 1)
+
+# Match 1: vs Sora
+[sub_resource type="Resource" id="mc_sora"]
+script = ExtResource("mc")
+match_id = "demo_sora"
+opponent_id = "sora"
+ai_difficulty = 0.3
+intro_script = "res://scene_scripts/scripts/tech_demo_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/tech_demo_reactions.dscn"
+player_style = "slam"
+opponent_style = "dramatic"
+
+[sub_resource type="Resource" id="evt_match1"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Sora"
+match_config = SubResource("mc_sora")
+order_index = 0
+
+# Match 2: vs Ryu
+[sub_resource type="Resource" id="mc_ryu"]
+script = ExtResource("mc")
+match_id = "demo_ryu"
+opponent_id = "ryu"
+ai_difficulty = 0.5
+intro_script = "res://scene_scripts/scripts/tech_demo_match2_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/tech_demo_match2_reactions.dscn"
+player_style = "slam"
+opponent_style = "gentle"
+
+[sub_resource type="Resource" id="evt_match2"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Ryu"
+match_config = SubResource("mc_ryu")
+order_index = 1
+
+# Finale
+[sub_resource type="Resource" id="evt_finale"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Finale"
+cutscene_script_path = "res://scene_scripts/scripts/tech_demo_finale.dscn"
+order_index = 2
+
+[resource]
+script = ExtResource("pd")
+project_name = "Tech Demo"
+characters = Array[Resource]([ExtResource("chr_sora"), ExtResource("chr_ryu"), ExtResource("chr_akira"), ExtResource("chr_mei"), ExtResource("chr_player")])
+events = Array[Resource]([SubResource("evt_match1"), SubResource("evt_match2"), SubResource("evt_finale")])
+board_config = SubResource("board_cfg")

@@ -1,0 +1,84 @@
+@scene tech_demo_intro
+
+# ══════════════════════════════════════════
+# TECHNICAL DEMO — Showcasing all systems
+# ══════════════════════════════════════════
+
+# --- ACT 1: Title + Dramatic entrance ---
+
+[background #1a1a2e]
+[title_card "DRAMA TIC TAC TOE" "Demo Técnica — Todos los sistemas"]
+[wait 1.5]
+
+# --- ACT 2: Sora enters energetically ---
+
+[background #f5e6d0]
+[camera_mode smooth]
+
+[enter sora center left]
+[expression sora happy]
+[pose sora excited]
+[wait 0.3]
+
+Sora: ¡Eh! ¿Estás listo para esto?
+Sora: Hoy no voy a contenerme. {shake}¡Prepárate!{/shake}
+
+[pose sora idle]
+[expression sora serious]
+Sora: Pero antes... déjame presentarte a alguien.
+
+# --- ACT 3: Ryu enters from opposite side ---
+
+[enter ryu right right]
+[expression ryu neutral]
+[pose ryu confident]
+[wait 0.3]
+
+# Camera showcases both characters
+[camera_mode smooth]
+
+Ryu: ...
+[expression ryu cold]
+Ryu: Así que tú eres el nuevo.
+
+[focus ryu]
+[close_up ryu 1.3]
+Ryu: Cada partida tiene una apuesta. Algo que importa de verdad.
+
+[camera_reset]
+[focus sora]
+[expression sora nervous]
+Sora: Ryu siempre es así de intenso, no te preocupes...
+
+[clear_focus]
+
+# --- ACT 4: Camera snap demo ---
+
+[camera_mode snappy]
+[camera_snap_to sora 1.4]
+[flash #ffffff 0.1]
+Sora: ¡Pero yo también puedo ser intensa!
+
+[expression sora happy]
+[pose sora leaning_forward]
+Sora: ¿Verdad que sí?
+
+[camera_reset]
+[camera_mode smooth]
+[wait 0.3]
+
+# --- ACT 5: Transition to board ---
+
+[pose sora arms_crossed]
+[expression sora focused]
+Sora → Tú: Primera ronda. Tú contra mí. ¿Listo?
+
+[exit ryu left]
+[move sora center]
+[wait 0.3]
+
+[expression sora happy]
+Sora: ¡Vamos allá!
+
+[layout split]
+[board_enable]

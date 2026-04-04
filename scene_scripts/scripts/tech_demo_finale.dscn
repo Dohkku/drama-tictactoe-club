@@ -1,0 +1,61 @@
+@scene tech_demo_finale
+
+# ══════════════════════════════════════════
+# FINALE — All characters gather
+# ══════════════════════════════════════════
+
+[background #2a1a3e]
+[layout fullscreen]
+[camera_mode smooth]
+
+# Everyone enters
+[enter sora left left]
+[enter ryu right right]
+[wait 0.5]
+[enter akira center_left left]
+[enter mei center_right right]
+[wait 0.3]
+
+[expression sora happy]
+[expression ryu neutral]
+[expression akira neutral]
+[expression mei neutral]
+
+# Camera pans across all
+[close_up sora 1.2]
+[wait 0.8]
+[close_up akira 1.2]
+[wait 0.8]
+[close_up mei 1.2]
+[wait 0.8]
+[close_up ryu 1.2]
+[wait 0.8]
+[camera_reset]
+[wait 0.3]
+
+Sora: ¡Eso ha sido increíble!
+
+[focus akira]
+[expression akira neutral]
+Akira: No estuvo mal.
+
+[focus mei]
+[expression mei neutral]
+Mei: Tiene potencial. Habrá que vigilarle.
+
+[clear_focus]
+
+[camera_mode snappy]
+[camera_snap_to ryu 1.3]
+[flash #ffffff 0.08]
+Ryu: Nos veremos de nuevo.
+[wait 0.5]
+
+[camera_reset]
+[camera_mode smooth]
+[wait 0.3]
+
+[pose sora excited]
+Sora: ¡Hasta la próxima!
+
+[title_card "FIN DE LA DEMO" "Todos los sistemas funcionando"]

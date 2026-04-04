@@ -230,38 +230,31 @@ func _deferred_snap_layout() -> void:
 
 
 func full_reset(new_rules: Resource = null) -> void:
-	## Tear down and rebuild the board with (optionally) new rules.
+	## Tear down and rebuild the board INSTANTLY. No deferred cleanup.
 	input_enabled = false
 	_animating = false
 	if new_rules:
 		game_rules = new_rules
 
-	# Clear win line
+	# Clear win line IMMEDIATELY
 	if _win_line_node and is_instance_valid(_win_line_node):
-		_win_line_node.queue_free()
+		_win_line_node.get_parent().remove_child(_win_line_node)
+		_win_line_node.free()
 		_win_line_node = null
 
-	# Clear effect players
-	for p in pieces.player_pieces + pieces.opponent_pieces:
-		if is_instance_valid(p) and p.get("effect_player") and is_instance_valid(p.effect_player):
-			p.effect_player.queue_free()
+	# Clear existing pieces (includes effect players) IMMEDIATELY
+	pieces.clear_all_pieces()
 
-	# Clear existing cells
+	# Clear existing cells IMMEDIATELY
 	for c in cells:
 		if is_instance_valid(c):
-			c.queue_free()
+			c.get_parent().remove_child(c)
+			c.free()
 	cells.clear()
-
-	# Clear existing pieces
-	pieces.clear_all_pieces()
 
 	# Rebuild
 	logic = BoardLogicScript.new(game_rules)
 	_create_cells()
-
-	await get_tree().process_frame
-	await get_tree().process_frame
-
 	_start_game()
 
 
