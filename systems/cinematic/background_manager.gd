@@ -46,8 +46,24 @@ func _setup_texture(tex: Texture2D) -> void:
 	_current_bg_node = tr
 
 
+func set_gradient(top_color: Color, bottom_color: Color) -> void:
+	_clear_current()
+	var grad := _GradientBG.new()
+	grad.top_color = top_color
+	grad.bottom_color = bottom_color
+	grad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(grad)
+	_current_bg_node = grad
+
+
 func _setup_from_path(path: String) -> void:
-	if path.begins_with("#"): # Hex color
+	# Support "gradient:top_hex:bottom_hex" syntax
+	if path.begins_with("gradient:"):
+		var parts: PackedStringArray = path.split(":")
+		if parts.size() >= 3:
+			set_gradient(Color.html(parts[1]), Color.html(parts[2]))
+			return
+	if path.begins_with("#"):
 		_setup_color(Color.html(path))
 		return
 		
@@ -76,3 +92,16 @@ func _setup_video(path: String) -> void:
 	add_child(vp)
 	_current_bg_node = vp
 	vp.play()
+
+
+class _GradientBG extends Control:
+	var top_color: Color = Color.BLACK
+	var bottom_color: Color = Color.BLACK
+
+	func _draw() -> void:
+		var steps: int = 32
+		var h: float = size.y / float(steps)
+		for i in steps:
+			var t: float = float(i) / float(steps)
+			var col: Color = top_color.lerp(bottom_color, t)
+			draw_rect(Rect2(0, i * h, size.x, h + 1.0), col)

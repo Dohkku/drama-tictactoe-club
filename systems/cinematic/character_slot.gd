@@ -32,23 +32,23 @@ func _ready() -> void:
 	resized.connect(_update_pivot)
 	_update_pivot()
 
-	# Debug state label (shows body pose) - placed at TOP of character
+	# Debug state label — compact, at top of character
 	_state_label = Label.new()
 	_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_state_label.add_theme_font_size_override("font_size", 11)
-	_state_label.add_theme_color_override("font_color", Color.WHITE)
-	_state_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_state_label.add_theme_constant_override("outline_size", 3)
+	_state_label.add_theme_font_size_override("font_size", 8)
+	_state_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	_state_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_state_label.add_theme_constant_override("outline_size", 2)
 	$VBoxContainer.add_child(_state_label)
 	$VBoxContainer.move_child(_state_label, 0)
 
-	# Look direction indicator - placed right after state label
+	# Look direction indicator
 	_look_indicator = Label.new()
 	_look_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_look_indicator.add_theme_font_size_override("font_size", 10)
-	_look_indicator.add_theme_color_override("font_color", Color(1, 1, 0.7))
-	_look_indicator.add_theme_color_override("font_outline_color", Color.BLACK)
-	_look_indicator.add_theme_constant_override("outline_size", 3)
+	_look_indicator.add_theme_font_size_override("font_size", 7)
+	_look_indicator.add_theme_color_override("font_color", Color(1, 1, 0.7, 0.6))
+	_look_indicator.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
+	_look_indicator.add_theme_constant_override("outline_size", 2)
 	$VBoxContainer.add_child(_look_indicator)
 	$VBoxContainer.move_child(_look_indicator, 1)
 

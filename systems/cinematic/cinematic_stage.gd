@@ -6,6 +6,7 @@ const CinematicCameraScript = preload("res://systems/cinematic/cinematic_camera.
 const SpeedLinesEffectScript = preload("res://systems/cinematic/speed_lines_effect.gd")
 
 ## Named stage positions as fractions of stage width (0.0 = left edge, 1.0 = right edge)
+## Spaced ~14% apart so 7 characters fit without overlap at standard size
 const POSITIONS = {
 	"far_left": 0.08,
 	"left": 0.22,
@@ -16,8 +17,9 @@ const POSITIONS = {
 	"far_right": 0.92,
 }
 
-const CHAR_ASPECT := 0.55       # Character width / height ratio (fixed, never squishes)
-const CHAR_HEIGHT_RATIO := 0.85 # Character height as fraction of stage height
+const CHAR_ASPECT := 0.45       # Character width / height ratio
+const CHAR_HEIGHT_RATIO := 0.70 # Character height as fraction of stage height
+const CHAR_MAX_WIDTH_FRAC := 0.14 # Max character width as fraction of stage width
 const MOVE_DURATION := 0.5
 
 var characters_on_stage: Dictionary = {}    # character_id -> CharacterSlot node
@@ -171,7 +173,14 @@ func set_character_expression(character_id: String, expression: String) -> void:
 
 func set_character_speaking(character_id: String, speaking: bool) -> void:
 	for id in characters_on_stage:
-		characters_on_stage[id].set_speaking(id == character_id and speaking)
+		var slot: Control = characters_on_stage[id]
+		var is_speaker: bool = id == character_id and speaking
+		slot.set_speaking(is_speaker)
+		# Bring speaker to front
+		if is_speaker:
+			slot.z_index = 10
+		else:
+			slot.z_index = 0
 
 
 func set_body_state(character_id: String, state: String) -> void:
@@ -205,12 +214,17 @@ func set_talk_target(character_id: String, target: String) -> void:
 
 func set_focus(character_id: String) -> void:
 	for id in characters_on_stage:
-		characters_on_stage[id].set_focus(id == character_id)
+		var slot: Control = characters_on_stage[id]
+		var focused: bool = id == character_id
+		slot.set_focus(focused)
+		slot.z_index = 10 if focused else 0
 
 
 func clear_focus() -> void:
 	for id in characters_on_stage:
-		characters_on_stage[id].set_focus(true)
+		var slot: Control = characters_on_stage[id]
+		slot.set_focus(true)
+		slot.z_index = 0
 
 
 # --- Camera / Zoom (virtual camera on CharacterLayer) ---
@@ -387,12 +401,10 @@ func _calc_slot_position(fraction: float) -> Vector2:
 
 
 func _calc_slot_size() -> Vector2:
-	var layer_size = character_layer.size
-	# Height-based sizing: aspect ratio is ALWAYS preserved
+	var layer_size: Vector2 = character_layer.size
 	var h: float = layer_size.y * CHAR_HEIGHT_RATIO
 	var w: float = h * CHAR_ASPECT
-	# Clamp width but always keep aspect ratio
-	var max_w: float = layer_size.x * 0.35
+	var max_w: float = layer_size.x * CHAR_MAX_WIDTH_FRAC
 	if w > max_w:
 		w = max_w
 		h = w / CHAR_ASPECT
@@ -464,13 +476,13 @@ class _PositionMarkers extends Control:
 		for pos_name in positions:
 			var fraction: float = positions[pos_name]
 			var x: float = size.x * fraction
-			# White outline + black line for visibility on any background
-			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(1, 1, 1, 0.3), 3.0)
-			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(0, 0, 0, 0.25), 1.0)
-			var dot_y: float = size.y - 22.0
-			draw_circle(Vector2(x, dot_y), 5.0, Color(1, 1, 1, 0.5))
-			draw_circle(Vector2(x, dot_y), 3.0, Color(0, 0, 0, 0.4))
-			# Label with outline effect
-			var lbl_pos := Vector2(x - 25, size.y - 4)
-			draw_string(font, lbl_pos + Vector2(1, 1), pos_name, HORIZONTAL_ALIGNMENT_LEFT, 60, 9, Color(1, 1, 1, 0.6))
-			draw_string(font, lbl_pos, pos_name, HORIZONTAL_ALIGNMENT_LEFT, 60, 9, Color(0, 0, 0, 0.5))
+			# Dashed vertical line — white outline + black core
+			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(1, 1, 1, 0.2), 3.0)
+			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(0, 0, 0, 0.15), 1.0)
+			# Label at TOP (not bottom — avoids dialogue box overlap)
+			var dot_y: float = 14.0
+			draw_circle(Vector2(x, dot_y), 4.0, Color(1, 1, 1, 0.4))
+			draw_circle(Vector2(x, dot_y), 2.5, Color(0, 0, 0, 0.3))
+			var lbl_pos := Vector2(x - 20, 28.0)
+			draw_string(font, lbl_pos + Vector2(1, 1), pos_name, HORIZONTAL_ALIGNMENT_LEFT, 50, 7, Color(1, 1, 1, 0.5))
+			draw_string(font, lbl_pos, pos_name, HORIZONTAL_ALIGNMENT_LEFT, 50, 7, Color(0, 0, 0, 0.4))

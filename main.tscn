@@ -22,16 +22,16 @@ corner_radius_bottom_right = 0
 corner_radius_bottom_left = 0
 
 [sub_resource type="StyleBoxFlat" id="dialogue_panel_style"]
-bg_color = Color(0.94, 0.90, 0.84, 0.95)
+bg_color = Color(0.08, 0.08, 0.12, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.7, 0.62, 0.5, 0.7)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+border_color = Color(0.3, 0.25, 0.4, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -132,6 +132,7 @@ layout_mode = 2
 [node name="SpeakerName" type="Label" parent="DialogueLayer/DialogueBox/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.7, 1)
 theme_override_font_sizes/font_size = 18
 text = ""
 
@@ -141,12 +142,14 @@ layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 50)
 bbcode_enabled = true
+theme_override_colors/default_color = Color(0.9, 0.9, 0.92, 1)
 text = ""
 fit_content = true
 
 [node name="AdvanceIndicator" type="Label" parent="DialogueLayer/DialogueBox/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 0.7)
 theme_override_font_sizes/font_size = 12
 text = "Click para continuar"
 horizontal_alignment = 2

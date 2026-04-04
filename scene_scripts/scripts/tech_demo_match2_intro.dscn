@@ -4,7 +4,7 @@
 # MATCH 2 — vs Ryu
 # ══════════════════════════════════════════
 
-[background #1a1a2e]
+[background gradient:#1a1a2e:#16222a]
 [camera_mode smooth]
 
 [enter ryu center right]

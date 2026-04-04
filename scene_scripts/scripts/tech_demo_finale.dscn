@@ -4,7 +4,7 @@
 # FINALE — All characters gather
 # ══════════════════════════════════════════
 
-[background #2a1a3e]
+[background gradient:#0f2027:#2c5364]
 [fullscreen]
 [camera_mode smooth]
 

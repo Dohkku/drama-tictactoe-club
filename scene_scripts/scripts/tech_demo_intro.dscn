@@ -6,13 +6,13 @@
 
 # --- ACT 1: Title + Dramatic entrance ---
 
-[background #1a1a2e]
+[background gradient:#0f0c29:#302b63]
 [title_card "DRAMA TIC TAC TOE" "Demo Técnica — Todos los sistemas"]
 [wait 1.5]
 
 # --- ACT 2: Sora enters energetically ---
 
-[background #f5e6d0]
+[background gradient:#2b1055:#d53369]
 [camera_mode smooth]
 
 [enter sora center left]
