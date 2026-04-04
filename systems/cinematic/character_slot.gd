@@ -32,25 +32,26 @@ func _ready() -> void:
 	resized.connect(_update_pivot)
 	_update_pivot()
 
-	# Debug state label — compact, at top of character
+	# Debug labels — placed right after portrait, before name label
+	# VBoxContainer order: PortraitRect, _state_label, _look_indicator, NameLabel
 	_state_label = Label.new()
 	_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_state_label.add_theme_font_size_override("font_size", 8)
+	_state_label.add_theme_font_size_override("font_size", 9)
 	_state_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
 	_state_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_state_label.add_theme_constant_override("outline_size", 2)
 	$VBoxContainer.add_child(_state_label)
-	$VBoxContainer.move_child(_state_label, 0)
+	# Move after PortraitRect (index 0) but before NameLabel (last)
+	$VBoxContainer.move_child(_state_label, 1)
 
-	# Look direction indicator
 	_look_indicator = Label.new()
 	_look_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_look_indicator.add_theme_font_size_override("font_size", 7)
+	_look_indicator.add_theme_font_size_override("font_size", 8)
 	_look_indicator.add_theme_color_override("font_color", Color(1, 1, 0.7, 0.6))
 	_look_indicator.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	_look_indicator.add_theme_constant_override("outline_size", 2)
 	$VBoxContainer.add_child(_look_indicator)
-	$VBoxContainer.move_child(_look_indicator, 1)
+	$VBoxContainer.move_child(_look_indicator, 2)
 
 	_update_state_display()
 
@@ -266,7 +267,12 @@ func _stop_body_tween() -> void:
 
 func _update_state_display() -> void:
 	if _state_label:
-		_state_label.text = "[%s]" % body_state if body_state != "idle" else ""
+		var parts: Array[String] = []
+		if body_state != "idle":
+			parts.append("[%s]" % body_state)
+		if current_expression != "" and current_expression != "neutral":
+			parts.append(current_expression)
+		_state_label.text = " ".join(parts)
 	if _look_indicator:
 		var parts: Array[String] = []
 		if look_target != "" and look_target != "center":
@@ -279,6 +285,7 @@ func _update_state_display() -> void:
 func _apply_expression(expr_name: String) -> void:
 	current_expression = expr_name
 	expression_label.text = expr_name
+	_update_state_display()
 
 	if character_data == null:
 		return
