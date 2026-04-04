@@ -4,7 +4,7 @@
 
 config/name="Drama Tic Tac Toe Club"
 config/features=PackedStringArray("4.6")
-run/main_scene="res://ui/main_menu.tscn"
+run/main_scene="res://systems/dev_menu.tscn"
 
 [autoload]
 

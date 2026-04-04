@@ -82,3 +82,24 @@ func _build_ui() -> void:
 		var scene_path: String = sys.scene
 		btn.pressed.connect(func(): get_tree().change_scene_to_file(scene_path))
 		vbox.add_child(btn)
+
+	vbox.add_child(HSeparator.new())
+
+	# Tech Demo button — runs the full integrated game
+	var demo_btn := Button.new()
+	demo_btn.custom_minimum_size = Vector2(0, 58)
+	demo_btn.text = "  ▶  TECH DEMO  —  Historia completa con todos los sistemas"
+	demo_btn.add_theme_font_size_override("font_size", 17)
+	demo_btn.add_theme_color_override("font_color", Color.WHITE)
+	var demo_style := StyleBoxFlat.new()
+	demo_style.bg_color = Color(0.6, 0.2, 0.1)
+	demo_style.set_corner_radius_all(8)
+	demo_style.content_margin_left = 16
+	demo_btn.add_theme_stylebox_override("normal", demo_style)
+	var demo_hover := StyleBoxFlat.new()
+	demo_hover.bg_color = Color(0.8, 0.3, 0.15)
+	demo_hover.set_corner_radius_all(8)
+	demo_hover.content_margin_left = 16
+	demo_btn.add_theme_stylebox_override("hover", demo_hover)
+	demo_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
+	vbox.add_child(demo_btn)
