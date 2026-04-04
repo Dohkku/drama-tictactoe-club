@@ -219,6 +219,7 @@ func camera_close_up(character_id: String, zoom: float = 1.4, _duration: float =
 	if not characters_on_stage.has(character_id):
 		return
 	_camera_active = true
+	_focused_character_id = character_id
 	var slot = characters_on_stage[character_id]
 	_camera.focus_character(slot.position, slot.size, zoom)
 
@@ -245,6 +246,7 @@ func camera_snap_to(character_id: String, zoom: float = 1.4) -> void:
 	if not characters_on_stage.has(character_id):
 		return
 	_camera_active = true
+	_focused_character_id = character_id
 	var slot = characters_on_stage[character_id]
 	_camera.focus_character(slot.position, slot.size, zoom, CinematicCameraScript.Mode.SNAPPY)
 	if _speed_lines:
@@ -259,6 +261,8 @@ func camera_snap_to(character_id: String, zoom: float = 1.4) -> void:
 
 
 func camera_reset(_duration: float = 0.4) -> void:
+	_camera_active = false
+	_focused_character_id = ""
 	_camera.reset()
 
 	# Restore all character modulate
@@ -396,24 +400,36 @@ func _calc_slot_size() -> Vector2:
 
 
 func _reposition_all() -> void:
+	var count: int = characters_on_stage.size()
 	for id in characters_on_stage:
 		var slot = characters_on_stage[id]
 		var pos_name = _character_positions.get(id, "center")
-		var fraction = POSITIONS.get(pos_name, 0.5)
+		var fraction: float = POSITIONS.get(pos_name, 0.5)
+		# Auto-center when only one character and camera is not focusing
+		if count == 1 and not _camera_active:
+			fraction = 0.5
 		_apply_slot_position(slot, fraction)
 		var depth = _character_depth.get(id, 1.0)
 		if depth != 1.0:
 			slot.scale = Vector2(depth, depth)
 
 
+var _focused_character_id: String = ""
+
 func _on_layer_resized() -> void:
-	# Always reposition characters when stage resizes (layout transitions, window resize)
-	if _camera_active:
-		_camera.reset(_camera.SMOOTH)
-		_camera_active = false
 	_reposition_all()
+	# Re-focus if camera was active (layout changed size)
+	if _camera_active and _focused_character_id != "" and characters_on_stage.has(_focused_character_id):
+		var slot: Control = characters_on_stage[_focused_character_id]
+		_camera.focus_character(slot.position, slot.size, _layer_zoom(), _camera.SMOOTH)
 	if show_position_markers:
 		_update_markers()
+
+
+func _layer_zoom() -> float:
+	if _camera_active and character_layer:
+		return character_layer.scale.x
+	return 1.0
 
 
 func set_show_markers(val: bool) -> void:
