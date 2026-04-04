@@ -399,7 +399,7 @@ func _configure_board_visuals(config: Resource) -> void:
 
 	# Set piece effects based on style
 	var PieceEffectScript: GDScript = load("res://systems/board_visuals/piece_effect.gd")
-	_board.player_effect = _resolve_effect(p_style_name, PieceEffectScript)
+	_board.player_effect = PieceEffectScript.none()
 	_board.opponent_effect = _resolve_effect(o_style_name, PieceEffectScript)
 
 	# Per-match overrides for advanced opponents
