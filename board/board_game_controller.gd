@@ -33,11 +33,13 @@ func start_game() -> void:
 
 	board.pieces.create_all_pieces()
 
-	board.input_enabled = true
+	# Input starts DISABLED — MatchManager/SceneRunner enables it
+	# via EventBus.board_input_enabled when ready
+	board.input_enabled = false
 	board._animating = false
 	update_input_state()
 	board.abilities.update_ui_state()
-	update_status("Tu turno — X")
+	update_status("")
 	EventBus.game_started.emit()
 
 
