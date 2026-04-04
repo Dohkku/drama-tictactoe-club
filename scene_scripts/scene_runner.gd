@@ -256,15 +256,16 @@ func _cmd_music(cmd: Dictionary) -> void:
 		push_warning("SceneRunner: music track not found or unsupported: %s" % track)
 		return
 
+	# Enable looping on the stream itself
+	if stream is AudioStreamMP3:
+		stream.loop = true
+	elif stream is AudioStreamWAV:
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		stream.loop_end = stream.data.size() / 2 if stream.format == AudioStreamWAV.FORMAT_16_BITS else stream.data.size()
+	elif stream is AudioStreamOggVorbis:
+		stream.loop = true
 	_music_player.stream = stream
-	if not _music_player.finished.is_connected(_on_music_loop):
-		_music_player.finished.connect(_on_music_loop)
 	_music_player.play()
-
-
-func _on_music_loop() -> void:
-	if _music_player and _music_player.stream:
-		_music_player.play()
 
 
 func _cmd_sfx(cmd: Dictionary) -> void:
