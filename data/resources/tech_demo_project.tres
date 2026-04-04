@@ -70,11 +70,11 @@ order_index = 2
 script = ExtResource("mc")
 match_id = "s2_ryu"
 opponent_id = "ryu"
-ai_difficulty = 0.45
+ai_difficulty = 1.0
 intro_script = "res://scene_scripts/scripts/s2_match_intro.dscn"
 reactions_script = "res://scene_scripts/scripts/s2_reactions.dscn"
 player_style = "slam"
-opponent_style = "gentle"
+opponent_style = "dramatic"
 
 [sub_resource type="Resource" id="evt_match2"]
 script = ExtResource("te")

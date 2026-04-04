@@ -28,15 +28,21 @@ var _escape_dialog: AcceptDialog = null
 
 
 var _debug_mode: bool = false
+var _audio_panel: PanelContainer = null
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_ESCAPE:
+				if _audio_panel and _audio_panel.visible:
+					_audio_panel.visible = false
+					return
 				if _escape_dialog and is_instance_valid(_escape_dialog) and _escape_dialog.visible:
 					_escape_dialog.hide()
 					return
 				_show_exit_confirmation()
+			KEY_F2:
+				_toggle_audio_panel()
 			KEY_F3:
 				_debug_mode = not _debug_mode
 				cinematic_stage.set_show_markers(_debug_mode)
@@ -231,3 +237,76 @@ func _update_panel_highlights() -> void:
 	else:
 		cinematic_highlight.set_highlighted(false)
 		board_highlight.set_highlighted(false)
+
+
+func _toggle_audio_panel() -> void:
+	if _audio_panel and is_instance_valid(_audio_panel):
+		_audio_panel.visible = not _audio_panel.visible
+		return
+
+	_audio_panel = PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.12, 0.95)
+	style.border_color = Color(0.3, 0.3, 0.4, 0.8)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(16)
+	_audio_panel.add_theme_stylebox_override("panel", style)
+	_audio_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_audio_panel.offset_left = -160
+	_audio_panel.offset_right = 160
+	_audio_panel.offset_top = -120
+	_audio_panel.offset_bottom = 120
+	add_child(_audio_panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	_audio_panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Audio (F2)"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", Color(0.9, 0.85, 1.0))
+	vbox.add_child(title)
+
+	_add_vol_slider(vbox, "Master", Settings.master_volume, func(v: float) -> void:
+		Settings.master_volume = v; Settings._apply_audio())
+	_add_vol_slider(vbox, "Música", Settings.music_volume, func(v: float) -> void:
+		Settings.music_volume = v; Settings.volumes_changed.emit())
+	_add_vol_slider(vbox, "SFX", Settings.sfx_volume, func(v: float) -> void:
+		Settings.sfx_volume = v; Settings.volumes_changed.emit())
+	_add_vol_slider(vbox, "Voces", Settings.voice_volume, func(v: float) -> void:
+		Settings.voice_volume = v; Settings.volumes_changed.emit())
+
+	var save_btn := Button.new()
+	save_btn.text = "Guardar"
+	save_btn.pressed.connect(func() -> void: Settings.save_settings())
+	vbox.add_child(save_btn)
+
+
+func _add_vol_slider(parent: VBoxContainer, lbl_text: String, initial: float, on_change: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var lbl := Label.new()
+	lbl.text = lbl_text
+	lbl.custom_minimum_size = Vector2(60, 0)
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	row.add_child(lbl)
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.05
+	slider.value = initial
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.value_changed.connect(on_change)
+	row.add_child(slider)
+	var val_lbl := Label.new()
+	val_lbl.text = "%d%%" % int(initial * 100)
+	val_lbl.custom_minimum_size = Vector2(40, 0)
+	val_lbl.add_theme_font_size_override("font_size", 12)
+	val_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	slider.value_changed.connect(func(v: float) -> void: val_lbl.text = "%d%%" % int(v * 100))
+	row.add_child(val_lbl)

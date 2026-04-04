@@ -317,6 +317,8 @@ func _setup_audio_players() -> void:
 		_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 		_stage.add_child(_sfx_player)
 	_update_audio_volumes()
+	if not Settings.volumes_changed.is_connected(_update_audio_volumes):
+		Settings.volumes_changed.connect(_update_audio_volumes)
 
 
 func _update_audio_volumes() -> void:
