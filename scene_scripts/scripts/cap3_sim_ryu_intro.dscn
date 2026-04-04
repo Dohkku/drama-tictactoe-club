@@ -1,9 +1,0 @@
-@scene cap3_sim_ryu_intro
-
-[split]
-[enter ryu right right]
-[pose ryu arms_crossed]
-ryu "cold" -> player: No esperes piedad.
-[pose ryu idle]
-[exit ryu right]
-@end
