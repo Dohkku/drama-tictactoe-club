@@ -248,6 +248,13 @@ func handle_game_over() -> void:
 			audio.play_sfx("draw")
 
 	await board.get_tree().create_timer(GAME_OVER_DELAY).timeout
+
+	# Clean up win line before layout transition
+	if board._win_line_node and is_instance_valid(board._win_line_node):
+		board._win_line_node.get_parent().remove_child(board._win_line_node)
+		board._win_line_node.free()
+		board._win_line_node = null
+
 	EventBus.match_ended.emit(result)
 
 
