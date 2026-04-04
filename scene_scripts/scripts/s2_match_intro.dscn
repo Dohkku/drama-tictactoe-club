@@ -1,6 +1,6 @@
 @scene s2_match_intro
 
-[background gradient:#1a1a2e:#16222a]
+[background res://backgrounds/background_2.png]
 [enter ryu center right]
 [expression ryu neutral]
 [pose ryu arms_crossed]

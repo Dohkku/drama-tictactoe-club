@@ -1,18 +1,34 @@
 [gd_resource type="Resource" script_class="CharacterData" format=3]
 
 [ext_resource type="Script" path="res://characters/character_data.gd" id="1_sora1"]
+[ext_resource type="Texture2D" path="res://characters/portraits/sora_neutral.png" id="sora_neutral"]
+[ext_resource type="Texture2D" path="res://characters/portraits/sora_happy.png" id="sora_happy"]
+[ext_resource type="Texture2D" path="res://characters/portraits/sora_sad.png" id="sora_sad"]
+[ext_resource type="Texture2D" path="res://characters/portraits/sora_nervous.png" id="sora_nervous"]
+[ext_resource type="Texture2D" path="res://characters/portraits/sora_serious.png" id="sora_serious"]
+[ext_resource type="Texture2D" path="res://characters/portraits/sora_focused.png" id="sora_focused"]
 
 [resource]
 script = ExtResource("1_sora1")
 character_id = "sora"
 display_name = "Sora"
 color = Color(1.0, 0.6, 0.15, 1)
+portrait_image = ExtResource("sora_neutral")
+expression_images = {
+"neutral": ExtResource("sora_neutral"),
+"happy": ExtResource("sora_happy"),
+"sad": ExtResource("sora_sad"),
+"nervous": ExtResource("sora_nervous"),
+"serious": ExtResource("sora_serious"),
+"focused": ExtResource("sora_focused")
+}
 expressions = {
 "happy": Color(1.0, 0.7, 0.2, 1),
 "nervous": Color(0.9, 0.5, 0.1, 1),
 "neutral": Color(1.0, 0.6, 0.15, 1),
 "serious": Color(0.85, 0.45, 0.1, 1),
-"thinking": Color(0.9, 0.55, 0.15, 1)
+"focused": Color(0.8, 0.5, 0.15, 1),
+"sad": Color(0.7, 0.4, 0.1, 1)
 }
 default_style = "slam"
 default_pose = "idle"

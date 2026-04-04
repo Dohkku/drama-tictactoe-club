@@ -1,15 +1,28 @@
 [gd_resource type="Resource" script_class="CharacterData" format=3]
 
 [ext_resource type="Script" path="res://characters/character_data.gd" id="1_6v4kc"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_neutral.png" id="akira_neutral"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_confident.png" id="akira_confident"]
 
 [resource]
 script = ExtResource("1_6v4kc")
 character_id = "akira"
 display_name = "Akira"
 color = Color(0.9, 0.2, 0.2, 1)
+portrait_image = ExtResource("akira_neutral")
+expression_images = {
+"neutral": ExtResource("akira_neutral"),
+"confident": ExtResource("akira_confident")
+}
 expressions = {
 "angry": Color(0.8, 0.1, 0.1, 1),
 "neutral": Color(0.9, 0.2, 0.2, 1),
-"smirk": Color(0.95, 0.3, 0.15, 1)
+"confident": Color(0.95, 0.3, 0.15, 1)
 }
 default_style = "spinning"
+default_pose = "idle"
+voice_pitch = 200.0
+voice_variation = 25.0
+voice_waveform = "square"
+dialogue_bg_color = Color(0.14, 0.05, 0.05, 0.92)
+dialogue_border_color = Color(0.9, 0.2, 0.2, 1)

@@ -1,17 +1,31 @@
 [gd_resource type="Resource" script_class="CharacterData" format=3]
 
 [ext_resource type="Script" path="res://characters/character_data.gd" id="1_ryu01"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_neutral.png" id="ryu_neutral"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_cold.png" id="ryu_cold"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_intense.png" id="ryu_intense"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_surprised.png" id="ryu_surprised"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_thinking.png" id="ryu_thinking"]
 
 [resource]
 script = ExtResource("1_ryu01")
 character_id = "ryu"
 display_name = "Ryu"
 color = Color(0.15, 0.2, 0.45, 1)
+portrait_image = ExtResource("ryu_neutral")
+expression_images = {
+"neutral": ExtResource("ryu_neutral"),
+"cold": ExtResource("ryu_cold"),
+"intense": ExtResource("ryu_intense"),
+"surprised": ExtResource("ryu_surprised"),
+"thinking": ExtResource("ryu_thinking")
+}
 expressions = {
 "cold": Color(0.1, 0.15, 0.4, 1),
 "intense": Color(0.3, 0.15, 0.5, 1),
 "neutral": Color(0.15, 0.2, 0.45, 1),
-"surprised": Color(0.2, 0.3, 0.55, 1)
+"surprised": Color(0.2, 0.3, 0.55, 1),
+"thinking": Color(0.2, 0.25, 0.4, 1)
 }
 default_style = "gentle"
 default_pose = "arms_crossed"

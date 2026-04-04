@@ -1,6 +1,6 @@
 @scene s3_the_club
 
-[background gradient:#0f2027:#2c5364]
+[background res://backgrounds/background_3.png]
 [camera_mode smooth]
 [fullscreen]
 

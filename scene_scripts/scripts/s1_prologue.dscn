@@ -4,7 +4,7 @@
 [title_card "EL CLUB" "Capítulo 1: La invitación"]
 [wait 1.5]
 
-[background gradient:#2b1055:#d53369]
+[background res://backgrounds/background_1.png]
 [camera_mode smooth]
 
 [enter sora center right]

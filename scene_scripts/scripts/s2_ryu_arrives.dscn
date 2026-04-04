@@ -1,6 +1,6 @@
 @scene s2_ryu_arrives
 
-[background gradient:#1a1a2e:#16222a]
+[background res://backgrounds/background_2.png]
 [camera_mode smooth]
 [fullscreen]
 

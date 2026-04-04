@@ -1,13 +1,28 @@
 [gd_resource type="Resource" script_class="CharacterData" format=3]
 
 [ext_resource type="Script" path="res://characters/character_data.gd" id="1_y48ho"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_neutral.png" id="mei_neutral"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_thinking.png" id="mei_thinking"]
 
 [resource]
 script = ExtResource("1_y48ho")
 character_id = "mei"
 display_name = "Mei"
 color = Color(0.6, 0.3, 0.9, 1)
+portrait_image = ExtResource("mei_neutral")
+expression_images = {
+"neutral": ExtResource("mei_neutral"),
+"thinking": ExtResource("mei_thinking")
+}
 expressions = {
 "analytical": Color(0.5, 0.25, 0.95, 1),
-"neutral": Color(0.6, 0.3, 0.9, 1)
+"neutral": Color(0.6, 0.3, 0.9, 1),
+"thinking": Color(0.55, 0.3, 0.85, 1)
 }
+default_style = "gentle"
+default_pose = "idle"
+voice_pitch = 280.0
+voice_variation = 35.0
+voice_waveform = "sine"
+dialogue_bg_color = Color(0.08, 0.05, 0.14, 0.92)
+dialogue_border_color = Color(0.6, 0.3, 0.9, 1)
