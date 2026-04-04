@@ -55,8 +55,17 @@ func _ready() -> void:
 	_update_state_display()
 
 
+var show_debug_border: bool = true
+
 func _update_pivot() -> void:
 	pivot_offset = size / 2.0
+
+
+func _draw() -> void:
+	if show_debug_border and character_data:
+		var rect := Rect2(Vector2.ZERO, size)
+		draw_rect(rect, Color(1, 1, 1, 0.15), false, 1.0)
+		draw_rect(rect.grow(-1), Color(0, 0, 0, 0.1), false, 1.0)
 
 
 func enter_character(data: Resource, from_direction: String = "right") -> void:

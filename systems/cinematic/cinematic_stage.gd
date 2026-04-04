@@ -17,9 +17,9 @@ const POSITIONS = {
 	"far_right": 0.92,
 }
 
-const CHAR_ASPECT := 0.45       # Character width / height ratio
-const CHAR_HEIGHT_RATIO := 0.70 # Character height as fraction of stage height
-const CHAR_MAX_WIDTH_FRAC := 0.14 # Max character width as fraction of stage width
+const CHAR_ASPECT := 0.60       # Character width / height ratio (bust-style, wider)
+const CHAR_HEIGHT_RATIO := 0.92 # Character height — almost full stage height
+const CHAR_MAX_WIDTH_FRAC := 0.45 # Max width — in split mode fills most of the panel
 const MOVE_DURATION := 0.5
 
 var characters_on_stage: Dictionary = {}    # character_id -> CharacterSlot node
