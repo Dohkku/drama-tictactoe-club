@@ -60,7 +60,7 @@ func _show_exit_confirmation() -> void:
 
 
 func _return_to_menu() -> void:
-	get_tree().change_scene_to_file("res://ui/main_menu.tscn")
+	get_tree().change_scene_to_file("res://systems/dev_menu.tscn")
 
 
 func _ready() -> void:
