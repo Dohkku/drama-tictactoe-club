@@ -74,7 +74,7 @@ ai_difficulty = 1.0
 intro_script = "res://scene_scripts/scripts/s2_match_intro.dscn"
 reactions_script = "res://scene_scripts/scripts/s2_reactions.dscn"
 player_style = "slam"
-opponent_style = "dramatic"
+opponent_style = "slam"
 
 [sub_resource type="Resource" id="evt_match2"]
 script = ExtResource("te")

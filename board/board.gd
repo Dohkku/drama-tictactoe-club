@@ -63,6 +63,7 @@ var board_audio: Node = null
 var _win_line_node: Control = null
 var player_effect: Resource = null
 var opponent_effect: Resource = null
+var placement_offset_max: float = 0.0
 
 
 func _ready() -> void:

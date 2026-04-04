@@ -112,6 +112,9 @@ func do_move(index: int, is_player: bool) -> void:
 	var piece_size = cell_size * board.pieces.get_piece_ratio()
 	var offset = (cell_size - piece_size) / 2.0
 	var final_pos = target_pos + offset
+	if board.placement_offset_max > 0.0:
+		var max_px: float = cell_size.x * board.placement_offset_max
+		final_pos += Vector2(randf_range(-max_px, max_px), randf_range(-max_px, max_px))
 
 	# Style
 	var style = board._next_move_style_override if board._next_move_style_override else (board.player_style if is_player else board.opponent_style)

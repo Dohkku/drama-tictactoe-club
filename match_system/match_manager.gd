@@ -402,6 +402,13 @@ func _configure_board_visuals(config: Resource) -> void:
 	_board.player_effect = _resolve_effect(p_style_name, PieceEffectScript)
 	_board.opponent_effect = _resolve_effect(o_style_name, PieceEffectScript)
 
+	# Per-match overrides for advanced opponents
+	if config.ai_difficulty >= 0.9:
+		_board.opponent_effect = PieceEffectScript.shockwave()
+		_board.placement_offset_max = 0.3
+	else:
+		_board.placement_offset_max = 0.0
+
 
 func _configure_board(config: Resource) -> void:
 	var board_cfg: Resource = _resolve_board_config(config)
