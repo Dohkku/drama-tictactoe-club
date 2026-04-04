@@ -61,6 +61,8 @@ var _board_config: Resource = null
 var screen_effects: Control = null
 var board_audio: Node = null
 var _win_line_node: Control = null
+var player_effect: Resource = null
+var opponent_effect: Resource = null
 
 
 func _ready() -> void:
@@ -157,6 +159,24 @@ func _on_board_resized() -> void:
 
 func _start_game() -> void:
 	game_controller.start_game()
+	_attach_piece_effects()
+
+
+func _attach_piece_effects() -> void:
+	for p in pieces.player_pieces:
+		if is_instance_valid(p):
+			var ep := Node2D.new()
+			ep.set_script(PieceEffectPlayerScript)
+			ep.setup(player_effect if player_effect else PieceEffectScript.none())
+			piece_layer.add_child(ep)
+			p.effect_player = ep
+	for p in pieces.opponent_pieces:
+		if is_instance_valid(p):
+			var ep := Node2D.new()
+			ep.set_script(PieceEffectPlayerScript)
+			ep.setup(opponent_effect if opponent_effect else PieceEffectScript.none())
+			piece_layer.add_child(ep)
+			p.effect_player = ep
 
 
 func _on_cell_clicked(index: int) -> void:

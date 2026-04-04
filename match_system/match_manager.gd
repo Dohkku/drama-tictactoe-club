@@ -397,6 +397,11 @@ func _configure_board_visuals(config: Resource) -> void:
 	_board.set_opponent_style(_resolve_style(o_style_name))
 	_board.ai.difficulty = config.ai_difficulty
 
+	# Set piece effects based on style
+	var PieceEffectScript: GDScript = load("res://systems/board_visuals/piece_effect.gd")
+	_board.player_effect = _resolve_effect(p_style_name, PieceEffectScript)
+	_board.opponent_effect = _resolve_effect(o_style_name, PieceEffectScript)
+
 
 func _configure_board(config: Resource) -> void:
 	var board_cfg: Resource = _resolve_board_config(config)
@@ -436,11 +441,20 @@ func _resolve_rules_legacy(preset: String) -> Resource:
 			return GameRulesScript.standard()
 
 
-func _resolve_style(name: String) -> Resource:
-	match name:
+func _resolve_style(style_name: String) -> Resource:
+	match style_name:
 		"gentle": return PlacementStyleScript.gentle()
 		"slam": return PlacementStyleScript.slam()
 		"spinning": return PlacementStyleScript.spinning()
 		"dramatic": return PlacementStyleScript.dramatic()
 		"nervous": return PlacementStyleScript.nervous()
 	return PlacementStyleScript.gentle()
+
+
+func _resolve_effect(style_name: String, EffectScript: GDScript) -> Resource:
+	match style_name:
+		"slam": return EffectScript.fire()
+		"dramatic": return EffectScript.shockwave()
+		"spinning": return EffectScript.sparkle()
+		"nervous": return EffectScript.smoke()
+	return EffectScript.none()
