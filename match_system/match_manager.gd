@@ -382,10 +382,8 @@ func _configure_board_visuals(config: Resource) -> void:
 
 	if player_data:
 		_board.player_color = player_data.color
-		_board.player_expressions = player_data.expressions
 	if opponent_data:
 		_board.opponent_color = opponent_data.color
-		_board.opponent_expressions = opponent_data.expressions
 
 	# Update existing pieces to match character colors
 	_board.refresh_piece_colors()

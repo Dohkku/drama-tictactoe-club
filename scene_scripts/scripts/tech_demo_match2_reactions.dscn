@@ -1,7 +1,7 @@
 @reactions tech_demo_match2_reactions
 
 @on player_wins
-[layout fullscreen]
+[fullscreen]
 [board_disable]
 [expression ryu surprised]
 [pose ryu leaning_back]
@@ -14,7 +14,7 @@ Ryu: No subestimé a nadie. Simplemente... eres bueno.
 @end
 
 @on opponent_wins
-[layout fullscreen]
+[fullscreen]
 [board_disable]
 [expression ryu cold]
 [pose ryu confident]
@@ -24,7 +24,7 @@ Ryu: Necesitas más práctica.
 @end
 
 @on draw
-[layout fullscreen]
+[fullscreen]
 [board_disable]
 [expression ryu thinking]
 [pose ryu thinking]

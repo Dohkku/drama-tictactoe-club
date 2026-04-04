@@ -5,7 +5,7 @@
 # ══════════════════════════════════════════
 
 @on player_wins
-[layout fullscreen]
+[fullscreen]
 [board_disable]
 [expression sora sad]
 [pose sora defeated]
@@ -18,7 +18,7 @@ Sora: ¡Pero ha sido una gran partida! ¡Quiero la revancha!
 @end
 
 @on opponent_wins
-[layout fullscreen]
+[fullscreen]
 [board_disable]
 [expression sora happy]
 [pose sora excited]
@@ -30,7 +30,7 @@ Sora: No te lo tomes a mal. La próxima vez será diferente.
 @end
 
 @on draw
-[layout fullscreen]
+[fullscreen]
 [board_disable]
 [expression sora thinking]
 [pose sora thinking]

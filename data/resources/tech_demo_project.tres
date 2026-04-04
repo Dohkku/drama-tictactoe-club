@@ -35,7 +35,6 @@ default_player_color = Color(0.2, 0.5, 1, 1)
 default_opponent_color = Color(1.0, 0.4, 0.1, 1)
 board_bg_color = Color(0.3, 0.28, 0.24, 1)
 
-# Match 1: vs Sora
 [sub_resource type="Resource" id="mc_sora"]
 script = ExtResource("mc")
 match_id = "demo_sora"
@@ -46,14 +45,6 @@ reactions_script = "res://scene_scripts/scripts/tech_demo_reactions.dscn"
 player_style = "slam"
 opponent_style = "dramatic"
 
-[sub_resource type="Resource" id="evt_match1"]
-script = ExtResource("te")
-event_type = "match"
-event_name = "vs Sora"
-match_config = SubResource("mc_sora")
-order_index = 0
-
-# Match 2: vs Ryu
 [sub_resource type="Resource" id="mc_ryu"]
 script = ExtResource("mc")
 match_id = "demo_ryu"
@@ -64,6 +55,13 @@ reactions_script = "res://scene_scripts/scripts/tech_demo_match2_reactions.dscn"
 player_style = "slam"
 opponent_style = "gentle"
 
+[sub_resource type="Resource" id="evt_match1"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Sora"
+match_config = SubResource("mc_sora")
+order_index = 0
+
 [sub_resource type="Resource" id="evt_match2"]
 script = ExtResource("te")
 event_type = "match"
@@ -71,7 +69,6 @@ event_name = "vs Ryu"
 match_config = SubResource("mc_ryu")
 order_index = 1
 
-# Finale
 [sub_resource type="Resource" id="evt_finale"]
 script = ExtResource("te")
 event_type = "cutscene"

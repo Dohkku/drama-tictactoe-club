@@ -35,5 +35,5 @@ Ryu → Tú: El tablero no miente. Muestra quién eres de verdad.
 [expression ryu neutral]
 Ryu: Empecemos.
 
-[layout split]
+[split]
 [board_enable]

@@ -80,5 +80,5 @@ Sora → Tú: Primera ronda. Tú contra mí. ¿Listo?
 [expression sora happy]
 Sora: ¡Vamos allá!
 
-[layout split]
+[split]
 [board_enable]

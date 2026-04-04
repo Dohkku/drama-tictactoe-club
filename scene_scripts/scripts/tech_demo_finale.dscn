@@ -5,7 +5,7 @@
 # ══════════════════════════════════════════
 
 [background #2a1a3e]
-[layout fullscreen]
+[fullscreen]
 [camera_mode smooth]
 
 # Everyone enters
