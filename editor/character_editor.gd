@@ -403,50 +403,83 @@ func _rebuild_expression_list(ch: Resource) -> void:
 	_clear_children(expression_list_container)
 	for expr_name in ch.expressions.keys():
 		var expr_color: Color = ch.expressions[expr_name]
-		_add_expression_row(expr_name, expr_color)
+		var img_path: String = ""
+		if ch.expression_images.has(expr_name):
+			var tex: Texture2D = ch.expression_images[expr_name]
+			if tex and tex.resource_path != "":
+				img_path = tex.resource_path
+		_add_expression_row(expr_name, expr_color, img_path)
 
 
-func _add_expression_row(expr_name: String = "", expr_color: Color = Color.WHITE) -> void:
+func _add_expression_row(expr_name: String = "", expr_color: Color = Color.WHITE, img_path: String = "") -> void:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	row.add_theme_constant_override("separation", 4)
 
 	var name_field := LineEdit.new()
 	name_field.text = expr_name
 	name_field.placeholder_text = "nombre"
 	name_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_field.custom_minimum_size = Vector2(100, 0)
+	name_field.custom_minimum_size = Vector2(80, 0)
 	name_field.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9))
 	name_field.add_theme_color_override("font_placeholder_color", Color(0.4, 0.4, 0.5))
+	name_field.add_theme_font_size_override("font_size", 12)
 	var name_sb := StyleBoxFlat.new()
 	name_sb.bg_color = Color(0.12, 0.13, 0.18)
 	name_sb.border_color = Color(0.25, 0.25, 0.35)
 	name_sb.set_border_width_all(1)
 	name_sb.set_corner_radius_all(4)
-	name_sb.set_content_margin_all(6)
+	name_sb.set_content_margin_all(4)
 	name_field.add_theme_stylebox_override("normal", name_sb)
 	row.add_child(name_field)
 
 	var color_btn := ColorPickerButton.new()
 	color_btn.color = expr_color
-	color_btn.custom_minimum_size = Vector2(40, 30)
+	color_btn.custom_minimum_size = Vector2(30, 26)
 	row.add_child(color_btn)
+
+	# Image path for this expression
+	var img_field := LineEdit.new()
+	img_field.text = img_path
+	img_field.placeholder_text = "imagen..."
+	img_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	img_field.custom_minimum_size = Vector2(60, 0)
+	img_field.add_theme_font_size_override("font_size", 10)
+	img_field.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	img_field.add_theme_color_override("font_placeholder_color", Color(0.35, 0.35, 0.45))
+	var img_sb := StyleBoxFlat.new()
+	img_sb.bg_color = Color(0.1, 0.12, 0.16)
+	img_sb.border_color = Color(0.2, 0.2, 0.3)
+	img_sb.set_border_width_all(1)
+	img_sb.set_corner_radius_all(3)
+	img_sb.set_content_margin_all(3)
+	img_field.add_theme_stylebox_override("normal", img_sb)
+	row.add_child(img_field)
+
+	var img_browse := Button.new()
+	img_browse.text = "📁"
+	img_browse.custom_minimum_size = Vector2(28, 26)
+	img_browse.add_theme_font_size_override("font_size", 12)
+	img_browse.pressed.connect(func(): _browse_expression_image(img_field))
+	row.add_child(img_browse)
 
 	var del_btn := Button.new()
 	del_btn.text = "x"
-	del_btn.custom_minimum_size = Vector2(30, 30)
+	del_btn.custom_minimum_size = Vector2(26, 26)
 	var del_sb := StyleBoxFlat.new()
 	del_sb.bg_color = Color(0.4, 0.15, 0.15)
 	del_sb.set_corner_radius_all(4)
-	del_sb.set_content_margin_all(4)
+	del_sb.set_content_margin_all(3)
 	del_btn.add_theme_stylebox_override("normal", del_sb)
 	del_btn.add_theme_color_override("font_color", Color(1, 0.6, 0.6))
+	del_btn.add_theme_font_size_override("font_size", 12)
 	row.add_child(del_btn)
 
 	expression_list_container.add_child(row)
 
-	# Connect signals
 	name_field.text_changed.connect(_on_expression_name_changed.bind(row))
 	color_btn.color_changed.connect(_on_expression_color_changed.bind(row))
+	img_field.text_changed.connect(func(_t: String) -> void: _sync_expression_images_from_ui())
+	del_btn.pressed.connect(func() -> void: _delete_expression_row(row))
 	del_btn.pressed.connect(_on_expression_delete.bind(row))
 
 
@@ -492,6 +525,57 @@ func _sync_expressions_from_ui() -> void:
 			if name_field and color_btn and name_field.text != "":
 				new_expressions[name_field.text] = color_btn.color
 	ch.expressions = new_expressions
+
+
+func _delete_expression_row(row: HBoxContainer) -> void:
+	row.queue_free()
+	await get_tree().process_frame
+	_sync_expressions_from_ui()
+	_sync_expression_images_from_ui()
+	_update_preview()
+
+
+func _sync_expression_images_from_ui() -> void:
+	var ch := _get_current()
+	if ch == null:
+		return
+	var new_images := {}
+	for child in expression_list_container.get_children():
+		if child is HBoxContainer and is_instance_valid(child) and child.get_child_count() >= 4:
+			var name_field: LineEdit = child.get_child(0) as LineEdit
+			var img_field: LineEdit = child.get_child(2) as LineEdit
+			if name_field and img_field and name_field.text != "" and img_field.text != "":
+				var tex: Texture2D = _try_load_texture(img_field.text)
+				if tex:
+					new_images[name_field.text] = tex
+	ch.expression_images = new_images
+
+
+func _try_load_texture(path: String) -> Texture2D:
+	if path == "" or not ResourceLoader.exists(path):
+		return null
+	var res: Resource = load(path)
+	if res is Texture2D:
+		return res
+	return null
+
+
+func _browse_expression_image(target_field: LineEdit) -> void:
+	var dialog := FileDialog.new()
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dialog.access = FileDialog.ACCESS_RESOURCES
+	dialog.filters = PackedStringArray(["*.png, *.jpg, *.jpeg, *.webp ; Images"])
+	dialog.title = "Seleccionar imagen de expresión"
+	dialog.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_PRIMARY_SCREEN
+	dialog.size = Vector2i(700, 500)
+	add_child(dialog)
+	dialog.file_selected.connect(func(path: String) -> void:
+		target_field.text = path
+		_sync_expression_images_from_ui()
+		dialog.queue_free()
+	)
+	dialog.canceled.connect(dialog.queue_free)
+	dialog.popup_centered()
 
 
 # --- Poses ---

@@ -103,3 +103,24 @@ func _build_ui() -> void:
 	demo_btn.add_theme_stylebox_override("hover", demo_hover)
 	demo_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
 	vbox.add_child(demo_btn)
+
+	# Editor button
+	var editor_btn := Button.new()
+	editor_btn.custom_minimum_size = Vector2(0, 52)
+	editor_btn.text = "  ✎  EDITOR  —  Personajes, escenas, partidas, tablero"
+	editor_btn.add_theme_font_size_override("font_size", 16)
+	editor_btn.add_theme_color_override("font_color", Color.WHITE)
+	var editor_style := StyleBoxFlat.new()
+	editor_style.bg_color = Color(0.15, 0.35, 0.5)
+	editor_style.set_corner_radius_all(8)
+	editor_style.content_margin_left = 16
+	editor_btn.add_theme_stylebox_override("normal", editor_style)
+	var editor_hover := StyleBoxFlat.new()
+	editor_hover.bg_color = Color(0.2, 0.45, 0.6)
+	editor_hover.set_corner_radius_all(8)
+	editor_hover.content_margin_left = 16
+	editor_btn.add_theme_stylebox_override("hover", editor_hover)
+	var editor_exists: bool = ResourceLoader.exists("res://editor/editor_main.tscn")
+	editor_btn.disabled = not editor_exists
+	editor_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://editor/editor_main.tscn"))
+	vbox.add_child(editor_btn)
