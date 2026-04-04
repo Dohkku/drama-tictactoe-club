@@ -124,3 +124,24 @@ func _build_ui() -> void:
 	editor_btn.disabled = not editor_exists
 	editor_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://editor/editor_main.tscn"))
 	vbox.add_child(editor_btn)
+
+	# Editor 2.0 (Canvas) button
+	var canvas_btn := Button.new()
+	canvas_btn.custom_minimum_size = Vector2(0, 52)
+	canvas_btn.text = "  ◈  EDITOR 2.0  —  Canvas visual basado en nodos"
+	canvas_btn.add_theme_font_size_override("font_size", 16)
+	canvas_btn.add_theme_color_override("font_color", Color.WHITE)
+	var canvas_style := StyleBoxFlat.new()
+	canvas_style.bg_color = Color(0.45, 0.25, 0.7)
+	canvas_style.set_corner_radius_all(8)
+	canvas_style.content_margin_left = 16
+	canvas_btn.add_theme_stylebox_override("normal", canvas_style)
+	var canvas_hover := StyleBoxFlat.new()
+	canvas_hover.bg_color = Color(0.55, 0.35, 0.8)
+	canvas_hover.set_corner_radius_all(8)
+	canvas_hover.content_margin_left = 16
+	canvas_btn.add_theme_stylebox_override("hover", canvas_hover)
+	var canvas_exists: bool = ResourceLoader.exists("res://editor/graph/graph_editor_main.tscn")
+	canvas_btn.disabled = not canvas_exists
+	canvas_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://editor/graph/graph_editor_main.tscn"))
+	vbox.add_child(canvas_btn)

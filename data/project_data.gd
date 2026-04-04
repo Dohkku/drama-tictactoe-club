@@ -8,3 +8,4 @@ extends Resource
 @export var characters: Array[Resource] = []  # Array of CharacterData
 @export var events: Array[Resource] = []  # Array of TournamentEvent
 @export var board_config: Resource = null  # BoardConfig
+@export var canvas_data: Resource = null  # CanvasData (for graph editor)
