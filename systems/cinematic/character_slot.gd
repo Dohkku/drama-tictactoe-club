@@ -25,6 +25,10 @@ var _state_label: Label
 var _look_indicator: Label
 var _body_tween: Tween = null
 
+# Crop base transforms (set from CharacterData portrait_zoom/offset)
+var _crop_base_scale: Vector2 = Vector2.ONE
+var _crop_base_position: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
 	modulate.a = 0.0
@@ -190,9 +194,10 @@ func set_focus(focused: bool) -> void:
 # --- Visual state application ---
 
 func _apply_body_state() -> void:
-	# Reset to base first — no rotation ever
+	# Reset to crop base first — no rotation ever
 	portrait_rect.rotation = 0.0
-	portrait_rect.scale = Vector2.ONE
+	portrait_rect.scale = _crop_base_scale
+	portrait_rect.position = _crop_base_position
 	portrait_rect.modulate = Color.WHITE
 	portrait_rect.pivot_offset = portrait_rect.size / 2.0
 
@@ -204,35 +209,34 @@ func _apply_body_state() -> void:
 			var tween := create_tween()
 			tween.tween_property(portrait_rect, "modulate", Color(0.85, 0.85, 0.95), 0.3)
 		"arms_crossed":
-			portrait_rect.scale = Vector2(0.95, 1.0)
+			portrait_rect.scale = _crop_base_scale * Vector2(0.95, 1.0)
 		"leaning_forward":
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", Vector2(1.08, 1.08), 0.3)
+			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(1.08, 1.08), 0.3)
 		"leaning_back":
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", Vector2(0.92, 0.92), 0.3)
+			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(0.92, 0.92), 0.3)
 		"excited":
 			# Bouncing loop + bright tint
 			portrait_rect.modulate = Color(1.1, 1.1, 1.0)
 			_body_tween = create_tween().set_loops()
-			_body_tween.tween_property(portrait_rect, "position:y", portrait_rect.position.y - 6.0, 0.2).set_ease(Tween.EASE_OUT)
-			_body_tween.tween_property(portrait_rect, "position:y", portrait_rect.position.y, 0.2).set_ease(Tween.EASE_IN)
+			_body_tween.tween_property(portrait_rect, "position:y", _crop_base_position.y - 6.0, 0.2).set_ease(Tween.EASE_OUT)
+			_body_tween.tween_property(portrait_rect, "position:y", _crop_base_position.y, 0.2).set_ease(Tween.EASE_IN)
 		"tense":
 			# Red tint + micro-vibration
 			portrait_rect.modulate = Color(1.1, 0.9, 0.9)
-			var orig: Vector2 = portrait_rect.position
 			_body_tween = create_tween().set_loops()
-			_body_tween.tween_property(portrait_rect, "position", orig + Vector2(2, 0), 0.05)
-			_body_tween.tween_property(portrait_rect, "position", orig + Vector2(-2, 0), 0.05)
-			_body_tween.tween_property(portrait_rect, "position", orig, 0.05)
+			_body_tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(2, 0), 0.05)
+			_body_tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(-2, 0), 0.05)
+			_body_tween.tween_property(portrait_rect, "position", _crop_base_position, 0.05)
 		"confident":
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", Vector2(1.05, 1.05), 0.3)
+			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(1.05, 1.05), 0.3)
 			portrait_rect.modulate = Color(1.05, 1.05, 1.1)
 		"defeated":
 			# Desaturate + shrink — no rotation
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", Vector2(0.88, 0.95), 0.4)
+			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(0.88, 0.95), 0.4)
 			tween.parallel().tween_property(portrait_rect, "modulate", Color(0.7, 0.7, 0.75), 0.4)
 
 
@@ -262,9 +266,9 @@ func _stop_body_tween() -> void:
 	if _body_tween and _body_tween.is_valid():
 		_body_tween.kill()
 		_body_tween = null
-		# Reset portrait position/scale
-		portrait_rect.position = Vector2.ZERO
-		portrait_rect.scale = Vector2.ONE
+		# Reset portrait to crop base
+		portrait_rect.position = _crop_base_position
+		portrait_rect.scale = _crop_base_scale
 		portrait_rect.rotation = 0.0
 
 
@@ -306,6 +310,33 @@ func _apply_expression(expr_name: String) -> void:
 		# 3. Last fallback: Generate a solid color texture from the character color
 		var color = character_data.expressions.get(expr_name, character_data.color)
 		_set_solid_color_fallback(color)
+
+	_apply_portrait_crop()
+
+
+func _apply_portrait_crop() -> void:
+	if character_data == null:
+		return
+
+	var zoom: float = 1.0
+	var offset: Vector2 = Vector2.ZERO
+	if "portrait_zoom" in character_data:
+		zoom = character_data.portrait_zoom
+	if "portrait_offset" in character_data:
+		offset = character_data.portrait_offset
+
+	zoom = clampf(zoom, 0.5, 2.0)
+	offset = Vector2(clampf(offset.x, -0.5, 0.5), clampf(offset.y, -0.5, 0.5))
+
+	_crop_base_scale = Vector2(zoom, zoom)
+	_crop_base_position = offset * portrait_rect.size
+
+	portrait_rect.pivot_offset = portrait_rect.size / 2.0
+	portrait_rect.scale = _crop_base_scale
+	portrait_rect.position = _crop_base_position
+
+	# Enable clipping so zoomed portrait doesn't overflow the slot
+	clip_children = CanvasItem.CLIP_CHILDREN_ONLY
 
 
 func _set_solid_color_fallback(color: Color) -> void:

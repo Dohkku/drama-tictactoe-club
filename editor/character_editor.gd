@@ -46,9 +46,16 @@ var image_dialog: FileDialog = null
 # Preview
 @onready var preview_slot: Control = %PreviewSlot
 
+# Portrait crop controls (built in _setup_crop_ui)
+var crop_zoom_slider: HSlider = null
+var crop_offset_x_slider: HSlider = null
+var crop_offset_y_slider: HSlider = null
+var crop_reset_button: Button = null
+
 
 func _ready() -> void:
 	_setup_image_ui()
+	_setup_crop_ui()
 
 	# Connect list selection
 	character_list.item_selected.connect(_on_character_selected)
@@ -124,6 +131,149 @@ func _setup_image_ui() -> void:
 	add_child(image_dialog)
 
 
+func _setup_crop_ui() -> void:
+	# Add crop controls below the PreviewSlot inside PreviewVBox
+	var preview_vbox: VBoxContainer = preview_slot.get_parent()
+
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("separator_color", Color(0.25, 0.25, 0.35, 0.5))
+	preview_vbox.add_child(sep)
+
+	var crop_label := Label.new()
+	crop_label.text = "Encuadre del Retrato"
+	crop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	crop_label.add_theme_color_override("font_color", Color(0.7, 0.65, 0.85))
+	crop_label.add_theme_font_size_override("font_size", 14)
+	preview_vbox.add_child(crop_label)
+
+	# Zoom slider row
+	var zoom_row := HBoxContainer.new()
+	zoom_row.add_theme_constant_override("separation", 6)
+	preview_vbox.add_child(zoom_row)
+
+	var zoom_lbl := Label.new()
+	zoom_lbl.text = "Zoom:"
+	zoom_lbl.custom_minimum_size = Vector2(70, 0)
+	zoom_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	zoom_lbl.add_theme_font_size_override("font_size", 12)
+	zoom_row.add_child(zoom_lbl)
+
+	crop_zoom_slider = HSlider.new()
+	crop_zoom_slider.min_value = 0.5
+	crop_zoom_slider.max_value = 2.0
+	crop_zoom_slider.step = 0.05
+	crop_zoom_slider.value = 1.0
+	crop_zoom_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crop_zoom_slider.custom_minimum_size = Vector2(0, 20)
+	crop_zoom_slider.value_changed.connect(_on_crop_zoom_changed)
+	zoom_row.add_child(crop_zoom_slider)
+
+	# Offset X slider row
+	var ox_row := HBoxContainer.new()
+	ox_row.add_theme_constant_override("separation", 6)
+	preview_vbox.add_child(ox_row)
+
+	var ox_lbl := Label.new()
+	ox_lbl.text = "Pan X:"
+	ox_lbl.custom_minimum_size = Vector2(70, 0)
+	ox_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	ox_lbl.add_theme_font_size_override("font_size", 12)
+	ox_row.add_child(ox_lbl)
+
+	crop_offset_x_slider = HSlider.new()
+	crop_offset_x_slider.min_value = -0.5
+	crop_offset_x_slider.max_value = 0.5
+	crop_offset_x_slider.step = 0.01
+	crop_offset_x_slider.value = 0.0
+	crop_offset_x_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crop_offset_x_slider.custom_minimum_size = Vector2(0, 20)
+	crop_offset_x_slider.value_changed.connect(_on_crop_offset_x_changed)
+	ox_row.add_child(crop_offset_x_slider)
+
+	# Offset Y slider row
+	var oy_row := HBoxContainer.new()
+	oy_row.add_theme_constant_override("separation", 6)
+	preview_vbox.add_child(oy_row)
+
+	var oy_lbl := Label.new()
+	oy_lbl.text = "Pan Y:"
+	oy_lbl.custom_minimum_size = Vector2(70, 0)
+	oy_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	oy_lbl.add_theme_font_size_override("font_size", 12)
+	oy_row.add_child(oy_lbl)
+
+	crop_offset_y_slider = HSlider.new()
+	crop_offset_y_slider.min_value = -0.5
+	crop_offset_y_slider.max_value = 0.5
+	crop_offset_y_slider.step = 0.01
+	crop_offset_y_slider.value = 0.0
+	crop_offset_y_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crop_offset_y_slider.custom_minimum_size = Vector2(0, 20)
+	crop_offset_y_slider.value_changed.connect(_on_crop_offset_y_changed)
+	oy_row.add_child(crop_offset_y_slider)
+
+	# Reset button
+	crop_reset_button = Button.new()
+	crop_reset_button.text = "Resetear Encuadre"
+	crop_reset_button.add_theme_font_size_override("font_size", 12)
+	crop_reset_button.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9))
+	var reset_sb := StyleBoxFlat.new()
+	reset_sb.bg_color = Color(0.2, 0.2, 0.28)
+	reset_sb.set_corner_radius_all(4)
+	reset_sb.set_content_margin_all(4)
+	crop_reset_button.add_theme_stylebox_override("normal", reset_sb)
+	crop_reset_button.pressed.connect(_on_crop_reset_pressed)
+	preview_vbox.add_child(crop_reset_button)
+
+
+func _on_crop_zoom_changed(value: float) -> void:
+	if _updating_ui:
+		return
+	var ch := _get_current()
+	if ch == null:
+		return
+	ch.portrait_zoom = value
+	_update_preview()
+	characters_changed.emit()
+
+
+func _on_crop_offset_x_changed(value: float) -> void:
+	if _updating_ui:
+		return
+	var ch := _get_current()
+	if ch == null:
+		return
+	ch.portrait_offset.x = value
+	_update_preview()
+	characters_changed.emit()
+
+
+func _on_crop_offset_y_changed(value: float) -> void:
+	if _updating_ui:
+		return
+	var ch := _get_current()
+	if ch == null:
+		return
+	ch.portrait_offset.y = value
+	_update_preview()
+	characters_changed.emit()
+
+
+func _on_crop_reset_pressed() -> void:
+	var ch := _get_current()
+	if ch == null:
+		return
+	ch.portrait_zoom = 1.0
+	ch.portrait_offset = Vector2.ZERO
+	_updating_ui = true
+	crop_zoom_slider.value = 1.0
+	crop_offset_x_slider.value = 0.0
+	crop_offset_y_slider.value = 0.0
+	_updating_ui = false
+	_update_preview()
+	characters_changed.emit()
+
+
 func _on_portrait_browse_pressed() -> void:
 	image_dialog.popup_centered(Vector2i(700, 500))
 
@@ -167,6 +317,10 @@ func _set_form_enabled(enabled: bool) -> void:
 	add_expression_button.disabled = !enabled
 	add_pose_button.disabled = !enabled
 	delete_button.disabled = !enabled
+	if crop_zoom_slider: crop_zoom_slider.editable = enabled
+	if crop_offset_x_slider: crop_offset_x_slider.editable = enabled
+	if crop_offset_y_slider: crop_offset_y_slider.editable = enabled
+	if crop_reset_button: crop_reset_button.disabled = !enabled
 
 
 # --- List management ---
@@ -255,6 +409,14 @@ func _populate_form() -> void:
 	dialogue_bg_picker.color = ch.dialogue_bg_color
 	dialogue_border_picker.color = ch.dialogue_border_color
 
+	# Portrait crop
+	if crop_zoom_slider:
+		crop_zoom_slider.value = ch.portrait_zoom
+	if crop_offset_x_slider:
+		crop_offset_x_slider.value = ch.portrait_offset.x
+	if crop_offset_y_slider:
+		crop_offset_y_slider.value = ch.portrait_offset.y
+
 	# Expressions
 	_rebuild_expression_list(ch)
 
@@ -281,6 +443,9 @@ func _clear_form() -> void:
 	waveform_option.selected = 0
 	dialogue_bg_picker.color = Color(0.1, 0.1, 0.15, 0.9)
 	dialogue_border_picker.color = Color(0.3, 0.3, 0.4, 1.0)
+	if crop_zoom_slider: crop_zoom_slider.value = 1.0
+	if crop_offset_x_slider: crop_offset_x_slider.value = 0.0
+	if crop_offset_y_slider: crop_offset_y_slider.value = 0.0
 	_clear_children(expression_list_container)
 	_clear_children(pose_list_container)
 	_updating_ui = false

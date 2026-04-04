@@ -26,6 +26,8 @@ var _max_size_slider: HSlider
 var _hand_height_slider: HSlider
 var _piece_ratio_slider: HSlider
 var _cell_line_width_slider: HSlider
+var _margin_h_slider: HSlider
+var _margin_v_slider: HSlider
 
 var _cell_empty_picker: ColorPickerButton
 var _cell_alt_picker: ColorPickerButton
@@ -50,6 +52,10 @@ func _ready() -> void:
 	# Apply config to test board now that it's in the tree
 	if _test_board:
 		_test_board.apply_board_config(_config)
+		_test_board.modulate.a = 1.0
+		# Board._ready() awaits 2 process frames before _start_game(), which disables
+		# input. Wait for that to finish, then enable input so the editor board is playable.
+		_enable_test_input_deferred()
 
 	EventBus.match_ended.connect(_on_test_match_ended)
 
@@ -119,6 +125,8 @@ func _build_ui() -> void:
 	# ── Visual Section ──
 	_add_section_label(form, "Tamaño")
 	_max_size_slider = _add_slider(form, "Tamaño máx. tablero (px)", 150, 800, 10)
+	_margin_h_slider = _add_slider(form, "Margen horizontal (px)", 0, 80, 2)
+	_margin_v_slider = _add_slider(form, "Margen vertical (px)", 0, 80, 2)
 	_hand_height_slider = _add_slider(form, "Altura área fichas (px)", 20, 100, 5)
 	_piece_ratio_slider = _add_slider(form, "Ratio ficha/casilla", 0.5, 1.0, 0.05)
 
@@ -162,6 +170,20 @@ func _build_ui() -> void:
 	_test_board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_test_board.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(_test_board)
+	# Board._ready() sets modulate.a = 0.0 to avoid flash during gameplay.
+	# In the editor the board must be visible immediately.
+	_test_board.modulate.a = 1.0
+
+
+func _enable_test_input_deferred() -> void:
+	## Wait for board._ready() startup to finish, then enable input.
+	if not _test_board or not is_instance_valid(_test_board):
+		return
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if _test_board and is_instance_valid(_test_board):
+		_test_board.input_enabled = true
 
 
 func _on_test_match_ended(_result: String) -> void:
@@ -170,6 +192,7 @@ func _on_test_match_ended(_result: String) -> void:
 	await get_tree().create_timer(1.0).timeout
 	if _test_board and is_instance_valid(_test_board):
 		_test_board._start_game()
+		_enable_test_input_deferred()
 
 
 # ── Change handlers ──
@@ -240,6 +263,8 @@ func _apply_rules_to_ui() -> void:
 
 func _apply_visuals_to_ui() -> void:
 	_max_size_slider.value = _config.max_board_size
+	_margin_h_slider.value = _config.margin_h
+	_margin_v_slider.value = _config.margin_v
 	_hand_height_slider.value = _config.hand_area_height
 	_piece_ratio_slider.value = _config.piece_cell_ratio
 	_cell_line_width_slider.value = _config.cell_line_width
@@ -268,6 +293,8 @@ func _sync_rules_from_ui() -> void:
 
 func _sync_visuals_from_ui() -> void:
 	_config.max_board_size = int(_max_size_slider.value)
+	_config.margin_h = int(_margin_h_slider.value)
+	_config.margin_v = int(_margin_v_slider.value)
 	_config.hand_area_height = int(_hand_height_slider.value)
 	_config.piece_cell_ratio = _piece_ratio_slider.value
 	_config.cell_line_width = _cell_line_width_slider.value
@@ -291,6 +318,7 @@ func _apply_config_to_test_board() -> void:
 	if not _test_board or not is_instance_valid(_test_board):
 		return
 	_test_board.apply_board_config(_config)
+	_test_board.modulate.a = 1.0
 
 
 func _rebuild_test_board() -> void:
@@ -299,6 +327,9 @@ func _rebuild_test_board() -> void:
 		return
 	_test_board.full_reset(_config.get_rules())
 	_test_board.apply_board_config(_config)
+	_test_board.modulate.a = 1.0
+	# full_reset calls _start_game() which disables input; re-enable after it settles
+	_enable_test_input_deferred()
 
 
 func _detect_preset(rules: Resource) -> int:

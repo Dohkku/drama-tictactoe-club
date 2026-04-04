@@ -24,6 +24,8 @@ const COLOR_TEXT_DIM := Color(0.55, 0.55, 0.65)
 const COLOR_DELETE := Color(0.9, 0.3, 0.3)
 const COLOR_BUTTON_BG := Color(0.25, 0.26, 0.32)
 const COLOR_INPUT_BG := Color(0.14, 0.15, 0.20)
+const COLOR_SEPARATOR := Color(0.3, 0.3, 0.4)
+const COLOR_SUMMARY := Color(0.45, 0.45, 0.6)
 
 # ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -81,7 +83,7 @@ func set_available_characters(chars: Array) -> void:
 
 func _build_ui() -> void:
 	# Background panel
-	var bg_style = StyleBoxFlat.new()
+	var bg_style := StyleBoxFlat.new()
 	bg_style.bg_color = COLOR_BG
 	add_theme_stylebox_override("panel", bg_style)
 
@@ -225,8 +227,11 @@ func _create_event_card(event_idx: int) -> PanelContainer:
 	content_vbox.add_theme_constant_override("separation", 4)
 	hbox.add_child(content_vbox)
 
-	# Title
+	# Title row
 	var title := Label.new()
+	var subtitle := Label.new()
+	subtitle.add_theme_font_size_override("font_size", 12)
+	subtitle.add_theme_color_override("font_color", COLOR_TEXT_DIM)
 	match event_type:
 		"cutscene":
 			var script_path: String = event_data.get("script_path", "")
@@ -234,6 +239,7 @@ func _create_event_card(event_idx: int) -> PanelContainer:
 				title.text = "%s — %s" % [type_label, script_path.get_file()]
 			else:
 				title.text = type_label
+			subtitle.text = script_path if script_path != "" else "(sin script)"
 		"match":
 			var opp_id: String = event_data.get("opponent_id", "")
 			var char_name := _get_character_name(opp_id)
@@ -243,17 +249,20 @@ func _create_event_card(event_idx: int) -> PanelContainer:
 				title.add_theme_color_override("font_color", char_color.lerp(Color.WHITE, 0.4))
 			else:
 				title.text = type_label
+			subtitle.text = _build_match_summary(event_data)
 		"simultaneous":
 			var matches: Array = event_data.get("matches", [])
 			if matches.size() > 0:
-				var names := []
-				for m in matches:
+				var names: Array = []
+				for m: Dictionary in matches:
 					names.append(_get_character_name(m.get("opponent_id", "")))
 				title.text = "%s — %s" % [type_label, ", ".join(names)]
 			else:
 				title.text = "%s (sin oponentes)" % type_label
+			subtitle.text = "%d oponente(s)" % event_data.get("matches", []).size()
 	title.add_theme_font_size_override("font_size", 15)
 	content_vbox.add_child(title)
+	content_vbox.add_child(subtitle)
 
 	# ── Details container (collapsible) ──────────────────────────────────
 	var details := VBoxContainer.new()
@@ -301,6 +310,9 @@ func _build_cutscene_details(parent: VBoxContainer, event_idx: int, data: Dictio
 
 
 func _build_match_details(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
+	# ── Section: Configuracion de partida ────────────────────────────────
+	_add_section_header(parent, "Configuracion de partida")
+
 	_add_character_dropdown_row(parent, "Oponente:", data.get("opponent_id", ""),
 		func(id: String):
 			_update_event_data(event_idx, "opponent_id", id)
@@ -309,7 +321,11 @@ func _build_match_details(parent: VBoxContainer, event_idx: int, data: Dictionar
 	_add_slider_row(parent, "Dificultad IA:", data.get("ai_difficulty", 0.3), 0.0, 1.0, 0.05,
 		func(val: float): _update_event_data(event_idx, "ai_difficulty", val))
 
-	_build_board_rules_section(parent, event_idx, data)
+	_add_slider_row(parent, "Turnos/visita:", data.get("turns_per_visit", 1), 1, 5, 1,
+		func(val: float): _update_event_data(event_idx, "turns_per_visit", int(val)))
+
+	# ── Section: Scripts ─────────────────────────────────────────────────
+	_add_section_header(parent, "Scripts")
 
 	_add_line_edit_row(parent, "Script intro:", data.get("intro_script", ""),
 		func(text: String): _update_event_data(event_idx, "intro_script", text))
@@ -317,33 +333,37 @@ func _build_match_details(parent: VBoxContainer, event_idx: int, data: Dictionar
 	_add_line_edit_row(parent, "Script reacciones:", data.get("reactions_script", ""),
 		func(text: String): _update_event_data(event_idx, "reactions_script", text))
 
+	# ── Section: Estilo visual ───────────────────────────────────────────
+	_add_section_header(parent, "Estilo visual")
+
 	_add_option_row(parent, "Estilo jugador:", STYLE_OPTIONS, data.get("player_style", "slam"),
 		func(idx: int): _update_event_data(event_idx, "player_style", STYLE_OPTIONS[idx]))
 
 	_add_option_row(parent, "Estilo oponente:", STYLE_OPTIONS, data.get("opponent_style", "gentle"),
 		func(idx: int): _update_event_data(event_idx, "opponent_style", STYLE_OPTIONS[idx]))
 
-	# Effects
 	_add_option_row(parent, "Efecto jugador:", EFFECT_OPTIONS, data.get("player_effect_name", "none"),
 		func(idx: int): _update_event_data(event_idx, "player_effect_name", EFFECT_OPTIONS[idx]))
 
 	_add_option_row(parent, "Efecto oponente:", EFFECT_OPTIONS, data.get("opponent_effect_name", "auto"),
 		func(idx: int): _update_event_data(event_idx, "opponent_effect_name", EFFECT_OPTIONS[idx]))
 
-	# Imprecision
-	_add_slider_row(parent, "Imprecisión:", data.get("placement_offset", 0.0), 0.0, 0.3, 0.01,
+	_add_slider_row(parent, "Imprecision:", data.get("placement_offset", 0.0), 0.0, 0.3, 0.01,
 		func(val: float): _update_event_data(event_idx, "placement_offset", val))
 
-	# Piece designs
 	_add_option_row(parent, "Pieza jugador:", DESIGN_OPTIONS, data.get("player_piece_design", "x"),
 		func(idx: int): _update_event_data(event_idx, "player_piece_design", DESIGN_OPTIONS[idx]))
 
 	_add_option_row(parent, "Pieza oponente:", DESIGN_OPTIONS, data.get("opponent_piece_design", "o"),
 		func(idx: int): _update_event_data(event_idx, "opponent_piece_design", DESIGN_OPTIONS[idx]))
 
-	# Turns per visit (for simultaneous)
-	_add_slider_row(parent, "Turnos/visita:", data.get("turns_per_visit", 1), 1, 5, 1,
-		func(val: float): _update_event_data(event_idx, "turns_per_visit", int(val)))
+	# ── Section: Reglas de tablero ───────────────────────────────────────
+	_add_section_header(parent, "Reglas de tablero")
+
+	_build_board_rules_section(parent, event_idx, data)
+
+	# ── Summary footer ──────────────────────────────────────────────────
+	_add_summary_footer(parent, data)
 
 
 func _build_simultaneous_details(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
@@ -388,8 +408,9 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 	sub_vbox.add_child(header_hbox)
 
 	var sub_title := Label.new()
-	var opp_name: String = data.get("opponent_id", "")
-	sub_title.text = "Oponente %d: %s" % [sub_idx + 1, opp_name.capitalize() if opp_name != "" else "?"]
+	var opp_id: String = data.get("opponent_id", "")
+	var opp_display: String = _get_character_name(opp_id) if opp_id != "" else "?"
+	sub_title.text = "Oponente %d: %s" % [sub_idx + 1, opp_display]
 	sub_title.add_theme_color_override("font_color", COLOR_SIMULTANEOUS.lightened(0.3))
 	sub_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_hbox.add_child(sub_title)
@@ -397,7 +418,9 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 	var del_sub_btn := _make_card_button("x", func(): _delete_sub_match(event_idx, sub_idx), COLOR_DELETE)
 	header_hbox.add_child(del_sub_btn)
 
-	# Fields
+	# ── Section: Configuracion ──────────────────────────────────────────
+	_add_section_header(sub_vbox, "Configuracion de partida")
+
 	_add_character_dropdown_row(sub_vbox, "Oponente:", data.get("opponent_id", ""),
 		func(id: String):
 			_update_sub_match_data(event_idx, sub_idx, "opponent_id", id)
@@ -406,7 +429,8 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 	_add_slider_row(sub_vbox, "Dificultad IA:", data.get("ai_difficulty", 0.3), 0.0, 1.0, 0.05,
 		func(val: float): _update_sub_match_data(event_idx, sub_idx, "ai_difficulty", val))
 
-	_build_board_rules_section_sub(sub_vbox, event_idx, sub_idx, data)
+	# ── Section: Scripts ────────────────────────────────────────────────
+	_add_section_header(sub_vbox, "Scripts")
 
 	_add_line_edit_row(sub_vbox, "Script intro:", data.get("intro_script", ""),
 		func(text: String): _update_sub_match_data(event_idx, sub_idx, "intro_script", text))
@@ -414,11 +438,22 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 	_add_line_edit_row(sub_vbox, "Script reacciones:", data.get("reactions_script", ""),
 		func(text: String): _update_sub_match_data(event_idx, sub_idx, "reactions_script", text))
 
+	# ── Section: Estilo visual ──────────────────────────────────────────
+	_add_section_header(sub_vbox, "Estilo visual")
+
 	_add_option_row(sub_vbox, "Estilo jugador:", STYLE_OPTIONS, data.get("player_style", "slam"),
 		func(idx: int): _update_sub_match_data(event_idx, sub_idx, "player_style", STYLE_OPTIONS[idx]))
 
 	_add_option_row(sub_vbox, "Estilo oponente:", STYLE_OPTIONS, data.get("opponent_style", "gentle"),
 		func(idx: int): _update_sub_match_data(event_idx, sub_idx, "opponent_style", STYLE_OPTIONS[idx]))
+
+	# ── Section: Reglas de tablero ──────────────────────────────────────
+	_add_section_header(sub_vbox, "Reglas de tablero")
+
+	_build_board_rules_section_sub(sub_vbox, event_idx, sub_idx, data)
+
+	# ── Summary footer ──────────────────────────────────────────────────
+	_add_summary_footer(sub_vbox, data)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -427,7 +462,7 @@ func _add_sub_match_card(parent: VBoxContainer, event_idx: int, sub_idx: int, da
 
 func _build_board_rules_section(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
 	## Build expandable board rules section for a regular match.
-	var has_custom = data.get("custom_rules", false)
+	var has_custom: bool = data.get("custom_rules", false)
 	var rules_data: Dictionary = data.get("board_rules", {})
 
 	var custom_check := CheckBox.new()
@@ -460,7 +495,7 @@ func _build_board_rules_section(parent: VBoxContainer, event_idx: int, data: Dic
 
 func _build_board_rules_section_sub(parent: VBoxContainer, event_idx: int, sub_idx: int, data: Dictionary) -> void:
 	## Build expandable board rules section for a simultaneous sub-match.
-	var has_custom = data.get("custom_rules", false)
+	var has_custom: bool = data.get("custom_rules", false)
 	var rules_data: Dictionary = data.get("board_rules", {})
 
 	var custom_check := CheckBox.new()
@@ -575,10 +610,11 @@ func _add_character_dropdown_row(parent: Control, label_text: String, current_id
 	
 	var select_idx := 0
 	for i in range(available_characters.size()):
-		var ch = available_characters[i]
-		var id = ch.get("character_id")
-		var name = ch.get("display_name")
-		opt.add_item(name if name != "" else id, i + 1)
+		var ch: Variant = available_characters[i]
+		var id: String = str(ch.get("character_id"))
+		var char_name: String = str(ch.get("display_name"))
+		var label: String = "%s (%s)" % [char_name, id] if char_name != "" and char_name != id else id
+		opt.add_item(label, i + 1)
 		opt.set_item_metadata(i + 1, id)
 		if id == current_id:
 			select_idx = i + 1
@@ -866,16 +902,77 @@ func _update_sub_match_data(event_idx: int, sub_idx: int, key: String, value: Va
 
 # ─── New Helpers ──────────────────────────────────────────────────────────────
 
+func _add_section_header(parent: Control, text: String) -> void:
+	## Adds a labeled separator to visually group controls.
+	var section := HBoxContainer.new()
+	section.add_theme_constant_override("separation", 8)
+	parent.add_child(section)
+
+	var line_left := HSeparator.new()
+	line_left.custom_minimum_size = Vector2(12, 0)
+	line_left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	line_left.add_theme_color_override("separator", COLOR_SEPARATOR)
+	section.add_child(line_left)
+
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", COLOR_SEPARATOR)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	section.add_child(lbl)
+
+	var line_right := HSeparator.new()
+	line_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line_right.add_theme_color_override("separator", COLOR_SEPARATOR)
+	section.add_child(line_right)
+
+
+func _build_match_summary(data: Dictionary) -> String:
+	## Build a short human-readable summary string from match data.
+	var parts: Array = []
+	var opp_id: String = data.get("opponent_id", "")
+	if opp_id != "":
+		parts.append("vs %s" % _get_character_name(opp_id))
+	var difficulty: float = data.get("ai_difficulty", 0.3)
+	parts.append("Dificultad: %.2f" % difficulty)
+	var p_style: String = data.get("player_style", "slam")
+	var o_style: String = data.get("opponent_style", "gentle")
+	parts.append("Estilos: %s/%s" % [p_style, o_style])
+	var rules_preset: String = data.get("game_rules_preset", "standard")
+	if data.get("custom_rules", false):
+		parts.append("Reglas: personalizadas")
+	elif rules_preset != "standard":
+		parts.append("Reglas: %s" % rules_preset)
+	return " | ".join(parts)
+
+
+func _add_summary_footer(parent: Control, data: Dictionary) -> void:
+	## Adds a dim summary line at the bottom of an expanded card.
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("separator", COLOR_SEPARATOR)
+	parent.add_child(sep)
+
+	var summary := Label.new()
+	summary.text = _build_match_summary(data)
+	summary.add_theme_font_size_override("font_size", 11)
+	summary.add_theme_color_override("font_color", COLOR_SUMMARY)
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(summary)
+
+
 func _get_character_name(id: String) -> String:
-	for ch in available_characters:
+	for ch: Variant in available_characters:
 		if ch.get("character_id") == id:
-			var n = ch.get("display_name")
+			var n: String = str(ch.get("display_name"))
 			return n if n != "" else id
 	return id if id != "" else "???"
 
 
 func _get_character_color(id: String) -> Color:
-	for ch in available_characters:
+	for ch: Variant in available_characters:
 		if ch.get("character_id") == id:
-			return ch.get("color")
+			var c: Variant = ch.get("color")
+			if c is Color:
+				return c
+			return COLOR_TEXT
 	return COLOR_TEXT

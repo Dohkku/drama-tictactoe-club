@@ -18,6 +18,12 @@ extends Resource
 ## Default placement style for board pieces (slam, gentle, spinning, etc.)
 @export var default_style: String = "gentle"
 
+## Portrait crop — pan offset as fraction (-0.5 to 0.5) within the slot
+@export var portrait_offset: Vector2 = Vector2.ZERO
+
+## Portrait crop — zoom level (0.5 = zoomed out, 2.0 = zoomed in)
+@export var portrait_zoom: float = 1.0
+
 ## Default body pose when entering a scene
 @export var default_pose: String = "idle"
 
