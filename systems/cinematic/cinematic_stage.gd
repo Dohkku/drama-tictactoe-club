@@ -399,10 +399,11 @@ func _apply_slot_position(slot: Control, fraction: float) -> void:
 
 
 func _calc_slot_position(fraction: float) -> Vector2:
-	var layer_size = character_layer.size
-	var sz = _calc_slot_size()
-	var x = layer_size.x * fraction - sz.x / 2.0
-	var y = (layer_size.y - sz.y) / 2.0
+	var layer_size: Vector2 = character_layer.size
+	var sz: Vector2 = _calc_slot_size()
+	var x: float = layer_size.x * fraction - sz.x / 2.0
+	# Anchor to bottom of stage
+	var y: float = layer_size.y - sz.y
 	return Vector2(x, y)
 
 

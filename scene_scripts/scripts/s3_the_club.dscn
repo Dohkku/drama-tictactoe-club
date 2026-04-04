@@ -1,6 +1,8 @@
 @scene s3_the_club
 
 [background res://backgrounds/background_3.png]
+[title_card "Capítulo 3" "El Club"]
+[wait 1.0]
 [camera_mode smooth]
 [fullscreen]
 

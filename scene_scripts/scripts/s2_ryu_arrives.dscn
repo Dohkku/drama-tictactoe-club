@@ -1,6 +1,8 @@
 @scene s2_ryu_arrives
 
 [background res://backgrounds/background_2.png]
+[title_card "Capítulo 2" "La prueba de Ryu"]
+[wait 1.0]
 [camera_mode smooth]
 [fullscreen]
 
