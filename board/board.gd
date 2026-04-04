@@ -66,6 +66,8 @@ var _win_line_node: Control = null
 
 
 func _ready() -> void:
+	# Start invisible — MatchManager fades in after configure
+	modulate.a = 0.0
 	if game_rules == null:
 		game_rules = GameRulesScript.new()
 	logic = BoardLogicScript.new(game_rules)

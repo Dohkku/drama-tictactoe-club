@@ -407,8 +407,11 @@ func _reposition_all() -> void:
 
 
 func _on_layer_resized() -> void:
-	if not _camera_active:
-		_reposition_all()
+	# Always reposition characters when stage resizes (layout transitions, window resize)
+	if _camera_active:
+		_camera.reset(_camera.SMOOTH)
+		_camera_active = false
+	_reposition_all()
 	if show_position_markers:
 		_update_markers()
 

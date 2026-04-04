@@ -27,12 +27,21 @@ var _dialogue_active: bool = false
 var _escape_dialog: AcceptDialog = null
 
 
+var _debug_mode: bool = false
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		if _escape_dialog and is_instance_valid(_escape_dialog) and _escape_dialog.visible:
-			_escape_dialog.hide()
-			return
-		_show_exit_confirmation()
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_ESCAPE:
+				if _escape_dialog and is_instance_valid(_escape_dialog) and _escape_dialog.visible:
+					_escape_dialog.hide()
+					return
+				_show_exit_confirmation()
+			KEY_F3:
+				_debug_mode = not _debug_mode
+				cinematic_stage.set_show_markers(_debug_mode)
+				debug_log.visible = _debug_mode
+				_log_debug("Debug: %s" % ("ON" if _debug_mode else "OFF"))
 
 
 func _show_exit_confirmation() -> void:
@@ -60,6 +69,7 @@ func _ready() -> void:
 	layout.setup(split_container, cinematic_panel, board_panel, panel_separator)
 	layout.transition_finished.connect(_on_layout_finished)
 	layout.set_instant("fullscreen")
+	debug_log.visible = false
 
 	_setup_runner()
 	var loaded := _load_project_data()
