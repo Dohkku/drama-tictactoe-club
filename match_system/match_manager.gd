@@ -401,21 +401,51 @@ func _configure_board_visuals(config: Resource) -> void:
 
 
 func _configure_board(config: Resource) -> void:
-	var board_cfg = _resolve_board_config(config)
-	# Hide board, reset, then reveal
+	var board_cfg: Resource = _resolve_board_config(config)
+
+	# Immediately hide everything and destroy old visuals
 	_board.modulate.a = 0.0
-	# Force immediate visual cleanup before await
+
+	# Destroy old cells RIGHT NOW (not queue_free — remove_child + free)
 	for c in _board.cells:
 		if is_instance_valid(c):
-			c.queue_free()
+			c.get_parent().remove_child(c)
+			c.free()
 	_board.cells.clear()
-	_board.pieces.clear_all_pieces()
-	await _board.get_tree().process_frame
-	# Now do the full reset (creates fresh cells/pieces)
+
+	# Destroy old pieces RIGHT NOW
+	for p in _board.pieces.player_pieces:
+		if is_instance_valid(p):
+			if p.get("effect_player") and is_instance_valid(p.effect_player):
+				p.effect_player.get_parent().remove_child(p.effect_player)
+				p.effect_player.free()
+			p.get_parent().remove_child(p)
+			p.free()
+	for p in _board.pieces.opponent_pieces:
+		if is_instance_valid(p):
+			if p.get("effect_player") and is_instance_valid(p.effect_player):
+				p.effect_player.get_parent().remove_child(p.effect_player)
+				p.effect_player.free()
+			p.get_parent().remove_child(p)
+			p.free()
+	_board.pieces.player_pieces.clear()
+	_board.pieces.opponent_pieces.clear()
+	_board.pieces.cell_to_piece.clear()
+	_board.pieces.player_next = 0
+	_board.pieces.opponent_next = 0
+
+	# Clear win line
+	if _board._win_line_node and is_instance_valid(_board._win_line_node):
+		_board._win_line_node.get_parent().remove_child(_board._win_line_node)
+		_board._win_line_node.free()
+		_board._win_line_node = null
+
+	# Now rebuild cleanly
 	await _board.full_reset(board_cfg.get_rules())
 	_board.apply_board_config(board_cfg)
 	_configure_board_visuals(config)
-	# Fade board back in
+
+	# Board is clean — make visible
 	_board.modulate.a = 1.0
 
 
