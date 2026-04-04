@@ -232,7 +232,7 @@ func handle_game_over() -> void:
 				board._win_line_node = sfx.play_win_line(positions, color)
 
 		if audio:
-			audio.play_sfx("win")
+			audio.play_sfx("win", 3.5)
 			audio.duck_bgm(0.5)
 	else:
 		update_status("¡Empate!")

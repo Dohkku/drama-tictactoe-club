@@ -76,8 +76,10 @@ func _run(commands: Array) -> void:
 			"choose":
 				await _cmd_choose(cmd)
 			"enter":
+				_play_sfx_fire_and_forget("res://audio/sfx/enter.mp3")
 				await _stage.enter_character(cmd.character, cmd.get("position", "center"), cmd.get("enter_from", ""))
 			"exit":
+				_play_sfx_fire_and_forget("res://audio/sfx/enter.mp3")
 				await _stage.exit_character(cmd.character, cmd.get("direction", ""))
 			"move":
 				await _stage.move_character(cmd.character, cmd.position)
@@ -255,7 +257,14 @@ func _cmd_music(cmd: Dictionary) -> void:
 		return
 
 	_music_player.stream = stream
+	if not _music_player.finished.is_connected(_on_music_loop):
+		_music_player.finished.connect(_on_music_loop)
 	_music_player.play()
+
+
+func _on_music_loop() -> void:
+	if _music_player and _music_player.stream:
+		_music_player.play()
 
 
 func _cmd_sfx(cmd: Dictionary) -> void:
@@ -312,6 +321,16 @@ func _update_audio_volumes() -> void:
 		if typeof(Settings) != TYPE_NIL:
 			sfx_linear = clampf(Settings.master_volume * Settings.sfx_volume, 0.0001, 1.0)
 		_sfx_player.volume_db = linear_to_db(sfx_linear)
+
+
+func _play_sfx_fire_and_forget(path: String) -> void:
+	_setup_audio_players()
+	if _sfx_player == null:
+		return
+	var stream: AudioStream = _load_audio_stream(path)
+	if stream:
+		_sfx_player.stream = stream
+		_sfx_player.play()
 
 
 func _load_audio_stream(path_or_key: String) -> AudioStream:

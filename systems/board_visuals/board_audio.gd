@@ -38,7 +38,7 @@ const MUSIC_DIR := "res://audio/music/"
 
 # ── Public API ──
 
-func play_sfx(sfx_name: String) -> void:
+func play_sfx(sfx_name: String, fadeout_after: float = 0.0) -> void:
 	var stream: AudioStream = _load_external_sfx(sfx_name)
 	if not stream:
 		stream = _get_sfx(sfx_name)
@@ -46,6 +46,17 @@ func play_sfx(sfx_name: String) -> void:
 		_sfx_player.stream = stream
 		_sfx_player.volume_db = _sfx_volume
 		_sfx_player.play()
+		if fadeout_after > 0.0:
+			_sfx_fadeout(fadeout_after)
+
+
+func _sfx_fadeout(delay: float) -> void:
+	await get_tree().create_timer(delay).timeout
+	if _sfx_player and _sfx_player.playing:
+		var tween := create_tween()
+		tween.tween_property(_sfx_player, "volume_db", -40.0, 1.0)
+		tween.tween_callback(_sfx_player.stop)
+		tween.tween_callback(func() -> void: _sfx_player.volume_db = _sfx_volume)
 
 
 func play_bgm(track_name: String = "bgm") -> void:

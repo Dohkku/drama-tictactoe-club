@@ -21,7 +21,7 @@ expressions = {
 }
 default_style = "gentle"
 default_pose = "idle"
-voice_pitch = 280.0
+voice_pitch = 380.0
 voice_variation = 35.0
 voice_waveform = "sine"
 dialogue_bg_color = Color(0.08, 0.05, 0.14, 0.92)
