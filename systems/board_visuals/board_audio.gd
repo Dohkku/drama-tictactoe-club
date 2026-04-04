@@ -227,21 +227,51 @@ func _generate_impact_heavy() -> AudioStreamWAV:
 
 
 func _generate_bgm_loop() -> AudioStreamWAV:
-	# Simple ambient drone loop — soft, unobtrusive
-	var duration: float = 4.0
+	# Melodic ambient loop — chord progression with rhythm
+	var duration: float = 8.0
 	var num_frames: int = int(SAMPLE_RATE * duration)
 	var data := PackedByteArray()
 	data.resize(num_frames * 2)
 	var base_freq: float = _theme_freq(110.0)
 
+	# Simple chord progression: i - VI - III - VII (Am - F - C - G feel)
+	var chords: Array = [
+		[1.0, 1.2, 1.5],       # i  (root, minor 3rd, 5th)
+		[0.89, 1.12, 1.33],    # VI
+		[0.75, 0.94, 1.12],    # III
+		[0.84, 1.0, 1.26],     # VII
+	]
+	var chord_dur: float = duration / float(chords.size())
+
 	for i in num_frames:
 		var t: float = float(i) / float(SAMPLE_RATE)
-		# Two detuned sine tones for warmth
-		var s1: float = sin(TAU * base_freq * t) * 0.15
-		var s2: float = sin(TAU * (base_freq * 1.005) * t) * 0.15
-		# Subtle fifth
-		var s3: float = sin(TAU * (base_freq * 1.5) * t) * 0.05
-		var sample: float = s1 + s2 + s3
+		var chord_idx: int = mini(int(t / chord_dur), chords.size() - 1)
+		var chord: Array = chords[chord_idx]
+		var chord_t: float = fmod(t, chord_dur) / chord_dur
+
+		# Soft pad (detuned sines)
+		var pad: float = 0.0
+		for interval in chord:
+			var freq: float = base_freq * interval
+			pad += sin(TAU * freq * t) * 0.06
+			pad += sin(TAU * freq * 1.003 * t) * 0.05  # Slight detune for warmth
+		# Fifth harmony
+		pad += sin(TAU * base_freq * chord[2] * t) * 0.03
+
+		# Subtle rhythmic pulse (every beat)
+		var beat_pos: float = fmod(t, 0.5)
+		var pulse: float = 0.0
+		if beat_pos < 0.05:
+			pulse = sin(TAU * base_freq * 2.0 * t) * 0.08 * (1.0 - beat_pos / 0.05)
+
+		# Chord transition fade
+		var fade: float = 1.0
+		if chord_t < 0.05:
+			fade = chord_t / 0.05
+		elif chord_t > 0.95:
+			fade = (1.0 - chord_t) / 0.05
+
+		var sample: float = (pad + pulse) * fade
 		var s16: int = int(clampf(sample, -1.0, 1.0) * 32767.0)
 		data[i * 2] = s16 & 0xFF
 		data[i * 2 + 1] = (s16 >> 8) & 0xFF

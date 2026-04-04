@@ -37,7 +37,7 @@ func _ready() -> void:
 	if ResourceLoader.exists(SAVE_PATH):
 		_on_load_file_selected(SAVE_PATH)
 	else:
-		var default_res = load("res://data/resources/default_project.tres")
+		var default_res = load("res://data/resources/tech_demo_project.tres")
 		if default_res:
 			current_project = default_res
 			_apply_data()
