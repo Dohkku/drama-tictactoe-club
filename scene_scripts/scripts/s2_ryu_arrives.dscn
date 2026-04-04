@@ -1,6 +1,7 @@
 @scene s2_ryu_arrives
 
 [background res://backgrounds/background_2.png]
+[music res://audio/music/bgm_tense.wav]
 [title_card "Capítulo 2" "La prueba de Ryu"]
 [wait 1.0]
 [camera_mode smooth]

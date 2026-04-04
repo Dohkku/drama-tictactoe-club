@@ -332,7 +332,7 @@ func _load_external_music(track_name: String) -> AudioStream:
 
 
 func _try_load_audio(base_path: String) -> AudioStream:
-	for ext in [".ogg", ".wav"]:
+	for ext in [".ogg", ".wav", ".mp3"]:
 		var path: String = base_path + ext
 		if ResourceLoader.exists(path):
 			return load(path)

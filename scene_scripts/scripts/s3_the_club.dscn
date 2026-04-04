@@ -1,6 +1,7 @@
 @scene s3_the_club
 
 [background res://backgrounds/background_3.png]
+[music res://audio/music/bgm_chill.mp3]
 [title_card "Capítulo 3" "El Club"]
 [wait 1.0]
 [camera_mode smooth]
