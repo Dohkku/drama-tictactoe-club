@@ -24,10 +24,7 @@ func setup_defaults() -> void:
 
 
 func connect_ui() -> void:
-	if board.double_play_button:
-		board.double_play_button.pressed.connect(_on_double_play_pressed)
-	if board.steal_button:
-		board.steal_button.pressed.connect(_on_steal_pressed)
+	pass
 
 
 func reset_all() -> void:
@@ -42,16 +39,7 @@ func update_ui_state() -> void:
 		board.ability_bar.visible = not board.logic.game_over
 	var can_try = _can_use_player_abilities()
 
-	var state := _get_board_state()
-	if board.double_play_button:
-		var double_ability = _find_ability_by_type(player_abilities, DoublePlayAbilityScript)
-		var can_use_double: bool = can_try and double_ability != null and double_ability.can_use(board.logic, state)
-		board.double_play_button.disabled = not can_use_double
-
-	if board.steal_button:
-		var steal_ability = _find_ability_by_type(player_abilities, StealAbilityScript)
-		var can_use_steal: bool = can_try and steal_ability != null and steal_ability.can_use(board.logic, state)
-		board.steal_button.disabled = not can_use_steal
+	var _state := _get_board_state()
 
 
 func apply_ability(ability: Resource, _is_player: bool) -> Dictionary:

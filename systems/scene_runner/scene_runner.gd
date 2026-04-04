@@ -1,4 +1,4 @@
-class_name SceneRunner
+
 extends RefCounted
 
 ## Executes scene commands produced by SceneParser.

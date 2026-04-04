@@ -1,4 +1,4 @@
-class_name SceneParser
+
 extends RefCounted
 
 ## Parses .dscn text files into command arrays.

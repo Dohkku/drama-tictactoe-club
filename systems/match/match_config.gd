@@ -1,4 +1,3 @@
-class_name MatchConfig
 extends Resource
 
 ## Configuration for a single match in the tournament.

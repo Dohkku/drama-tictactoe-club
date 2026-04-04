@@ -1,4 +1,3 @@
-class_name MatchManager
 extends RefCounted
 
 ## Orchestrates a tournament: matches, cutscenes, and simultaneous round-robin matches.
