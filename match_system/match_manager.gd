@@ -397,17 +397,23 @@ func _configure_board_visuals(config: Resource) -> void:
 	_board.set_opponent_style(_resolve_style(o_style_name))
 	_board.ai.difficulty = config.ai_difficulty
 
-	# Set piece effects based on style
+	# Effects — read from config, no hardcoding
 	var PieceEffectScript: GDScript = load("res://systems/board_visuals/piece_effect.gd")
-	_board.player_effect = PieceEffectScript.none()
-	_board.opponent_effect = _resolve_effect(o_style_name, PieceEffectScript)
+	var PieceDesignScript: GDScript = load("res://systems/board_visuals/piece_design.gd")
 
-	# Per-match overrides for advanced opponents
-	if config.ai_difficulty >= 0.9:
-		_board.opponent_effect = PieceEffectScript.shockwave()
-		_board.placement_offset_max = 0.3
-	else:
-		_board.placement_offset_max = 0.0
+	var p_effect_name: String = config.get("player_effect_name") if config.get("player_effect_name") else "none"
+	var o_effect_name: String = config.get("opponent_effect_name") if config.get("opponent_effect_name") else "auto"
+	_board.player_effect = _resolve_effect_by_name(p_effect_name, o_style_name, PieceEffectScript)
+	_board.opponent_effect = _resolve_effect_by_name(o_effect_name, o_style_name, PieceEffectScript)
+
+	# Placement offset — from config
+	_board.placement_offset_max = config.get("placement_offset") if config.get("placement_offset") != null else 0.0
+
+	# Piece designs — from config
+	var p_design_name: String = config.get("player_piece_design") if config.get("player_piece_design") else "x"
+	var o_design_name: String = config.get("opponent_piece_design") if config.get("opponent_piece_design") else "o"
+	_board.player_design = _resolve_design(p_design_name, PieceDesignScript)
+	_board.opponent_design = _resolve_design(o_design_name, PieceDesignScript)
 
 
 func _configure_board(config: Resource) -> void:
@@ -458,10 +464,29 @@ func _resolve_style(style_name: String) -> Resource:
 	return PlacementStyleScript.gentle()
 
 
-func _resolve_effect(style_name: String, EffectScript: GDScript) -> Resource:
-	match style_name:
-		"slam": return EffectScript.fire()
-		"dramatic": return EffectScript.shockwave()
-		"spinning": return EffectScript.sparkle()
-		"nervous": return EffectScript.smoke()
+func _resolve_effect_by_name(effect_name: String, style_fallback: String, EffectScript: GDScript) -> Resource:
+	if effect_name == "auto":
+		# Derive from style
+		match style_fallback:
+			"slam": return EffectScript.fire()
+			"dramatic": return EffectScript.shockwave()
+			"spinning": return EffectScript.sparkle()
+			"nervous": return EffectScript.smoke()
+		return EffectScript.none()
+	match effect_name:
+		"fire": return EffectScript.fire()
+		"sparkle": return EffectScript.sparkle()
+		"smoke": return EffectScript.smoke()
+		"shockwave": return EffectScript.shockwave()
 	return EffectScript.none()
+
+
+func _resolve_design(design_name: String, DesignScript: GDScript) -> Resource:
+	match design_name:
+		"x": return DesignScript.x_design()
+		"o": return DesignScript.o_design()
+		"triangle": return DesignScript.triangle_design()
+		"square": return DesignScript.square_design()
+		"star": return DesignScript.star_design()
+		"diamond": return DesignScript.diamond_design()
+	return DesignScript.x_design()

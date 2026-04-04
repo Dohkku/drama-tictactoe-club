@@ -75,6 +75,8 @@ intro_script = "res://scene_scripts/scripts/s2_match_intro.dscn"
 reactions_script = "res://scene_scripts/scripts/s2_reactions.dscn"
 player_style = "slam"
 opponent_style = "slam"
+opponent_effect_name = "shockwave"
+placement_offset = 0.3
 
 [sub_resource type="Resource" id="evt_match2"]
 script = ExtResource("te")

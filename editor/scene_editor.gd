@@ -138,6 +138,10 @@ func _build_ui() -> void:
 		["Emoción", "[set_emotion player neutral]"],
 		["Efecto", "akira: texto con {shake}énfasis{/shake}"],
 		["Trigger", "akira: texto {trigger:ai_move}aquí"],
+		["Stop Música", "[stop_music]"],
+		["Board Enable", "[board_enable]"],
+		["Board Disable", "[board_disable]"],
+		["Title Card", "[title_card \"Titulo\" \"Subtitulo\"]"],
 	]
 	for cmd in commands:
 		var btn = Button.new()
@@ -148,6 +152,39 @@ func _build_ui() -> void:
 		btn.pressed.connect(_insert_at_cursor.bind(insert_text))
 		_style_palette_button(btn)
 		palette.add_child(btn)
+
+	# Asset browser buttons
+	var sep := HSeparator.new()
+	palette.add_child(sep)
+	var assets_label := Label.new()
+	assets_label.text = "Assets"
+	assets_label.add_theme_font_size_override("font_size", 11)
+	assets_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	palette.add_child(assets_label)
+
+	var music_btn := Button.new()
+	music_btn.text = "🎵 Música"
+	music_btn.add_theme_font_size_override("font_size", 12)
+	music_btn.add_theme_color_override("font_color", Color(0.7, 1.0, 0.7))
+	music_btn.pressed.connect(func(): _browse_and_insert("res://audio/music", "[music %s]"))
+	_style_palette_button(music_btn)
+	palette.add_child(music_btn)
+
+	var sfx_btn := Button.new()
+	sfx_btn.text = "🔊 SFX"
+	sfx_btn.add_theme_font_size_override("font_size", 12)
+	sfx_btn.add_theme_color_override("font_color", Color(1.0, 0.85, 0.6))
+	sfx_btn.pressed.connect(func(): _browse_and_insert("res://audio/sfx", "[sfx %s]"))
+	_style_palette_button(sfx_btn)
+	palette.add_child(sfx_btn)
+
+	var bg_btn := Button.new()
+	bg_btn.text = "🖼 Fondo"
+	bg_btn.add_theme_font_size_override("font_size", 12)
+	bg_btn.add_theme_color_override("font_color", Color(0.8, 0.7, 1.0))
+	bg_btn.pressed.connect(func(): _browse_and_insert("res://backgrounds", "[background %s]"))
+	_style_palette_button(bg_btn)
+	palette.add_child(bg_btn)
 
 	# --- RIGHT PANEL ---
 	var right_panel = VBoxContainer.new()
@@ -529,6 +566,25 @@ func _exec_next(cmds: Array, idx: int, spd: float) -> void:
 func _insert_at_cursor(text: String) -> void:
 	code_edit.insert_text_at_caret(text)
 	code_edit.grab_focus()
+
+
+func _browse_and_insert(base_dir: String, format_template: String) -> void:
+	var dialog := FileDialog.new()
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dialog.access = FileDialog.ACCESS_RESOURCES
+	dialog.current_dir = base_dir
+	dialog.filters = PackedStringArray(["*.ogg, *.mp3, *.wav ; Audio", "*.png, *.jpg, *.webp ; Images"])
+	dialog.title = "Seleccionar asset"
+	dialog.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_PRIMARY_SCREEN
+	dialog.size = Vector2i(700, 500)
+	add_child(dialog)
+	dialog.file_selected.connect(func(path: String) -> void:
+		var cmd: String = format_template % path
+		_insert_at_cursor(cmd)
+		dialog.queue_free()
+	)
+	dialog.canceled.connect(dialog.queue_free)
+	dialog.popup_centered()
 
 
 func _set_status(msg: String) -> void:

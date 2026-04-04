@@ -222,6 +222,12 @@ func _dict_to_match_config(data: Dictionary) -> Resource:
 	mc.reactions_script = data.get("reactions_script", "")
 	mc.player_style = data.get("player_style", "slam")
 	mc.opponent_style = data.get("opponent_style", "gentle")
+	mc.player_effect_name = data.get("player_effect_name", "none")
+	mc.opponent_effect_name = data.get("opponent_effect_name", "auto")
+	mc.placement_offset = data.get("placement_offset", 0.0)
+	mc.player_piece_design = data.get("player_piece_design", "x")
+	mc.opponent_piece_design = data.get("opponent_piece_design", "o")
+	mc.turns_per_visit = data.get("turns_per_visit", 1)
 
 	# Build per-match BoardConfig from custom rules if enabled
 	if data.get("custom_rules", false):
@@ -264,6 +270,12 @@ func _match_config_to_dict(mc: Resource) -> Dictionary:
 		"reactions_script": mc.reactions_script,
 		"player_style": mc.player_style,
 		"opponent_style": mc.opponent_style,
+		"player_effect_name": mc.player_effect_name,
+		"opponent_effect_name": mc.opponent_effect_name,
+		"placement_offset": mc.placement_offset,
+		"player_piece_design": mc.player_piece_design,
+		"opponent_piece_design": mc.opponent_piece_design,
+		"turns_per_visit": mc.turns_per_visit,
 		"custom_rules": mc.board_config != null,
 	}
 	if mc.board_config != null:

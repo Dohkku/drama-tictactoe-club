@@ -8,6 +8,8 @@ extends VBoxContainer
 # ─── Constants ───────────────────────────────────────────────────────────────
 
 const STYLE_OPTIONS := ["gentle", "slam", "spinning", "dramatic", "nervous"]
+const EFFECT_OPTIONS := ["none", "auto", "fire", "sparkle", "smoke", "shockwave"]
+const DESIGN_OPTIONS := ["x", "o", "triangle", "square", "star", "diamond"]
 const RULES_OPTIONS := ["standard", "rotating_3", "big_board"]
 
 const COLOR_BG := Color(0.12, 0.13, 0.17)
@@ -320,6 +322,28 @@ func _build_match_details(parent: VBoxContainer, event_idx: int, data: Dictionar
 
 	_add_option_row(parent, "Estilo oponente:", STYLE_OPTIONS, data.get("opponent_style", "gentle"),
 		func(idx: int): _update_event_data(event_idx, "opponent_style", STYLE_OPTIONS[idx]))
+
+	# Effects
+	_add_option_row(parent, "Efecto jugador:", EFFECT_OPTIONS, data.get("player_effect_name", "none"),
+		func(idx: int): _update_event_data(event_idx, "player_effect_name", EFFECT_OPTIONS[idx]))
+
+	_add_option_row(parent, "Efecto oponente:", EFFECT_OPTIONS, data.get("opponent_effect_name", "auto"),
+		func(idx: int): _update_event_data(event_idx, "opponent_effect_name", EFFECT_OPTIONS[idx]))
+
+	# Imprecision
+	_add_slider_row(parent, "Imprecisión:", data.get("placement_offset", 0.0), 0.0, 0.3, 0.01,
+		func(val: float): _update_event_data(event_idx, "placement_offset", val))
+
+	# Piece designs
+	_add_option_row(parent, "Pieza jugador:", DESIGN_OPTIONS, data.get("player_piece_design", "x"),
+		func(idx: int): _update_event_data(event_idx, "player_piece_design", DESIGN_OPTIONS[idx]))
+
+	_add_option_row(parent, "Pieza oponente:", DESIGN_OPTIONS, data.get("opponent_piece_design", "o"),
+		func(idx: int): _update_event_data(event_idx, "opponent_piece_design", DESIGN_OPTIONS[idx]))
+
+	# Turns per visit (for simultaneous)
+	_add_slider_row(parent, "Turnos/visita:", data.get("turns_per_visit", 1), 1, 5, 1,
+		func(val: float): _update_event_data(event_idx, "turns_per_visit", int(val)))
 
 
 func _build_simultaneous_details(parent: VBoxContainer, event_idx: int, data: Dictionary) -> void:
