@@ -402,15 +402,21 @@ func _configure_board_visuals(config: Resource) -> void:
 
 func _configure_board(config: Resource) -> void:
 	var board_cfg = _resolve_board_config(config)
-	# Hide board during reset to prevent stale state flash
+	# Hide board, reset, then reveal
 	_board.modulate.a = 0.0
+	# Force immediate visual cleanup before await
+	for c in _board.cells:
+		if is_instance_valid(c):
+			c.queue_free()
+	_board.cells.clear()
+	_board.pieces.clear_all_pieces()
+	await _board.get_tree().process_frame
+	# Now do the full reset (creates fresh cells/pieces)
 	await _board.full_reset(board_cfg.get_rules())
 	_board.apply_board_config(board_cfg)
-	_configure_board_visuals(config)  # Character colors override config defaults
-	# Fade board back in cleanly
-	var tw = _board.create_tween()
-	tw.tween_property(_board, "modulate:a", 1.0, 0.3)
-	await tw.finished
+	_configure_board_visuals(config)
+	# Fade board back in
+	_board.modulate.a = 1.0
 
 
 func _resolve_board_config(config: Resource) -> Resource:

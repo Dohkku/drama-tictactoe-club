@@ -448,7 +448,13 @@ class _PositionMarkers extends Control:
 		for pos_name in positions:
 			var fraction: float = positions[pos_name]
 			var x: float = size.x * fraction
-			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(1, 1, 1, 0.15), 1.0)
-			var dot_y: float = size.y - 20.0
-			draw_circle(Vector2(x, dot_y), 4.0, Color(1, 1, 1, 0.3))
-			draw_string(font, Vector2(x - 25, size.y - 4), pos_name, HORIZONTAL_ALIGNMENT_LEFT, 60, 8, Color(1, 1, 1, 0.3))
+			# White outline + black line for visibility on any background
+			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(1, 1, 1, 0.3), 3.0)
+			draw_line(Vector2(x, 0), Vector2(x, size.y), Color(0, 0, 0, 0.25), 1.0)
+			var dot_y: float = size.y - 22.0
+			draw_circle(Vector2(x, dot_y), 5.0, Color(1, 1, 1, 0.5))
+			draw_circle(Vector2(x, dot_y), 3.0, Color(0, 0, 0, 0.4))
+			# Label with outline effect
+			var lbl_pos := Vector2(x - 25, size.y - 4)
+			draw_string(font, lbl_pos + Vector2(1, 1), pos_name, HORIZONTAL_ALIGNMENT_LEFT, 60, 9, Color(1, 1, 1, 0.6))
+			draw_string(font, lbl_pos, pos_name, HORIZONTAL_ALIGNMENT_LEFT, 60, 9, Color(0, 0, 0, 0.5))

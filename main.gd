@@ -70,6 +70,7 @@ func _ready() -> void:
 	layout.transition_finished.connect(_on_layout_finished)
 	layout.set_instant("fullscreen")
 	debug_log.visible = false
+	cinematic_stage.set_show_markers(true)
 
 	_setup_runner()
 	var loaded := _load_project_data()
@@ -195,6 +196,7 @@ func _on_layout_transition(mode: String) -> void:
 
 
 func _on_layout_finished(_mode: String) -> void:
+	_update_panel_highlights()
 	EventBus.layout_transition_finished.emit()
 
 
@@ -215,6 +217,11 @@ func _on_board_input_changed(_enabled: bool) -> void:
 
 
 func _update_panel_highlights() -> void:
+	# Only show highlights in split mode
+	if layout.get_current_mode() != "split":
+		cinematic_highlight.set_highlighted(false)
+		board_highlight.set_highlighted(false)
+		return
 	if board and board.input_enabled and not _dialogue_active:
 		cinematic_highlight.set_highlighted(false)
 		board_highlight.set_highlighted(true)
