@@ -32,8 +32,12 @@ func _ready() -> void:
 	resized.connect(_update_pivot)
 	_update_pivot()
 
-	# Debug labels — placed right after portrait, before name label
-	# VBoxContainer order: PortraitRect, _state_label, _look_indicator, NameLabel
+	# VBoxContainer order: NameLabel, _state_label, _look_indicator, PortraitRect
+	# Name and debug labels at TOP so they're never hidden by dialogue box
+
+	# Move NameLabel to top
+	$VBoxContainer.move_child(name_label, 0)
+
 	_state_label = Label.new()
 	_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_state_label.add_theme_font_size_override("font_size", 9)
@@ -41,7 +45,6 @@ func _ready() -> void:
 	_state_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_state_label.add_theme_constant_override("outline_size", 2)
 	$VBoxContainer.add_child(_state_label)
-	# Move after PortraitRect (index 0) but before NameLabel (last)
 	$VBoxContainer.move_child(_state_label, 1)
 
 	_look_indicator = Label.new()
