@@ -71,8 +71,10 @@ func _build_ui() -> void:
 	graph_edit.snapping_enabled = true
 	graph_edit.snapping_distance = GraphThemeC.SNAP_DISTANCE
 	graph_edit.minimap_enabled = true
+	graph_edit.minimap_size = Vector2(180, 120)
 	graph_edit.right_disconnects = true
 	graph_edit.show_grid = true
+	graph_edit.panning_scheme = GraphEdit.SCROLL_PANS
 	split.add_child(graph_edit)
 
 	detail_panel = PanelContainer.new()
@@ -381,12 +383,12 @@ func _on_popup_request(at_position: Vector2) -> void:
 func _show_welcome_panel() -> void:
 	_clear_detail()
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 12)
+	vbox.add_theme_constant_override("separation", 10)
 
 	var title := Label.new()
 	title.text = "Editor 2.0"
@@ -395,17 +397,66 @@ func _show_welcome_panel() -> void:
 	vbox.add_child(title)
 
 	var desc := Label.new()
-	desc.text = "Selecciona un nodo para editarlo.\nClick derecho para agregar nodos.\nConecta los puertos para definir el flujo."
+	desc.text = "Selecciona un nodo para ver sus propiedades aqui."
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.add_theme_font_size_override("font_size", 13)
 	desc.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
 	vbox.add_child(desc)
 
-	var shortcuts := Label.new()
-	shortcuts.text = "Atajos:\n  Delete — Borrar nodo\n  Click derecho — Menu contextual\n  Scroll — Zoom\n  Arrastrar — Mover canvas"
-	shortcuts.add_theme_font_size_override("font_size", 12)
-	shortcuts.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
-	vbox.add_child(shortcuts)
+	vbox.add_child(HSeparator.new())
+
+	# Navigation section
+	var nav_title := Label.new()
+	nav_title.text = "Navegacion"
+	nav_title.add_theme_font_size_override("font_size", 15)
+	nav_title.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	vbox.add_child(nav_title)
+	_add_help_line(vbox, "Scroll", "Mover canvas arriba/abajo")
+	_add_help_line(vbox, "Shift + Scroll", "Mover canvas izquierda/derecha")
+	_add_help_line(vbox, "Ctrl + Scroll", "Zoom in/out")
+	_add_help_line(vbox, "Minimap", "Arrastra en la esquina inferior derecha")
+
+	vbox.add_child(HSeparator.new())
+
+	# Editing section
+	var edit_title := Label.new()
+	edit_title.text = "Edicion"
+	edit_title.add_theme_font_size_override("font_size", 15)
+	edit_title.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	vbox.add_child(edit_title)
+	_add_help_line(vbox, "Click derecho", "Menu: agregar nodos")
+	_add_help_line(vbox, "Arrastrar puerto", "Crear conexion")
+	_add_help_line(vbox, "Click en nodo", "Seleccionar y editar")
+	_add_help_line(vbox, "Delete / Supr", "Borrar nodo seleccionado")
+	_add_help_line(vbox, "Arrastrar puerto der.", "Desconectar (right_disconnects)")
+
+	vbox.add_child(HSeparator.new())
+
+	# Node types section
+	var types_title := Label.new()
+	types_title.text = "Tipos de nodo"
+	types_title.add_theme_font_size_override("font_size", 15)
+	types_title.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	vbox.add_child(types_title)
+	_add_help_line(vbox, "INICIO", "Punto de entrada (1 por canvas)")
+	_add_help_line(vbox, "CINEMATICA", "Escena de dialogo (.dscn)")
+	_add_help_line(vbox, "PARTIDA", "Match vs oponente con IA")
+	_add_help_line(vbox, "PERSONAJE", "Definicion de personaje")
+	_add_help_line(vbox, "TABLERO", "Config de reglas y visual")
+	_add_help_line(vbox, "SIMULTANEA", "Ronda multiple oponentes")
+	_add_help_line(vbox, "FIN", "Punto de finalizacion")
+
+	vbox.add_child(HSeparator.new())
+
+	# Connections section
+	var conn_title := Label.new()
+	conn_title.text = "Conexiones"
+	conn_title.add_theme_font_size_override("font_size", 15)
+	conn_title.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	vbox.add_child(conn_title)
+	_add_help_line(vbox, "Blanco", "Flujo (orden de ejecucion)")
+	_add_help_line(vbox, "Naranja", "Personaje → Partida")
+	_add_help_line(vbox, "Cyan", "Tablero → Partida")
 
 	margin.add_child(vbox)
 	detail_content.add_child(margin)
@@ -802,14 +853,33 @@ func _add_file_field(parent: VBoxContainer, label_text: String, value: String, o
 	var browse := Button.new()
 	browse.text = "..."
 	browse.add_theme_font_size_override("font_size", 12)
-	browse.pressed.connect(func():
+	var _browse_cb := func():
 		_file_dialog.filters = PackedStringArray(["*.dscn ; Scene Scripts"])
 		_file_dialog.current_dir = "res://scene_scripts/scripts/"
-		_file_dialog.file_selected.connect(func(path: String):
+		var _on_file := func(path: String):
 			edit.text = path
-			on_change.call(path), CONNECT_ONE_SHOT)
-		_file_dialog.popup_centered(Vector2i(600, 400)))
+			on_change.call(path)
+		_file_dialog.file_selected.connect(_on_file, CONNECT_ONE_SHOT)
+		_file_dialog.popup_centered(Vector2i(600, 400))
+	browse.pressed.connect(_browse_cb)
 	hbox.add_child(browse)
+	parent.add_child(hbox)
+
+
+func _add_help_line(parent: VBoxContainer, key: String, desc: String) -> void:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+	var key_lbl := Label.new()
+	key_lbl.text = key
+	key_lbl.custom_minimum_size.x = 100
+	key_lbl.add_theme_font_size_override("font_size", 12)
+	key_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	hbox.add_child(key_lbl)
+	var desc_lbl := Label.new()
+	desc_lbl.text = desc
+	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+	hbox.add_child(desc_lbl)
 	parent.add_child(hbox)
 
 

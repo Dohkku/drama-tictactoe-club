@@ -104,32 +104,11 @@ func _build_ui() -> void:
 	demo_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
 	vbox.add_child(demo_btn)
 
-	# Editor button
-	var editor_btn := Button.new()
-	editor_btn.custom_minimum_size = Vector2(0, 52)
-	editor_btn.text = "  ✎  EDITOR  —  Personajes, escenas, partidas, tablero"
-	editor_btn.add_theme_font_size_override("font_size", 16)
-	editor_btn.add_theme_color_override("font_color", Color.WHITE)
-	var editor_style := StyleBoxFlat.new()
-	editor_style.bg_color = Color(0.15, 0.35, 0.5)
-	editor_style.set_corner_radius_all(8)
-	editor_style.content_margin_left = 16
-	editor_btn.add_theme_stylebox_override("normal", editor_style)
-	var editor_hover := StyleBoxFlat.new()
-	editor_hover.bg_color = Color(0.2, 0.45, 0.6)
-	editor_hover.set_corner_radius_all(8)
-	editor_hover.content_margin_left = 16
-	editor_btn.add_theme_stylebox_override("hover", editor_hover)
-	var editor_exists: bool = ResourceLoader.exists("res://editor/editor_main.tscn")
-	editor_btn.disabled = not editor_exists
-	editor_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://editor/editor_main.tscn"))
-	vbox.add_child(editor_btn)
-
-	# Editor 2.0 (Canvas) button
+	# Editor 2.0 (Canvas) — PRIMARY editor button
 	var canvas_btn := Button.new()
-	canvas_btn.custom_minimum_size = Vector2(0, 52)
+	canvas_btn.custom_minimum_size = Vector2(0, 58)
 	canvas_btn.text = "  ◈  EDITOR 2.0  —  Canvas visual basado en nodos"
-	canvas_btn.add_theme_font_size_override("font_size", 16)
+	canvas_btn.add_theme_font_size_override("font_size", 17)
 	canvas_btn.add_theme_color_override("font_color", Color.WHITE)
 	var canvas_style := StyleBoxFlat.new()
 	canvas_style.bg_color = Color(0.45, 0.25, 0.7)
@@ -145,3 +124,24 @@ func _build_ui() -> void:
 	canvas_btn.disabled = not canvas_exists
 	canvas_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://editor/graph/graph_editor_main.tscn"))
 	vbox.add_child(canvas_btn)
+
+	# Editor legacy (secondary, smaller)
+	var editor_btn := Button.new()
+	editor_btn.custom_minimum_size = Vector2(0, 40)
+	editor_btn.text = "  ✎  Editor clasico (tabs)"
+	editor_btn.add_theme_font_size_override("font_size", 13)
+	editor_btn.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75))
+	var editor_style := StyleBoxFlat.new()
+	editor_style.bg_color = Color(0.15, 0.17, 0.22)
+	editor_style.set_corner_radius_all(6)
+	editor_style.content_margin_left = 16
+	editor_btn.add_theme_stylebox_override("normal", editor_style)
+	var editor_hover := StyleBoxFlat.new()
+	editor_hover.bg_color = Color(0.2, 0.25, 0.3)
+	editor_hover.set_corner_radius_all(6)
+	editor_hover.content_margin_left = 16
+	editor_btn.add_theme_stylebox_override("hover", editor_hover)
+	var editor_exists: bool = ResourceLoader.exists("res://editor/editor_main.tscn")
+	editor_btn.disabled = not editor_exists
+	editor_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://editor/editor_main.tscn"))
+	vbox.add_child(editor_btn)

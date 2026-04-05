@@ -1,15 +1,14 @@
 extends "res://editor/graph/base_graph_node.gd"
 
 ## Board configuration node.
-## Output: BoardConfig port (connects to MatchNode.board_config).
-## Shows mini board grid preview and rules summary.
+## Output: BoardConfig port (connects to MatchNode).
+## Compact: mini grid + rules text.
 
 const BoardConfigScript = preload("res://data/board_config.gd")
 
 var board_config: Resource = null  # BoardConfig
 var is_project_default: bool = false
-var _rules_label: Label = null
-var _default_label: Label = null
+var _info_label: Label = null
 var _mini_board: Control = null
 
 
@@ -20,29 +19,28 @@ func _init() -> void:
 
 func _ready() -> void:
 	title = "TABLERO"
-	custom_minimum_size.x = 180
+	custom_minimum_size.x = 140
 	super._ready()
 
 	if board_config == null:
 		board_config = BoardConfigScript.create_default()
 
-	# Row 0: mini board preview + output port
+	# Row 0: mini board + output port
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 6)
+
 	_mini_board = _MiniBoardPreview.new()
-	_mini_board.custom_minimum_size = Vector2(80, 80)
-	add_child(_mini_board)
+	_mini_board.custom_minimum_size = Vector2(48, 48)
+	hbox.add_child(_mini_board)
+
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 0)
+	_info_label = _make_dim_label("")
+	info.add_child(_info_label)
+	hbox.add_child(info)
+
+	add_child(hbox)
 	add_board_config_output(0)
-
-	# Row 1: rules summary
-	_rules_label = _make_dim_label("")
-	add_child(_rules_label)
-	set_slot_enabled_left(1, false)
-	set_slot_enabled_right(1, false)
-
-	# Row 2: default indicator
-	_default_label = _make_label("", GraphThemeC.FONT_SIZE_SMALL, GraphThemeC.COLOR_START)
-	add_child(_default_label)
-	set_slot_enabled_left(2, false)
-	set_slot_enabled_right(2, false)
 
 	_refresh_display()
 
@@ -87,23 +85,19 @@ func _refresh_display() -> void:
 		return
 	var rules = board_config.get_rules()
 
-	if _rules_label:
-		var size_str := "%dx%d" % [rules.get_width(), rules.get_height()]
-		var win_str := "Win=%d" % rules.win_length
-		var pieces_str := ""
+	if _info_label:
+		var parts: PackedStringArray = []
+		parts.append("%dx%d W=%d" % [rules.get_width(), rules.get_height(), rules.win_length])
 		if rules.max_pieces_per_player > 0:
-			pieces_str = ", Max=%d" % rules.max_pieces_per_player
-		_rules_label.text = "%s, %s%s" % [size_str, win_str, pieces_str]
-
-	if _default_label:
-		_default_label.text = "DEFAULT" if is_project_default else ""
+			parts.append("Max %d" % rules.max_pieces_per_player)
+		if is_project_default:
+			parts.append("DEFAULT")
+		_info_label.text = "\n".join(parts)
 
 	if _mini_board:
 		_mini_board.board_config = board_config
 		_mini_board.queue_redraw()
 
-
-# ── Mini board preview (custom draw) ──
 
 class _MiniBoardPreview extends Control:
 	var board_config: Resource = null
@@ -124,7 +118,6 @@ class _MiniBoardPreview extends Control:
 				var color: Color = board_config.cell_color_alt if use_alt else board_config.cell_color_empty
 				draw_rect(rect, color)
 
-		# Grid lines
 		for i in range(1, w):
 			draw_line(Vector2(i * cell_w, 0), Vector2(i * cell_w, size.y), board_config.cell_line_color, 1.0)
 		for i in range(1, h):
