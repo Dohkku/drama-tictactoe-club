@@ -1458,29 +1458,25 @@ func _on_preview_toolbar_pressed() -> void:
 		_cinematic_editor.open_preview()
 		return
 
-	var cutscene_node = _get_preview_cutscene_target()
-	if cutscene_node == null:
+	var cutscene_nodes: Array = _get_all_cutscenes_in_flow()
+	if cutscene_nodes.is_empty():
 		push_warning("Editor2: No hay nodos de cinematica para previsualizar.")
 		return
 
-	_open_preview_from_main(cutscene_node)
+	_open_preview_from_main(cutscene_nodes)
 
 
-func _get_preview_cutscene_target():
-	# 1. Selected node is a cutscene → use it
-	if _selected_node is CutsceneNodeScript:
-		return _selected_node
-	for child in graph_edit.get_children():
-		if child is GraphNode and child.selected and child is CutsceneNodeScript:
-			return child
-	# 2. Follow flow from Start to find first cutscene in order
+## Collect all CutsceneNodes following the flow from Start to End.
+func _get_all_cutscenes_in_flow() -> Array:
 	var start_node: GraphNode = null
 	for child in graph_edit.get_children():
 		if child is StartNodeScript:
 			start_node = child
 			break
 	if start_node == null:
-		return null
+		return []
+
+	var result: Array = []
 	var current_name: StringName = start_node.name
 	var visited: Dictionary = {}
 	while current_name != StringName(""):
@@ -1489,18 +1485,17 @@ func _get_preview_cutscene_target():
 		visited[current_name] = true
 		var node := graph_edit.get_node_or_null(String(current_name))
 		if node is CutsceneNodeScript:
-			return node
-		# Follow flow connection
+			result.append(node)
 		var next_name: StringName = StringName("")
 		for conn in graph_edit.get_connection_list():
 			if conn.from_node == current_name:
 				next_name = conn.to_node
 				break
 		current_name = next_name
-	return null
+	return result
 
 
-func _open_preview_from_main(cutscene_node) -> void:
+func _open_preview_from_main(cutscene_nodes: Array) -> void:
 	if _preview_temp_cinematic_editor and _preview_temp_cinematic_editor.has_method("is_preview_open"):
 		if _preview_temp_cinematic_editor.is_preview_open():
 			_preview_temp_cinematic_editor.open_preview()
@@ -1514,15 +1509,56 @@ func _open_preview_from_main(cutscene_node) -> void:
 		if child is CharacterNodeScript and child.character_data:
 			chars.append(child.character_data)
 
-	var temp_editor := CinematicEditorScript.new()
-	_preview_temp_cinematic_editor = temp_editor
-	temp_editor.preview_closed.connect(func():
-		if temp_editor == _preview_temp_cinematic_editor:
-			temp_editor.dispose_without_save()
-			_preview_temp_cinematic_editor = null)
-	temp_editor.open(cutscene_node, chars, _graph_parent)
-	temp_editor.graph_edit.visible = false
-	temp_editor.open_preview()
+	# Chain: open first cutscene, when preview closes open next
+	var idx := 0
+	var _open_next: Callable
+	_open_next = func():
+		if idx >= cutscene_nodes.size():
+			if _preview_temp_cinematic_editor:
+				_preview_temp_cinematic_editor.dispose_without_save()
+				_preview_temp_cinematic_editor = null
+			return
+
+		var cutscene_node = cutscene_nodes[idx]
+		idx += 1
+
+		if _preview_temp_cinematic_editor and _preview_temp_cinematic_editor.has_method("dispose_without_save"):
+			_preview_temp_cinematic_editor.dispose_without_save()
+
+		var temp_editor := CinematicEditorScript.new()
+		_preview_temp_cinematic_editor = temp_editor
+		temp_editor.open(cutscene_node, chars, _graph_parent)
+		temp_editor.graph_edit.visible = false
+		temp_editor.open_preview()
+
+		# When all steps finish, auto-advance to next cutscene
+		# We detect this by polling: when step_index reaches commands.size()
+		var auto_advance_timer := Timer.new()
+		auto_advance_timer.wait_time = 0.3
+		auto_advance_timer.autostart = true
+		_graph_parent.add_child(auto_advance_timer)
+		auto_advance_timer.timeout.connect(func():
+			if temp_editor != _preview_temp_cinematic_editor:
+				auto_advance_timer.queue_free()
+				return
+			if not temp_editor.is_preview_open():
+				auto_advance_timer.queue_free()
+				return
+			if temp_editor._preview_step_index >= temp_editor._preview_commands.size() and not temp_editor._preview_commands.is_empty():
+				auto_advance_timer.queue_free()
+				if idx < cutscene_nodes.size():
+					_open_next.call()
+				else:
+					# All done — keep preview open on last frame
+					pass)
+
+		temp_editor.preview_closed.connect(func():
+			auto_advance_timer.queue_free()
+			if temp_editor == _preview_temp_cinematic_editor:
+				temp_editor.dispose_without_save()
+				_preview_temp_cinematic_editor = null)
+
+	_open_next.call()
 
 
 func _is_in_cinematic_editor() -> bool:
