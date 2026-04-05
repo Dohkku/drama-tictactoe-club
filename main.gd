@@ -103,6 +103,14 @@ func _apply_project_data(project_data: Resource) -> void:
 		if character is CharacterDataScript:
 			cinematic_stage.register_character(character)
 
+	# Apply stage settings from editor if present
+	if project_data.has_meta("stage_height_ratio"):
+		cinematic_stage.char_height_ratio = project_data.get_meta("stage_height_ratio")
+	if project_data.has_meta("stage_aspect"):
+		cinematic_stage.char_aspect = project_data.get_meta("stage_aspect")
+	if project_data.has_meta("stage_max_width"):
+		cinematic_stage.char_max_width_frac = project_data.get_meta("stage_max_width")
+
 	if project_data.board_config == null:
 		project_data.board_config = load("res://data/board_config.gd").create_default()
 	else:

@@ -17,9 +17,9 @@ const POSITIONS = {
 	"far_right": 0.88,
 }
 
-const CHAR_ASPECT := 0.50       # Character width / height ratio (slimmer)
-const CHAR_HEIGHT_RATIO := 0.78 # Character height — leave space for head/camera
-const CHAR_MAX_WIDTH_FRAC := 0.35 # Max width — prevent characters from being too wide
+var char_aspect := 0.60        # Character width / height ratio
+var char_height_ratio := 0.92  # Character height as fraction of stage
+var char_max_width_frac := 0.45 # Max width fraction in split mode
 const MOVE_DURATION := 0.5
 
 var characters_on_stage: Dictionary = {}    # character_id -> CharacterSlot node
@@ -415,13 +415,13 @@ func _calc_slot_position(fraction: float) -> Vector2:
 func _calc_slot_size() -> Vector2:
 	# Use base stage size for consistent character proportions across layout modes
 	var ref_size: Vector2 = _base_stage_size if _base_stage_size != Vector2.ZERO else character_layer.size
-	var h: float = ref_size.y * CHAR_HEIGHT_RATIO
-	var w: float = h * CHAR_ASPECT
+	var h: float = ref_size.y * char_height_ratio
+	var w: float = h * char_aspect
 	# Clamp to current layer width so characters don't overflow in split mode
-	var max_w: float = character_layer.size.x * CHAR_MAX_WIDTH_FRAC
+	var max_w: float = character_layer.size.x * char_max_width_frac
 	if w > max_w:
 		w = max_w
-		h = w / CHAR_ASPECT
+		h = w / char_aspect
 	return Vector2(w, h)
 
 

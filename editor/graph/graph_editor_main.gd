@@ -34,6 +34,9 @@ var _add_menu: PopupMenu = null
 var _context_position: Vector2 = Vector2.ZERO
 var _file_dialog: FileDialog = null
 var _undo_redo: UndoRedo = null
+var _stage_height_ratio: float = 0.92
+var _stage_aspect: float = 0.60
+var _stage_max_width: float = 0.45
 
 
 func _ready() -> void:
@@ -170,6 +173,13 @@ func _build_toolbar() -> PanelContainer:
 	var add_btn := _make_toolbar_button("+ Agregar Nodo", Color(0.3, 0.6, 0.9))
 	add_btn.pressed.connect(func(): _show_add_menu(add_btn.global_position + Vector2(0, add_btn.size.y)))
 	hbox.add_child(add_btn)
+
+	hbox.add_child(VSeparator.new())
+
+	# Settings
+	var settings_btn := _make_toolbar_button("Ajustes", Color(0.5, 0.4, 0.6))
+	settings_btn.pressed.connect(_show_stage_settings)
+	hbox.add_child(settings_btn)
 
 	hbox.add_child(VSeparator.new())
 
@@ -648,6 +658,100 @@ func _show_detail_for_node(node: GraphNode) -> void:
 func _clear_detail() -> void:
 	for child in detail_content.get_children():
 		child.queue_free()
+
+
+func _show_stage_settings() -> void:
+	_clear_detail()
+	_selected_node = null
+	# Deselect all nodes in graph
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			child.selected = false
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+
+	var header := Label.new()
+	header.text = "Ajustes de Escena"
+	header.add_theme_font_size_override("font_size", 18)
+	header.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	vbox.add_child(header)
+
+	# Stage preview with SubViewport
+	var viewport_container := SubViewportContainer.new()
+	viewport_container.custom_minimum_size = Vector2(0, 200)
+	viewport_container.stretch = true
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(640, 360)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport_container.add_child(viewport)
+
+	var stage_scene = load("res://systems/cinematic/cinematic_stage.tscn")
+	var preview_stage: Control = stage_scene.instantiate()
+	preview_stage.set_anchors_preset(Control.PRESET_FULL_RECT)
+	viewport.add_child(preview_stage)
+
+	# Load a character for preview
+	var _preview_loaded := false
+	var _load_preview := func():
+		if _preview_loaded:
+			return
+		_preview_loaded = true
+		for child in graph_edit.get_children():
+			if child is CharacterNodeScript and child.character_data:
+				preview_stage.register_character(child.character_data)
+				preview_stage.enter_character(child.character_data.character_id, "center")
+				break
+
+	viewport_container.ready.connect(_load_preview, CONNECT_ONE_SHOT)
+	vbox.add_child(viewport_container)
+
+	# Character sizing controls
+	_add_section_header(vbox, "Tamano de personajes")
+
+	var desc := Label.new()
+	desc.text = "Ajusta como se ven los personajes en el escenario."
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 12)
+	desc.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+	vbox.add_child(desc)
+
+	var _refresh_preview := func():
+		# Reposition all characters on stage with new sizing
+		for char_id in preview_stage.characters_on_stage:
+			var slot = preview_stage.characters_on_stage[char_id]
+			var pos_name = preview_stage._character_positions.get(char_id, "center")
+			var frac = preview_stage.POSITIONS.get(pos_name, 0.5)
+			preview_stage._apply_slot_position(slot, frac)
+
+	_add_slider_field(vbox, "Altura", _stage_height_ratio, 0.5, 1.0, func(val: float):
+		preview_stage.char_height_ratio = val
+		_stage_height_ratio = val
+		_refresh_preview.call())
+
+	_add_slider_field(vbox, "Aspecto", _stage_aspect, 0.3, 0.8, func(val: float):
+		preview_stage.char_aspect = val
+		_stage_aspect = val
+		_refresh_preview.call())
+
+	_add_slider_field(vbox, "Max ancho", _stage_max_width, 0.2, 0.6, func(val: float):
+		preview_stage.char_max_width_frac = val
+		_stage_max_width = val
+		_refresh_preview.call())
+
+	var apply_info := Label.new()
+	apply_info.text = "Los valores se aplican al jugar."
+	apply_info.add_theme_font_size_override("font_size", 11)
+	apply_info.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+	vbox.add_child(apply_info)
+
+	margin.add_child(vbox)
+	detail_content.add_child(margin)
 
 
 # ── Detail Builders ──
@@ -1288,8 +1392,11 @@ func _graph_to_project_data() -> Resource:
 		var events := _walk_flow(start_node)
 		project.events = events
 
-	# Store canvas data
+	# Store canvas data and stage settings
 	project.set_meta("canvas_data", _serialize_canvas())
+	project.set_meta("stage_height_ratio", _stage_height_ratio)
+	project.set_meta("stage_aspect", _stage_aspect)
+	project.set_meta("stage_max_width", _stage_max_width)
 
 	return project
 
