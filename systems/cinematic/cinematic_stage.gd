@@ -17,9 +17,9 @@ const POSITIONS = {
 	"far_right": 0.88,
 }
 
-const CHAR_ASPECT := 0.60       # Character width / height ratio (bust-style, wider)
-const CHAR_HEIGHT_RATIO := 0.92 # Character height — almost full stage height
-const CHAR_MAX_WIDTH_FRAC := 0.45 # Max width — in split mode fills most of the panel
+const CHAR_ASPECT := 0.50       # Character width / height ratio (slimmer)
+const CHAR_HEIGHT_RATIO := 0.78 # Character height — leave space for head/camera
+const CHAR_MAX_WIDTH_FRAC := 0.35 # Max width — prevent characters from being too wide
 const MOVE_DURATION := 0.5
 
 var characters_on_stage: Dictionary = {}    # character_id -> CharacterSlot node
@@ -40,6 +40,9 @@ var _speed_lines = null  # SpeedLinesEffect node
 
 
 func _ready() -> void:
+	# Clip the stage so camera zoom doesn't overflow into other panels
+	clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+
 	camera_effects = Node.new()
 	camera_effects.set_script(CameraEffectsScript)
 	add_child(camera_effects)

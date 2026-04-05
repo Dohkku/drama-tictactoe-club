@@ -337,11 +337,8 @@ func _apply_portrait_crop() -> void:
 	if offset != Vector2.ZERO:
 		portrait_rect.position += _crop_base_position
 
-	# Only clip when zoomed in (to prevent overflow); disable otherwise
-	if zoom > 1.01:
-		clip_children = CanvasItem.CLIP_CHILDREN_ONLY
-	else:
-		clip_children = CanvasItem.CLIP_CHILDREN_DISABLED
+	# Never clip at slot level — the stage handles overflow clipping
+	clip_children = CanvasItem.CLIP_CHILDREN_DISABLED
 
 
 func _set_solid_color_fallback(color: Color) -> void:

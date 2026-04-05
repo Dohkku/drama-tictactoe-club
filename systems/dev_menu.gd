@@ -31,14 +31,20 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
+
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	scroll.add_child(center)
+
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_CENTER)
-	vbox.offset_left = -300
-	vbox.offset_right = 300
-	vbox.offset_top = -250
-	vbox.offset_bottom = 250
-	vbox.add_theme_constant_override("separation", 12)
-	add_child(vbox)
+	vbox.custom_minimum_size.x = 600
+	vbox.add_theme_constant_override("separation", 10)
+	center.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "SYSTEMS DEV MENU"
