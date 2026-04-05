@@ -12,6 +12,7 @@ var _board: Control       # Board (can be null for pure cutscenes)
 var _dialogue_box: Control  # DialogueBox
 var _reactions: Dictionary = {}  # event_name -> Array[Dictionary]
 var _running: bool = false
+signal execution_finished
 var _music_player: AudioStreamPlayer = null
 var _sfx_player: AudioStreamPlayer = null
 var auto_advance_dialogue: bool = false
@@ -115,6 +116,9 @@ func _run(commands: Array) -> void:
 				var style = _resolve_style(cmd.style)
 				if style and _board:
 					_board.override_next_style(style)
+			"set_difficulty":
+				if _board and _board.ai:
+					_board.ai.difficulty = clampf(cmd.value, 0.0, 1.0)
 			"expression":
 				_stage.set_character_expression(cmd.character, cmd.expression)
 			# --- Rich cinematic commands ---
@@ -188,8 +192,12 @@ func _run(commands: Array) -> void:
 					var layout_mgr = _board.get_parent().get_parent()
 					if layout_mgr and layout_mgr.has_method("set_instant"):
 						layout_mgr.set_instant(cmd.get("mode", "fullscreen"))
+			"board_cheat":
+				if _board:
+					await _cmd_board_cheat(cmd)
 
 	_running = false
+	execution_finished.emit()
 
 
 # ---- Command implementations ----
@@ -458,6 +466,113 @@ static func _resolve_color(name: String) -> Color:
 	if name.begins_with("#"):
 		return Color.html(name)
 	return Color.WHITE
+
+
+func _cmd_board_cheat(cmd: Dictionary) -> void:
+	## Manipulate the board so the opponent has an immediate winning move.
+	## Clears board, places opponent pieces in a near-win configuration,
+	## plays placement SFX, and applies imprecision.
+	var logic = _board.logic
+	var size: int = logic.rules.board_size  # 3 for 3x3
+	var ai = _board.ai_piece
+	var player = _board.player_piece
+
+	# Clear the board state completely
+	for i in range(logic.cells.size()):
+		logic.cells[i] = 0
+
+	# Set up near-win: opponent has 2 in top row, player has 1 elsewhere
+	# [AI, AI, 0]  ← AI wins by placing at index 2
+	# [0,  P,  0]
+	# [0,  0,  0]
+	logic.cells[0] = ai
+	logic.cells[1] = ai
+	logic.cells[size + 1] = player  # center
+
+	# Update move history for rotation mode
+	logic.move_history = {player: [size + 1], ai: [0, 1]}
+
+	# Clear visual pieces and rebuild with imprecision + SFX
+	_board.pieces.cell_to_piece.clear()
+	for p in _board.pieces.player_pieces:
+		if is_instance_valid(p):
+			p.modulate.a = 0.0
+	for p in _board.pieces.opponent_pieces:
+		if is_instance_valid(p):
+			p.modulate.a = 0.0
+
+	# Place opponent visual pieces with SFX and imprecision
+	var cell_size = _board.pieces.get_cell_size()
+	var piece_size = cell_size * _board.pieces.get_piece_ratio()
+	var offset_max: float = cell_size.x * 0.25  # Strong imprecision
+
+	var opp_idx := 0
+	for cell_idx in [0, 1]:
+		if opp_idx >= _board.pieces.opponent_pieces.size():
+			break
+		var piece = _board.pieces.opponent_pieces[opp_idx]
+		var target = _board.pieces.get_cell_pos_in_layer(cell_idx)
+		var off = (cell_size - piece_size) / 2.0
+		var rand_off = Vector2(randf_range(-offset_max, offset_max), randf_range(-offset_max, offset_max))
+		piece.position = target + off + rand_off
+		piece.placement_offset = rand_off
+		piece.size = piece_size
+		piece.pivot_offset = piece_size / 2.0
+		piece.modulate.a = 1.0
+		_board.pieces.cell_to_piece[cell_idx] = piece
+		_board.cells[cell_idx].set_occupied(true)
+		opp_idx += 1
+		# SFX
+		if _board.board_audio:
+			_board.board_audio.play_sfx("impact_light")
+		await _wait_seconds(0.15)
+
+	# Place player visual piece
+	var player_used := 0
+	if not _board.pieces.player_pieces.is_empty():
+		var pp = _board.pieces.player_pieces[0]
+		var p_cell = size + 1
+		var p_target = _board.pieces.get_cell_pos_in_layer(p_cell)
+		var p_off = (cell_size - piece_size) / 2.0
+		pp.position = p_target + p_off
+		pp.size = piece_size
+		pp.pivot_offset = piece_size / 2.0
+		pp.modulate.a = 1.0
+		_board.pieces.cell_to_piece[p_cell] = pp
+		_board.cells[p_cell].set_occupied(true)
+		player_used = 1
+
+	# Sync piece counters with the visual pieces we consumed. Without this the
+	# next AI move reuses an already-placed piece, making it look like Mei
+	# dragged her last piece to the winning cell.
+	_board.pieces.opponent_next = opp_idx
+	_board.pieces.player_next = player_used
+
+	# Restore visibility + hand layout for pieces we didn't place on a cell.
+	# The earlier blanket modulate.a = 0 pass hid them to clear old positions,
+	# but the ones returning to the hand must be visible again.
+	for i in range(_board.pieces.opponent_pieces.size()):
+		if i >= opp_idx:
+			var op_piece = _board.pieces.opponent_pieces[i]
+			if is_instance_valid(op_piece):
+				op_piece.modulate.a = 1.0
+	for i in range(_board.pieces.player_pieces.size()):
+		if i >= player_used:
+			var pl_piece = _board.pieces.player_pieces[i]
+			if is_instance_valid(pl_piece):
+				pl_piece.modulate.a = 1.0
+	_board.pieces.position_hand_pieces(false)
+
+	# Sync per-cell occupied flag with the cheated logical state so previously
+	# filled cells (from pre-cheat moves) stop blocking input / ghosts.
+	for i in range(_board.cells.size()):
+		_board.cells[i].set_occupied(logic.cells[i] != 0)
+
+	# Set turn to AI so it can make the winning move
+	logic.current_turn = ai
+	logic.game_over = false
+	logic.winner = 0
+	logic.winning_pattern.clear()
 
 
 func _handle_dialogue_trigger(trigger_name: String) -> void:

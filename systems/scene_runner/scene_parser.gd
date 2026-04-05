@@ -164,6 +164,8 @@ static func _parse_bracket(content: String) -> Dictionary:
 			return {"type": "set_emotion", "target": _s(parts, 1), "emotion": _s(parts, 2)}
 		"override_next_style":
 			return {"type": "override_next_style", "style": _s(parts, 1)}
+		"set_difficulty":
+			return {"type": "set_difficulty", "value": _f(parts, 1, 0.5)}
 		"expression":
 			return {"type": "expression", "character": _s(parts, 1), "expression": _s(parts, 2)}
 		"music":
@@ -214,6 +216,9 @@ static func _parse_bracket(content: String) -> Dictionary:
 			return {"type": "wipe_out", "direction": _s(parts, 1, "right"), "duration": _f(parts, 2, 0.4)}
 		"layout_instant":
 			return {"type": "layout_instant", "mode": _s(parts, 1, "fullscreen")}
+		"board_cheat":
+			# [board_cheat opponent_wins] — set up board so next AI move wins
+			return {"type": "board_cheat", "result": _s(parts, 1, "opponent_wins")}
 		"title_card":
 			# [title_card Title Text | Subtitle Text] or [title_card Title Text]
 			var full_text = " ".join(parts.slice(1))

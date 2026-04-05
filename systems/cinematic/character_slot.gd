@@ -37,6 +37,8 @@ func _ready() -> void:
 	resized.connect(_update_pivot)
 	_update_pivot()
 	portrait_mask.resized.connect(_apply_portrait_crop)
+	portrait_rect.resized.connect(_update_portrait_pivot)
+	_update_portrait_pivot()
 
 	# VBoxContainer order: NameLabel, _state_label, _look_indicator, PortraitRect
 	# Name and debug labels at TOP so they're never hidden by dialogue box
@@ -69,6 +71,12 @@ var show_debug_border: bool = true
 
 func _update_pivot() -> void:
 	pivot_offset = size / 2.0
+
+
+func _update_portrait_pivot() -> void:
+	# Keep portrait_rect pivot centered so scale.x = -1 (look "right") flips
+	# in place instead of mirroring the rect across its top-left corner.
+	portrait_rect.pivot_offset = portrait_rect.size / 2.0
 
 
 func _draw() -> void:
@@ -207,44 +215,56 @@ func _apply_body_state() -> void:
 		"idle":
 			pass
 		"thinking":
-			# Darken slightly — introspective
-			var tween := create_tween()
-			tween.tween_property(portrait_rect, "modulate", Color(0.85, 0.85, 0.95), 0.3)
-		"arms_crossed":
-			portrait_rect.scale = _crop_base_scale * Vector2(0.95, 1.0)
-		"leaning_forward":
+			# Look away slightly + darken — introspective
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(1.08, 1.08), 0.3)
+			tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(8, 4), 0.4)
+			tween.parallel().tween_property(portrait_rect, "modulate", Color(0.88, 0.88, 0.96), 0.3)
+		"arms_crossed":
+			# Slight squeeze + subtle shift back — closed off
+			portrait_rect.scale = _crop_base_scale * Vector2(0.96, 1.0)
+			portrait_rect.position = _crop_base_position + Vector2(0, 3)
+		"leaning_forward":
+			# Zoom in + shift up — getting in your face
+			var tween := create_tween().set_ease(Tween.EASE_OUT)
+			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(1.1, 1.1), 0.3)
+			tween.parallel().tween_property(portrait_rect, "position", _crop_base_position + Vector2(0, -12), 0.3)
 		"leaning_back":
+			# Zoom out + shift down — pulling away
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
 			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(0.92, 0.92), 0.3)
+			tween.parallel().tween_property(portrait_rect, "position", _crop_base_position + Vector2(0, 8), 0.3)
 		"excited":
-			# Bouncing loop + bright tint
-			portrait_rect.modulate = Color(1.1, 1.1, 1.0)
+			# Bouncing loop + warm bright tint
+			portrait_rect.modulate = Color(1.1, 1.08, 1.0)
 			_body_tween = create_tween().set_loops()
-			_body_tween.tween_property(portrait_rect, "position:y", _crop_base_position.y - 6.0, 0.2).set_ease(Tween.EASE_OUT)
-			_body_tween.tween_property(portrait_rect, "position:y", _crop_base_position.y, 0.2).set_ease(Tween.EASE_IN)
+			_body_tween.tween_property(portrait_rect, "position:y", _crop_base_position.y - 8.0, 0.18).set_ease(Tween.EASE_OUT)
+			_body_tween.tween_property(portrait_rect, "position:y", _crop_base_position.y, 0.18).set_ease(Tween.EASE_IN)
 		"tense":
-			# Red tint + micro-vibration
-			portrait_rect.modulate = Color(1.1, 0.9, 0.9)
+			# Red tint + rapid micro-vibration — anxiety
+			portrait_rect.modulate = Color(1.1, 0.88, 0.88)
 			_body_tween = create_tween().set_loops()
-			_body_tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(2, 0), 0.05)
-			_body_tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(-2, 0), 0.05)
-			_body_tween.tween_property(portrait_rect, "position", _crop_base_position, 0.05)
+			_body_tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(3, 1), 0.04)
+			_body_tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(-3, -1), 0.04)
+			_body_tween.tween_property(portrait_rect, "position", _crop_base_position, 0.04)
 		"confident":
+			# Zoom in slightly + shift up — standing tall, chin up
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(1.05, 1.05), 0.3)
-			portrait_rect.modulate = Color(1.05, 1.05, 1.1)
+			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(1.06, 1.06), 0.3)
+			tween.parallel().tween_property(portrait_rect, "position", _crop_base_position + Vector2(0, -6), 0.3)
+			portrait_rect.modulate = Color(1.06, 1.06, 1.12)
 		"defeated":
-			# Desaturate + shrink — no rotation
+			# Sink down slightly + dim — deflated
 			var tween := create_tween().set_ease(Tween.EASE_OUT)
-			tween.tween_property(portrait_rect, "scale", _crop_base_scale * Vector2(0.88, 0.95), 0.4)
-			tween.parallel().tween_property(portrait_rect, "modulate", Color(0.7, 0.7, 0.75), 0.4)
+			tween.tween_property(portrait_rect, "position", _crop_base_position + Vector2(0, 10), 0.4)
+			tween.parallel().tween_property(portrait_rect, "modulate", Color(0.82, 0.82, 0.88), 0.4)
 
 
 func _apply_look_direction() -> void:
 	# Flip portrait horizontally based on look direction.
 	# Default portraits face left, so "right" = flip on X axis.
+	# Pivot must be centered for the scale mirror to happen in place; otherwise
+	# the rect mirrors around its top-left and shifts visually to the wrong slot.
+	_update_portrait_pivot()
 	var target_scale_x: float = _crop_base_scale.x
 	match look_target:
 		"right":

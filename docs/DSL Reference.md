@@ -94,6 +94,7 @@ Formato de opcion en choose:
 | `[set_style TARGET STYLE]` | Cambia estilo (`player`/`opponent`) |
 | `[set_emotion TARGET EMOTION]` | Cambia emocion de piezas |
 | `[override_next_style STYLE]` | Override para siguiente movimiento |
+| `[set_difficulty VALUE]` | Dificultad IA en vivo (0.0-1.0). Persiste hasta fin partida |
 
 ### Audio
 | Comando | Estado |

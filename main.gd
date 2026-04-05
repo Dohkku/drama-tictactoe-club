@@ -122,7 +122,7 @@ func _apply_project_data(project_data: Resource) -> void:
 	match_manager.setup(runner, board, cinematic_stage, project_data.board_config)
 
 	var sorted_events: Array[Resource] = project_data.events.duplicate()
-	sorted_events.sort_custom(func(a: Resource, b: Resource) -> bool: return a.order_index < b.order_index)
+	sorted_events.sort_custom(_compare_events_by_order)
 
 	for event in sorted_events:
 		if not (event is TournamentEventScript):
@@ -145,6 +145,10 @@ func _apply_project_data(project_data: Resource) -> void:
 	])
 
 
+func _compare_events_by_order(a: Resource, b: Resource) -> bool:
+	return a.order_index < b.order_index
+
+
 func _log_debug(text: String) -> void:
 	_debug_lines.append(text)
 	if _debug_lines.size() > 8:
@@ -153,6 +157,15 @@ func _log_debug(text: String) -> void:
 
 
 func _load_project_data() -> bool:
+	# Editor "Preview este nodo" path: one-shot override injected by the editor
+	# before opening the preview Window. Consume it so a later real play
+	# doesn't keep using the stub project.
+	if GameState.preview_project_override != null:
+		var override: Resource = GameState.preview_project_override
+		GameState.preview_project_override = null
+		if override is ProjectDataScript:
+			_apply_project_data(override)
+			return true
 	if not ResourceLoader.exists("user://current_project.tres"):
 		return false
 	var project_data: Resource = ResourceLoader.load("user://current_project.tres")
