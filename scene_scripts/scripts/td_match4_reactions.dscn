@@ -1,0 +1,31 @@
+@reactions td_match4_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression mei thinking]
+[pose mei thinking]
+Mei: ...Fascinante.
+[wait 0.4]
+[expression mei neutral]
+Mei: La rotacion te favorece. Tu patron es adaptativo.
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression mei neutral]
+Mei: El humo se disipa. La victoria queda.
+[wait 0.3]
+Mei: La rotacion cambia todo. Sin piezas eternas.
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+Mei: Imposible. Las reglas no permiten empate.
+@end
+
+@on near_win
+[expression mei thinking]
+@end

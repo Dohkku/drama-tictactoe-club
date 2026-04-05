@@ -1,0 +1,12 @@
+@scene td_match2_intro
+
+[background res://backgrounds/background_2.png]
+[enter ryu center right]
+[expression ryu cold]
+[pose ryu arms_crossed]
+[wait 0.2]
+
+Ryu: IA al maximo. Diamantes con shockwave. Offset 0.3.
+
+[split]
+[board_enable]

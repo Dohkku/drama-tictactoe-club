@@ -1,0 +1,41 @@
+@reactions td_match2_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression ryu surprised]
+[pose ryu leaning_back]
+[shake 0.5 0.3]
+[flash #4488ff 0.1]
+Ryu: ...
+[wait 0.5]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu: Impresionante. Shockwave no fue suficiente.
+[set_flag defeated_ryu]
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression ryu cold]
+[pose ryu confident]
+[flash #ff2200 0.08]
+Ryu: {shake}Predecible.{/shake}
+[wait 0.3]
+Ryu: Los diamantes no mienten.
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression ryu thinking]
+[pose ryu thinking]
+Ryu: Equilibrio bajo presion. Respetable.
+@end
+
+@on near_win
+[expression ryu intense]
+[pose ryu leaning_forward]
+[shake 0.15 0.1]
+@end

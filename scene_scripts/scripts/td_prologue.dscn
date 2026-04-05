@@ -1,0 +1,53 @@
+@scene td_prologue
+
+[background res://backgrounds/background_1.png]
+[music res://audio/music/bgm_chill.mp3]
+[title_card TECH DEMO 2.0 | Todas las funcionalidades]
+[wait 1.5]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora center_left left]
+[expression sora happy]
+[pose sora excited]
+[wait 0.3]
+
+Sora: ¡Bienvenido a la demo tecnica!
+Sora: Aqui vamos a probar {b}todas{/b} las funcionalidades del sistema.
+
+[pose sora idle]
+[expression sora focused]
+Sora: Estilos de colocacion, efectos, tableros, cinematicas...
+
+[enter ryu far_right right]
+[expression ryu cold]
+[pose ryu arms_crossed]
+[wait 0.2]
+
+[depth ryu 0.8 0.3]
+[look_at sora ryu]
+Sora "nervous": Oh... Ryu ya esta aqui.
+
+[depth ryu 1.0 0.4]
+[look_at ryu sora]
+Ryu: No hay tiempo para charlas. Al tablero.
+
+[camera_mode snappy]
+[camera_snap ryu 1.3]
+[flash #ffffff 0.06]
+Ryu → Tú: Demuestralo.
+
+[wait 0.3]
+[camera_reset]
+[camera_mode smooth]
+
+[clear_focus]
+[look_at sora center]
+[expression sora happy]
+[pose sora confident]
+Sora: Primera partida: {b}tu contra mi{/b}. Modo facil, estilo clasico.
+Sora: Tablero 3x3, fichas con efecto {b}fuego{/b}. ¡Vamos!
+
+[exit ryu right]
+[move sora center]
+[wait 0.2]

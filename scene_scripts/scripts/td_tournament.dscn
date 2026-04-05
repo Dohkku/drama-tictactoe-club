@@ -1,0 +1,58 @@
+@scene td_tournament
+
+[background res://backgrounds/background_3.png]
+[music res://audio/music/bgm_chill.mp3]
+[title_card El Torneo | Tableros avanzados]
+[wait 1.0]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora far_left left]
+[enter ryu far_right right]
+[wait 0.3]
+
+[expression sora happy]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+
+Sora: ¡Hora del torneo! Aqui se pone serio.
+
+[enter akira center_left left]
+[wait 0.2]
+[expression akira confident]
+[pose akira confident]
+
+[focus akira]
+[close_up akira 1.2 0.4]
+Akira: Ya era hora. Estoy harta de esperar.
+
+[camera_reset 0.3]
+[clear_focus]
+
+[enter mei center_right right]
+[wait 0.2]
+[expression mei neutral]
+[pose mei thinking]
+
+[focus mei]
+[close_up mei 1.2 0.4]
+Mei: He analizado tus partidas anteriores. Interesante patron.
+
+[camera_reset 0.3]
+[clear_focus]
+
+[wait 0.3]
+
+[if flag defeated_ryu]
+Ryu: Me ganaste antes. Ahora demuestra que no fue suerte.
+[else]
+Ryu: No pudiste conmigo. A ver si puedes con ellos.
+[end_if]
+
+Sora: Primero enfrentaras a {b}Akira{/b}. Tablero {b}5x5{/b}, 4 en raya.
+Sora: Piezas {b}triangulo{/b} vs {b}estrella{/b}. Efecto {b}destellos{/b}.
+
+[look_at akira center]
+Akira → Tú: No me subestimes.
+
+[wait 0.3]

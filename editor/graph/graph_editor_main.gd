@@ -297,18 +297,28 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 	# Flow connections: 1:1, no cycles
 	if from_type == GraphThemeC.PORT_FLOW:
 		if not ConnectionRulesC.flow_output_is_free(graph_edit, from_node, from_port):
-			# Disconnect existing first
 			for conn in graph_edit.get_connection_list():
 				if conn.from_node == from_node and conn.from_port == from_port:
 					graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+					_notify_disconnection(conn.to_node, conn.to_port)
 					break
 		if not ConnectionRulesC.flow_input_is_free(graph_edit, to_node, to_port):
 			for conn in graph_edit.get_connection_list():
 				if conn.to_node == to_node and conn.to_port == to_port:
 					graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+					_notify_disconnection(conn.to_node, conn.to_port)
 					break
 		if ConnectionRulesC.would_create_cycle(graph_edit, from_node, to_node):
 			return
+
+	# Character & BoardConfig inputs: 1:1 on the INPUT side
+	# (a character can fan out to many matches, but each match has one opponent)
+	elif from_type == GraphThemeC.PORT_CHARACTER or from_type == GraphThemeC.PORT_BOARD_CONFIG:
+		for conn in graph_edit.get_connection_list():
+			if conn.to_node == to_node and conn.to_port == to_port:
+				graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+				_notify_disconnection(conn.to_node, conn.to_port)
+				break
 
 	graph_edit.connect_node(from_node, from_port, to_node, to_port)
 
@@ -319,7 +329,11 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
-	var to := graph_edit.get_node(String(to_node))
+	_notify_disconnection(to_node, to_port)
+
+
+func _notify_disconnection(to_node_name: StringName, to_port: int) -> void:
+	var to := graph_edit.get_node(String(to_node_name))
 	if to is BaseGraphNode:
 		to.on_connection_changed(to_port, false, null)
 

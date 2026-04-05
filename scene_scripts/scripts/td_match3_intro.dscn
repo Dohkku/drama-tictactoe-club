@@ -1,0 +1,12 @@
+@scene td_match3_intro
+
+[background res://backgrounds/background_3.png]
+[enter akira center left]
+[expression akira confident]
+[pose akira confident]
+[wait 0.2]
+
+Akira: Tablero grande. Piezas spinning. No te pierdas.
+
+[split]
+[board_enable]

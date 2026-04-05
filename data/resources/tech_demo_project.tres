@@ -11,14 +11,15 @@
 [ext_resource type="Script" path="res://data/board_config.gd" id="bc"]
 [ext_resource type="Script" path="res://systems/board_logic/game_rules.gd" id="gr"]
 
-[sub_resource type="Resource" id="rules"]
+; ── Default board config (3x3 standard) ──
+[sub_resource type="Resource" id="rules_default"]
 script = ExtResource("gr")
 board_size = 3
 win_length = 3
 
 [sub_resource type="Resource" id="board_cfg"]
 script = ExtResource("bc")
-game_rules = SubResource("rules")
+game_rules = SubResource("rules_default")
 max_board_size = 400
 cell_color_empty = Color(0.88, 0.85, 0.78, 1)
 cell_color_alt = Color(0.22, 0.25, 0.3, 1)
@@ -35,22 +36,28 @@ default_player_color = Color(0.2, 0.5, 1, 1)
 default_opponent_color = Color(1.0, 0.4, 0.1, 1)
 board_bg_color = Color(0.3, 0.28, 0.24, 1)
 
+; ── Event 0: Prologue (cinematic) ──
 [sub_resource type="Resource" id="evt_prologue"]
 script = ExtResource("te")
 event_type = "cutscene"
 event_name = "Prologo"
-cutscene_script_path = "res://scene_scripts/scripts/s1_prologue.dscn"
+cutscene_script_path = "res://scene_scripts/scripts/td_prologue.dscn"
 order_index = 0
 
+; ── Event 1: Match vs Sora (standard 3x3, fire vs sparkle, easy) ──
 [sub_resource type="Resource" id="mc_sora"]
 script = ExtResource("mc")
-match_id = "s1_sora"
+match_id = "td_sora"
 opponent_id = "sora"
-ai_difficulty = 0.25
-intro_script = "res://scene_scripts/scripts/s1_match_intro.dscn"
-reactions_script = "res://scene_scripts/scripts/s1_reactions.dscn"
+ai_difficulty = 0.2
+intro_script = "res://scene_scripts/scripts/td_match1_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/td_match1_reactions.dscn"
 player_style = "slam"
-opponent_style = "dramatic"
+opponent_style = "gentle"
+player_effect_name = "fire"
+opponent_effect_name = "sparkle"
+player_piece_design = "x"
+opponent_piece_design = "o"
 
 [sub_resource type="Resource" id="evt_match1"]
 script = ExtResource("te")
@@ -59,24 +66,29 @@ event_name = "vs Sora"
 match_config = SubResource("mc_sora")
 order_index = 1
 
-[sub_resource type="Resource" id="evt_ryu_arrives"]
+; ── Event 2: Ryu challenge (cinematic) ──
+[sub_resource type="Resource" id="evt_ryu_challenge"]
 script = ExtResource("te")
 event_type = "cutscene"
-event_name = "Ryu llega"
-cutscene_script_path = "res://scene_scripts/scripts/s2_ryu_arrives.dscn"
+event_name = "Desafio Ryu"
+cutscene_script_path = "res://scene_scripts/scripts/td_ryu_challenge.dscn"
 order_index = 2
 
+; ── Event 3: Match vs Ryu (standard 3x3, shockwave, max difficulty, diamond pieces) ──
 [sub_resource type="Resource" id="mc_ryu"]
 script = ExtResource("mc")
-match_id = "s2_ryu"
+match_id = "td_ryu"
 opponent_id = "ryu"
 ai_difficulty = 1.0
-intro_script = "res://scene_scripts/scripts/s2_match_intro.dscn"
-reactions_script = "res://scene_scripts/scripts/s2_reactions.dscn"
+intro_script = "res://scene_scripts/scripts/td_match2_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/td_match2_reactions.dscn"
 player_style = "slam"
 opponent_style = "slam"
+player_effect_name = "none"
 opponent_effect_name = "shockwave"
 placement_offset = 0.3
+player_piece_design = "x"
+opponent_piece_design = "diamond"
 
 [sub_resource type="Resource" id="evt_match2"]
 script = ExtResource("te")
@@ -85,16 +97,133 @@ event_name = "vs Ryu"
 match_config = SubResource("mc_ryu")
 order_index = 3
 
-[sub_resource type="Resource" id="evt_club"]
+; ── Event 4: Tournament announcement (cinematic with choice/flags) ──
+[sub_resource type="Resource" id="evt_tournament"]
 script = ExtResource("te")
 event_type = "cutscene"
-event_name = "El Club"
-cutscene_script_path = "res://scene_scripts/scripts/s3_the_club.dscn"
+event_name = "Torneo"
+cutscene_script_path = "res://scene_scripts/scripts/td_tournament.dscn"
 order_index = 4
 
+; ── Event 5: Match vs Akira (5x5 big board, 4-in-row, spinning/dramatic, sparkle, triangle vs star) ──
+[sub_resource type="Resource" id="rules_big"]
+script = ExtResource("gr")
+board_size = 5
+win_length = 4
+
+[sub_resource type="Resource" id="board_big"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_big")
+max_board_size = 450
+cell_color_empty = Color(0.85, 0.82, 0.75, 1)
+cell_color_alt = Color(0.28, 0.25, 0.22, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.75, 0.72, 0.65, 1)
+cell_line_color = Color(0.5, 0.4, 0.35, 1)
+cell_line_width = 1.0
+board_border_enabled = true
+board_border_color = Color(0.5, 0.3, 0.2, 1)
+board_border_width = 8.0
+hand_area_height = 60
+piece_cell_ratio = 0.8
+default_player_color = Color(0.9, 0.3, 0.2, 1)
+default_opponent_color = Color(0.9, 0.7, 0.1, 1)
+board_bg_color = Color(0.25, 0.22, 0.2, 1)
+
+[sub_resource type="Resource" id="mc_akira"]
+script = ExtResource("mc")
+match_id = "td_akira"
+opponent_id = "akira"
+ai_difficulty = 0.6
+intro_script = "res://scene_scripts/scripts/td_match3_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/td_match3_reactions.dscn"
+player_style = "spinning"
+opponent_style = "dramatic"
+player_effect_name = "fire"
+opponent_effect_name = "sparkle"
+placement_offset = 0.1
+player_piece_design = "triangle"
+opponent_piece_design = "star"
+board_config = SubResource("board_big")
+
+[sub_resource type="Resource" id="evt_match3"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Akira"
+match_config = SubResource("mc_akira")
+order_index = 5
+
+; ── Event 6: Strategy scene (cinematic with depth/look_at) ──
+[sub_resource type="Resource" id="evt_strategy"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Estrategia"
+cutscene_script_path = "res://scene_scripts/scripts/td_strategy.dscn"
+order_index = 6
+
+; ── Event 7: Match vs Mei (3x3 rotation, max 3 pieces, no draw, nervous/gentle, smoke, square vs diamond) ──
+[sub_resource type="Resource" id="rules_rotation"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+max_pieces_per_player = 3
+overflow_mode = "rotate"
+allow_draw = false
+
+[sub_resource type="Resource" id="board_rotation"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_rotation")
+max_board_size = 380
+cell_color_empty = Color(0.82, 0.78, 0.88, 1)
+cell_color_alt = Color(0.3, 0.28, 0.35, 1)
+checkerboard_enabled = false
+cell_color_hover = Color(0.72, 0.68, 0.78, 1)
+cell_line_color = Color(0.45, 0.4, 0.5, 1)
+cell_line_width = 2.0
+board_border_enabled = true
+board_border_color = Color(0.5, 0.35, 0.6, 1)
+board_border_width = 8.0
+hand_area_height = 80
+piece_cell_ratio = 0.8
+default_player_color = Color(0.3, 0.7, 0.9, 1)
+default_opponent_color = Color(0.7, 0.3, 0.9, 1)
+board_bg_color = Color(0.2, 0.18, 0.25, 1)
+
+[sub_resource type="Resource" id="mc_mei"]
+script = ExtResource("mc")
+match_id = "td_mei"
+opponent_id = "mei"
+ai_difficulty = 0.8
+intro_script = "res://scene_scripts/scripts/td_match4_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/td_match4_reactions.dscn"
+player_style = "nervous"
+opponent_style = "gentle"
+player_effect_name = "smoke"
+opponent_effect_name = "none"
+placement_offset = 0.05
+player_piece_design = "square"
+opponent_piece_design = "diamond"
+board_config = SubResource("board_rotation")
+
+[sub_resource type="Resource" id="evt_match4"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Mei"
+match_config = SubResource("mc_mei")
+order_index = 7
+
+; ── Event 8: Finale (cinematic with all characters, flags check) ──
+[sub_resource type="Resource" id="evt_finale"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Finale"
+cutscene_script_path = "res://scene_scripts/scripts/td_finale.dscn"
+order_index = 8
+
+; ── Root resource ──
 [resource]
 script = ExtResource("pd")
-project_name = "El Club"
+project_name = "Tech Demo 2.0"
 characters = Array[Resource]([ExtResource("chr_sora"), ExtResource("chr_ryu"), ExtResource("chr_akira"), ExtResource("chr_mei"), ExtResource("chr_player")])
-events = Array[Resource]([SubResource("evt_prologue"), SubResource("evt_match1"), SubResource("evt_ryu_arrives"), SubResource("evt_match2"), SubResource("evt_club")])
+events = Array[Resource]([SubResource("evt_prologue"), SubResource("evt_match1"), SubResource("evt_ryu_challenge"), SubResource("evt_match2"), SubResource("evt_tournament"), SubResource("evt_match3"), SubResource("evt_strategy"), SubResource("evt_match4"), SubResource("evt_finale")])
 board_config = SubResource("board_cfg")

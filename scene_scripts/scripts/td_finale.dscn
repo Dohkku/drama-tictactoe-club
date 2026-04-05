@@ -1,0 +1,76 @@
+@scene td_finale
+
+[background res://backgrounds/background_3.png]
+[music res://audio/music/bgm_chill.mp3]
+[title_card Demo Completa | Resumen de funcionalidades]
+[wait 1.2]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora left left]
+[enter ryu far_right right]
+[enter akira center_left left]
+[enter mei center_right right]
+[wait 0.5]
+
+[expression sora happy]
+[expression ryu neutral]
+[expression akira confident]
+[expression mei neutral]
+
+[pose sora excited]
+[pose ryu arms_crossed]
+[pose akira confident]
+[pose mei thinking]
+
+[depth akira 0.9 0.3]
+[depth mei 0.9 0.3]
+
+Sora: ¡Eso es todo! Veamos que probamos:
+
+[focus sora]
+[close_up sora 1.2 0.3]
+Sora "focused": {b}Estilos{/b}: gentle, slam, spinning, dramatic, nervous.
+Sora: {b}Efectos{/b}: fuego, destellos, humo, shockwave.
+[camera_reset 0.3]
+[clear_focus]
+
+[focus ryu]
+[close_up ryu 1.2 0.3]
+Ryu: {b}Tableros{/b}: 3x3 estandar, 5x5 con 4 en raya, rotacion.
+Ryu: {b}Piezas{/b}: X, O, triangulo, estrella, cuadrado, diamante.
+[camera_reset 0.3]
+[clear_focus]
+
+[depth akira 1.0 0.3]
+[focus akira]
+Akira: {b}Cinematicas{/b}: enter, exit, move, depth, focus, close_up.
+Akira: Camera modes smooth y snappy. Flash, shake.
+[clear_focus]
+
+[depth mei 1.0 0.3]
+[focus mei]
+Mei: {b}Dialogos{/b}: dirigidos, expresiones, poses, look_at.
+Mei: {b}Logica{/b}: flags, condicionales, reacciones por evento.
+[clear_focus]
+
+[wait 0.3]
+
+[if flag defeated_ryu]
+Sora "happy": ¡Y encima le ganaste a Ryu! El flag {b}defeated_ryu{/b} esta activo.
+[else]
+Sora "nervous": Ryu sigue invicto. El flag {b}defeated_ryu{/b} no se activo.
+[end_if]
+
+[wait 0.5]
+
+[camera_mode snappy]
+[camera_snap sora 1.4]
+[flash #ffffff 0.06]
+Sora "happy": {b}¡Demo tecnica completada!{/b}
+
+[wait 0.3]
+[camera_reset 0.3]
+[camera_mode smooth]
+
+[title_card FIN | Drama Tic Tac Toe Club - Tech Demo 2.0]

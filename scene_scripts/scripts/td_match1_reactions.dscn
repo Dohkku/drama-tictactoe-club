@@ -1,0 +1,44 @@
+@reactions td_match1_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression sora sad]
+[pose sora defeated]
+[shake 0.3 0.2]
+Sora: ¡Bien jugado! El efecto fuego queda genial en la victoria.
+[wait 0.3]
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Siguiente ronda!
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression sora happy]
+[pose sora excited]
+[flash #ffcc00 0.12]
+Sora: {shake}¡Toma!{/shake} Los destellos celebran conmigo.
+[wait 0.3]
+[expression sora nervous]
+Sora: No te preocupes, ahora viene lo bueno.
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression sora thinking]
+[pose sora thinking]
+Sora: Empate. Las particulas de fuego contra los destellos... equilibrio perfecto.
+@end
+
+@on center_taken
+[expression sora focused]
+[pose sora leaning_forward]
+@end
+
+@on near_win
+[expression sora nervous]
+[pose sora tense]
+@end

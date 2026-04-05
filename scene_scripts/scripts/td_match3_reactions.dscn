@@ -1,0 +1,32 @@
+@reactions td_match3_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression akira neutral]
+[shake 0.4 0.25]
+Akira: Hmph. El tablero grande no fue suficiente.
+[wait 0.3]
+[expression akira confident]
+Akira: La proxima vez no tendre piedad.
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression akira confident]
+[flash #ff4400 0.1]
+Akira: {shake}¡Asi se juega!{/shake}
+Akira: Spinning con estrellas. Imparable.
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression akira neutral]
+Akira: Empate en 5x5... no esta mal.
+@end
+
+@on near_win
+[expression akira confident]
+@end

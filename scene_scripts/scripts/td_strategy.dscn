@@ -1,0 +1,41 @@
+@scene td_strategy
+
+[background res://backgrounds/background_3.png]
+[camera_mode smooth]
+[fullscreen]
+
+[enter mei center_right right]
+[enter sora left left]
+[wait 0.3]
+
+[expression sora happy]
+[expression mei thinking]
+[pose mei thinking]
+
+[focus mei]
+[depth mei 1.1 0.3]
+
+Mei: Cada movimiento cuenta una historia.
+Mei: Tu estilo de juego revela tu forma de pensar.
+
+[depth mei 1.0 0.3]
+[clear_focus]
+
+[look_at sora mei]
+Sora "focused": Mei juega diferente. Tablero {b}3x3 con rotacion{/b}.
+Sora: Solo {b}3 fichas{/b} por jugador. Cuando pones la cuarta, la primera desaparece.
+
+[look_at mei sora]
+Mei: Sin empates. El juego no termina hasta que alguien gana.
+
+[close_up mei 1.3 0.4]
+[expression mei neutral]
+Mei: Piezas cuadradas con efecto {b}humo{/b}. Estilo {b}nervioso{/b}.
+
+[camera_reset 0.3]
+[exit sora left]
+
+[move mei center]
+[wait 0.2]
+
+Mei → Tú: Preparate. Esto requiere otro tipo de pensamiento.

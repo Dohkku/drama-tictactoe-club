@@ -1,0 +1,12 @@
+@scene td_match4_intro
+
+[background res://backgrounds/background_3.png]
+[enter mei center right]
+[expression mei neutral]
+[pose mei thinking]
+[wait 0.2]
+
+Mei: Rotacion. 3 fichas max. Sin empate.
+
+[split]
+[board_enable]
