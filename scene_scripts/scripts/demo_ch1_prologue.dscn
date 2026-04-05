@@ -2,81 +2,62 @@
 
 [music res://audio/music/bgm_chill.mp3]
 [title_card La Invitacion | Capitulo 1]
-[wait 1.5]
-[camera_mode smooth]
+[title_card ]
+[focus]
 [fullscreen]
-
 [enter sora center right]
 [expression sora neutral]
-[wait 0.3]
-
+[title_card ]
 Sora "focused": ...Ah.
 Sora: Oye. Tu.
-
 [expression sora happy]
 Sora: ¡Sabia que encontraria a alguien aqui!
-
-[pose sora leaning_forward]
+[expression sora neutral]
 Sora: Siempre hay alguien en esta aula despues de clase.
 Sora: Alguien que no tiene adonde ir. Que se queda mirando por la ventana.
-
 [expression sora nervous]
-[pose sora idle]
+[expression sora neutral]
 Sora: No... no lo digo como algo malo.
-
 [expression sora serious]
 Sora: Yo tambien era asi. Hace un ano.
-
 [focus sora]
-[close_up sora 1.2 0.4]
+[focus sora]
 Sora "focused": Hasta que descubri algo que cambio todo.
-[camera_reset 0.3]
-[clear_focus]
-
+[focus]
+[focus]
 [expression sora happy]
-[pose sora excited]
+[expression sora neutral]
 [shake 0.3 0.08]
 Sora: {b}¡El Club de Tres en Raya!{/b}
-
-[pose sora idle]
+[expression sora neutral]
 Sora: Ya se lo que estas pensando. Tres en raya. Un juego de ninos.
-
 [expression sora serious]
 Sora: Pero aqui no jugamos para pasar el rato.
 Sora: Aqui cada partida es una {b}conversacion{/b}.
-
 [expression sora happy]
 Sora: Cada ficha que pones dice algo de ti.
 Sora: Como piensas. Como reaccionas bajo presion.
-
 [expression sora nervous]
-[pose sora arms_crossed]
+[expression sora neutral]
 Sora: Bueno... la verdad es que el club necesita miembros.
-
 [expression sora sad]
 Sora: Somos pocos. Eramos cinco, pero este ano...
-
 [expression sora happy]
-[pose sora excited]
+[expression sora neutral]
 Sora: ¡Pero eso da igual! Lo que importa es que estas aqui.
-
 [focus sora]
 [expression sora focused]
-[pose sora confident]
+[expression sora neutral]
 Sora → Tu: Voy a ensenarte como funciona esto.
-[clear_focus]
-
+[focus]
 Sora: Una partida. Tu y yo. Nada complicado.
 Sora: Solo quiero ver {b}como juegas{/b}.
-
 [expression sora happy]
-[pose sora idle]
+[expression sora neutral]
 Sora: Me llamo Sora, por cierto. Presidenta del club.
-
 [expression sora nervous]
 Sora: Bueno, presidenta y fundadora y... basicamente todo.
-
 [expression sora happy]
-[pose sora excited]
+[expression sora neutral]
 Sora: ¡Pero eso esta a punto de cambiar!
 Sora: Ven. El tablero esta preparado.

@@ -803,33 +803,35 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 	_add_section_header(parent, "Retrato")
 
 	# Live portrait preview with mask (simulates runtime behavior)
+	var mask_size := Vector2(160, 200)
 	var mask_container := Control.new()
-	mask_container.custom_minimum_size = Vector2(160, 200)
+	mask_container.custom_minimum_size = mask_size
 	mask_container.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
-	# Dark background to see the mask area
 	var mask_bg := ColorRect.new()
 	mask_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	mask_bg.color = Color(0.1, 0.1, 0.15)
 	mask_container.add_child(mask_bg)
 
 	var preview_img := TextureRect.new()
-	preview_img.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Use explicit size, NOT anchors — so scale works without clipping
+	preview_img.size = mask_size
 	preview_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	if data.portrait_image:
 		preview_img.texture = data.portrait_image
-	# Apply current zoom/offset
-	preview_img.pivot_offset = Vector2(80, 100)  # center of 160x200
-	preview_img.scale = Vector2(data.portrait_zoom, data.portrait_zoom)
-	preview_img.position = data.portrait_offset * Vector2(160, 200)
 	mask_container.add_child(preview_img)
 	parent.add_child(mask_container)
 
-	# Update preview function
+	# Update preview: reposition image within mask area
 	var _refresh_crop := func():
-		preview_img.scale = Vector2(data.portrait_zoom, data.portrait_zoom)
-		preview_img.position = data.portrait_offset * Vector2(160, 200)
-		preview_img.pivot_offset = Vector2(80, 100)
+		var z: float = data.portrait_zoom
+		var off: Vector2 = data.portrait_offset
+		# Scale from center of mask
+		preview_img.pivot_offset = mask_size / 2.0
+		preview_img.scale = Vector2(z, z)
+		# Offset shifts within the mask
+		preview_img.position = off * mask_size
+	_refresh_crop.call()
 
 	_add_file_field(parent, "Imagen", data.portrait_image.resource_path if data.portrait_image else "", func(val: String):
 		if ResourceLoader.exists(val):

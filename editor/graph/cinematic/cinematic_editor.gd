@@ -312,6 +312,17 @@ func open_preview() -> void:
 	vbox.add_child(viewport_container)
 	_preview_window.add_child(vbox)
 
+	# Store ref for updating
+	_preview_window.set_meta("step_label", step_label)
+
+	# Add to scene tree FIRST so _ready() runs on all children
+	_parent_ref.get_tree().root.add_child(_preview_window)
+	_preview_window.popup_centered()
+	_preview_window.position += Vector2i(50, 50)
+
+	# Wait a frame for nodes to initialize
+	await _parent_ref.get_tree().process_frame
+
 	# Register characters on preview stage
 	for ch in characters:
 		_preview_stage.register_character(ch)
@@ -327,15 +338,6 @@ func open_preview() -> void:
 	_preview_step_index = 0
 
 	step_label.text = "Paso: 0 / %d" % _preview_commands.size()
-
-	# Store ref for updating
-	_preview_window.set_meta("step_label", step_label)
-
-	# Add to scene tree and show
-	_parent_ref.get_tree().root.add_child(_preview_window)
-	_preview_window.popup_centered()
-	# Move to a slightly offset position so it doesn't overlap exactly
-	_preview_window.position += Vector2i(50, 50)
 
 
 func _close_preview() -> void:
