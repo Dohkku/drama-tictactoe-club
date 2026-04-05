@@ -316,6 +316,8 @@ func open_preview() -> void:
 	_preview_window.set_meta("step_label", step_label)
 
 	# Add to scene tree FIRST so _ready() runs on all children
+	# Disable embedding so the window is a real OS window (can move to other monitors)
+	_parent_ref.get_viewport().set_embedding_subwindows(false)
 	_parent_ref.get_tree().root.add_child(_preview_window)
 	_preview_window.popup_centered()
 	_preview_window.position += Vector2i(50, 50)
@@ -343,6 +345,9 @@ func open_preview() -> void:
 func _close_preview() -> void:
 	if _preview_window and is_instance_valid(_preview_window):
 		_preview_window.queue_free()
+	# Restore embedding
+	if _parent_ref and is_instance_valid(_parent_ref):
+		_parent_ref.get_viewport().set_embedding_subwindows(true)
 		_preview_window = null
 	_preview_stage = null
 	_preview_dialogue = null
