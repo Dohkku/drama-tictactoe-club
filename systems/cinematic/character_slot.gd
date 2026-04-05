@@ -318,24 +318,14 @@ func _apply_expression(expr_name: String) -> void:
 func _apply_portrait_crop() -> void:
 	if character_data == null or portrait_mask == null:
 		return
-
-	var offset: Vector2 = Vector2.ZERO
-	if "portrait_offset" in character_data:
-		offset = character_data.portrait_offset
-	offset = Vector2(clampf(offset.x, -0.5, 0.5), clampf(offset.y, -0.5, 0.5))
-
+	# Standard sprites (512x768) fill the slot exactly — no crop needed
 	_crop_base_scale = Vector2.ONE
-	portrait_rect.scale = _crop_base_scale
-
-	# Use anchor offsets to shift the portrait within the mask
-	# Anchors stay FULL_RECT so sizing works regardless of layout timing
-	var mask_size: Vector2 = portrait_mask.size
-	var shift: Vector2 = offset * mask_size
-	_crop_base_position = shift
-	portrait_rect.offset_left = shift.x
-	portrait_rect.offset_top = shift.y
-	portrait_rect.offset_right = shift.x
-	portrait_rect.offset_bottom = shift.y
+	_crop_base_position = Vector2.ZERO
+	portrait_rect.scale = Vector2.ONE
+	portrait_rect.offset_left = 0
+	portrait_rect.offset_top = 0
+	portrait_rect.offset_right = 0
+	portrait_rect.offset_bottom = 0
 
 
 func _set_solid_color_fallback(color: Color) -> void:

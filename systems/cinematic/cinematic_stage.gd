@@ -17,7 +17,9 @@ const POSITIONS = {
 	"far_right": 0.88,
 }
 
-var char_aspect := 0.60        # Character width / height ratio
+## Standard portrait sprite size — all sprites should match this aspect ratio
+const PORTRAIT_SIZE := Vector2i(512, 768)
+var char_aspect: float = float(PORTRAIT_SIZE.x) / float(PORTRAIT_SIZE.y)  # 0.6667
 var char_height_ratio := 0.92  # Character height as fraction of stage
 var char_max_width_frac := 0.45 # Max width fraction in split mode
 const MOVE_DURATION := 0.5

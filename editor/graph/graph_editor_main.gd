@@ -43,8 +43,6 @@ var _cinematic_editor: RefCounted = null
 var _graph_parent: Control = null  # Parent container for graph_edit (to add sub-editors)
 var _breadcrumb_label: Label = null
 var _preview_temp_cinematic_editor: RefCounted = null
-var _portrait_editor_window: Window = null
-var _portrait_editor_node = null
 
 
 func _ready() -> void:
@@ -815,20 +813,12 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		PackedStringArray(["*.png,*.jpg,*.jpeg,*.webp ; Portrait Images"]),
 		"res://")
 
-	var edit_portrait_btn := Button.new()
-	edit_portrait_btn.text = "Abrir editor de retrato"
-	edit_portrait_btn.add_theme_font_size_override("font_size", 13)
-	var ps := StyleBoxFlat.new()
-	ps.bg_color = Color(0.25, 0.45, 0.85)
-	ps.set_corner_radius_all(4)
-	ps.content_margin_left = 8
-	ps.content_margin_right = 8
-	ps.content_margin_top = 4
-	ps.content_margin_bottom = 4
-	edit_portrait_btn.add_theme_stylebox_override("normal", ps)
-	edit_portrait_btn.add_theme_color_override("font_color", Color.WHITE)
-	edit_portrait_btn.pressed.connect(func(): _open_portrait_editor(node))
-	parent.add_child(edit_portrait_btn)
+	# Info: sprites deben ser 512x768 (2:3)
+	var size_hint := Label.new()
+	size_hint.text = "Formato: 512x768 px (2:3)"
+	size_hint.add_theme_font_size_override("font_size", 10)
+	size_hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.55))
+	parent.add_child(size_hint)
 
 	# ── Gameplay ──
 	_add_section_header(parent, "Gameplay")
@@ -1537,215 +1527,6 @@ func _open_preview_from_main(cutscene_node) -> void:
 
 func _is_in_cinematic_editor() -> bool:
 	return _cinematic_editor != null
-
-
-func _add_portrait_inline_preview(parent: VBoxContainer, data: Resource) -> Callable:
-	var mask_size := Vector2(160, 200)
-	var mask_container := Control.new()
-	mask_container.custom_minimum_size = mask_size
-	mask_container.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
-	var mask_bg := ColorRect.new()
-	mask_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	mask_bg.color = Color(0.1, 0.1, 0.15)
-	mask_container.add_child(mask_bg)
-
-	var preview_img := TextureRect.new()
-	preview_img.size = mask_size
-	preview_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	preview_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	mask_container.add_child(preview_img)
-	parent.add_child(mask_container)
-
-	var _refresh_crop := func():
-		preview_img.texture = data.portrait_image if data.portrait_image else null
-		var z: float = clampf(data.portrait_zoom, 0.5, 3.0)
-		var off: Vector2 = Vector2(
-			clampf(data.portrait_offset.x, -0.5, 0.5),
-			clampf(data.portrait_offset.y, -0.5, 0.5)
-		)
-		preview_img.pivot_offset = mask_size / 2.0
-		preview_img.scale = Vector2(z, z)
-		preview_img.position = off * mask_size * z
-	_refresh_crop.call()
-	return _refresh_crop
-
-
-func _open_portrait_editor(node) -> void:
-	if node == null or node.character_data == null:
-		return
-	if _portrait_editor_window and is_instance_valid(_portrait_editor_window):
-		_portrait_editor_window.queue_free()
-		_portrait_editor_window = null
-		_portrait_editor_node = null
-
-	_portrait_editor_node = node
-	_portrait_editor_window = Window.new()
-	_portrait_editor_window.title = "Retrato — %s" % (node.character_data.display_name if node.character_data.display_name != "" else node.character_data.character_id)
-	_portrait_editor_window.size = Vector2i(760, 520)
-	_portrait_editor_window.unresizable = false
-	_portrait_editor_window.wrap_controls = true
-	_portrait_editor_window.close_requested.connect(func():
-		if _portrait_editor_window and is_instance_valid(_portrait_editor_window):
-			_portrait_editor_window.queue_free()
-		_portrait_editor_window = null
-		_portrait_editor_node = null)
-	_portrait_editor_window.set_meta("target_data", node.character_data)
-	_portrait_editor_window.set_meta("target_node", node)
-
-	var root := HBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 10)
-
-	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(300, 0)
-	left.add_theme_constant_override("separation", 8)
-
-	var preset_lbl := Label.new()
-	preset_lbl.text = "Vista"
-	preset_lbl.add_theme_font_size_override("font_size", 13)
-	left.add_child(preset_lbl)
-
-	var size_presets := {
-		"Desktop 16:9": Vector2i(640, 360),
-		"Split 4:3": Vector2i(480, 360),
-		"Movil 9:16": Vector2i(360, 640),
-	}
-	var preset_btn := OptionButton.new()
-	for key in size_presets.keys():
-		preset_btn.add_item(key)
-	left.add_child(preset_btn)
-
-	var ox_lbl := Label.new()
-	ox_lbl.text = "Offset X"
-	ox_lbl.add_theme_font_size_override("font_size", 13)
-	left.add_child(ox_lbl)
-	var ox_slider := HSlider.new()
-	ox_slider.min_value = -0.5
-	ox_slider.max_value = 0.5
-	ox_slider.step = 0.01
-	ox_slider.value = node.character_data.portrait_offset.x
-	left.add_child(ox_slider)
-
-	var oy_lbl := Label.new()
-	oy_lbl.text = "Offset Y"
-	oy_lbl.add_theme_font_size_override("font_size", 13)
-	left.add_child(oy_lbl)
-	var oy_slider := HSlider.new()
-	oy_slider.min_value = -0.5
-	oy_slider.max_value = 0.5
-	oy_slider.step = 0.01
-	oy_slider.value = node.character_data.portrait_offset.y
-	left.add_child(oy_slider)
-
-	var reset_btn := Button.new()
-	reset_btn.text = "Reset"
-	left.add_child(reset_btn)
-
-	var right := VBoxContainer.new()
-	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var viewport_container := SubViewportContainer.new()
-	viewport_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	viewport_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	viewport_container.stretch = true
-	right.add_child(viewport_container)
-
-	var viewport := SubViewport.new()
-	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	viewport.size = Vector2i(640, 360)
-	viewport_container.add_child(viewport)
-
-	var stage_scene = load("res://systems/cinematic/cinematic_stage.tscn")
-	var portrait_stage: Control = stage_scene.instantiate()
-	portrait_stage.set_anchors_preset(Control.PRESET_FULL_RECT)
-	viewport.add_child(portrait_stage)
-
-	root.add_child(left)
-	root.add_child(right)
-	_portrait_editor_window.add_child(root)
-	get_tree().root.add_child(_portrait_editor_window)
-	_portrait_editor_window.popup_centered()
-
-	var _sync_from_target := func():
-		var data: Resource = null
-		if _portrait_editor_window and is_instance_valid(_portrait_editor_window) and _portrait_editor_window.has_meta("target_data"):
-			data = _portrait_editor_window.get_meta("target_data")
-		if data == null:
-			return
-		ox_slider.value = data.portrait_offset.x
-		oy_slider.value = data.portrait_offset.y
-
-	var _refresh_stage := func():
-		var data: Resource = null
-		var target_node = null
-		if _portrait_editor_window and is_instance_valid(_portrait_editor_window):
-			if _portrait_editor_window.has_meta("target_data"):
-				data = _portrait_editor_window.get_meta("target_data")
-			if _portrait_editor_window.has_meta("target_node"):
-				target_node = _portrait_editor_window.get_meta("target_node")
-		if data == null:
-			if _portrait_editor_node and _portrait_editor_node.character_data:
-				data = _portrait_editor_node.character_data
-				target_node = _portrait_editor_node
-		if data == null:
-			return
-		if preset_btn.selected >= 0:
-			var key := preset_btn.get_item_text(preset_btn.selected)
-			var target: Vector2i = size_presets.get(key, Vector2i(640, 360))
-			viewport.size = target
-		data.portrait_offset = Vector2(ox_slider.value, oy_slider.value)
-		if target_node and target_node.has_method("_refresh_display"):
-			target_node._refresh_display()
-		portrait_stage.clear_stage()
-		portrait_stage.register_character(data)
-		portrait_stage.enter_character(data.character_id, "center")
-
-	var ext_sync_timer := Timer.new()
-	ext_sync_timer.wait_time = 0.25
-	ext_sync_timer.one_shot = false
-	ext_sync_timer.autostart = true
-	_portrait_editor_window.add_child(ext_sync_timer)
-	var _last_image = node.character_data.portrait_image
-	ext_sync_timer.timeout.connect(func():
-		if _portrait_editor_window == null or not is_instance_valid(_portrait_editor_window):
-			return
-		if not _portrait_editor_window.has_meta("target_data"):
-			return
-		var data: Resource = _portrait_editor_window.get_meta("target_data")
-		if data == null:
-			return
-		var changed := false
-		if absf(ox_slider.value - data.portrait_offset.x) > 0.0001:
-			ox_slider.value = data.portrait_offset.x
-			changed = true
-		if absf(oy_slider.value - data.portrait_offset.y) > 0.0001:
-			oy_slider.value = data.portrait_offset.y
-			changed = true
-		if _last_image != data.portrait_image:
-			_last_image = data.portrait_image
-			changed = true
-		if changed:
-			_refresh_stage.call())
-
-	viewport_container.resized.connect(func():
-		var s := viewport_container.size
-		if s.x >= 32 and s.y >= 32:
-			viewport.size = Vector2i(int(s.x), int(s.y)))
-
-	preset_btn.item_selected.connect(func(_i: int):
-		_refresh_stage.call())
-	ox_slider.value_changed.connect(func(_v: float):
-		_refresh_stage.call())
-	oy_slider.value_changed.connect(func(_v: float):
-		_refresh_stage.call())
-	reset_btn.pressed.connect(func():
-		ox_slider.value = 0.0
-		oy_slider.value = 0.0
-		_refresh_stage.call())
-
-	await get_tree().process_frame
-	_sync_from_target.call()
-	_refresh_stage.call()
 
 
 # ── Save / Load / Play ──
