@@ -1009,6 +1009,28 @@ func _build_match_detail(parent: VBoxContainer, node) -> void:
 
 
 func _build_cutscene_detail(parent: VBoxContainer, node) -> void:
+	# Big "Edit Scene" button at the top
+	var edit_btn := Button.new()
+	edit_btn.text = "EDITAR ESCENA EN NODOS"
+	edit_btn.custom_minimum_size = Vector2(0, 44)
+	edit_btn.add_theme_font_size_override("font_size", 16)
+	edit_btn.add_theme_color_override("font_color", Color.WHITE)
+	var eb_style := StyleBoxFlat.new()
+	eb_style.bg_color = Color(0.25, 0.45, 0.85)
+	eb_style.set_corner_radius_all(6)
+	eb_style.content_margin_left = 12
+	eb_style.content_margin_right = 12
+	eb_style.content_margin_top = 8
+	eb_style.content_margin_bottom = 8
+	edit_btn.add_theme_stylebox_override("normal", eb_style)
+	var eb_hover := eb_style.duplicate()
+	eb_hover.bg_color = Color(0.35, 0.55, 0.95)
+	edit_btn.add_theme_stylebox_override("hover", eb_hover)
+	edit_btn.pressed.connect(func(): _open_cinematic_editor(node))
+	parent.add_child(edit_btn)
+
+	parent.add_child(HSeparator.new())
+
 	_add_file_field(parent, "Script", node.script_path, func(val: String):
 		node.set_script_path(val)
 		_show_detail_for_node(node))

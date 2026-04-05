@@ -27,30 +27,10 @@ func _ready() -> void:
 	add_child(_path_label)
 	add_flow_through(0)
 
-	# Row 1: open editor button — prominent
-	var btn := Button.new()
-	btn.text = ">> Editar escena <<"
-	btn.add_theme_font_size_override("font_size", 12)
-	btn.custom_minimum_size = Vector2(0, 28)
-	var s_normal := StyleBoxFlat.new()
-	s_normal.bg_color = Color(0.25, 0.45, 0.85)
-	s_normal.set_corner_radius_all(4)
-	s_normal.content_margin_left = 8
-	s_normal.content_margin_right = 8
-	s_normal.content_margin_top = 4
-	s_normal.content_margin_bottom = 4
-	btn.add_theme_stylebox_override("normal", s_normal)
-	var s_hover := StyleBoxFlat.new()
-	s_hover.bg_color = Color(0.35, 0.55, 0.95)
-	s_hover.set_corner_radius_all(4)
-	s_hover.content_margin_left = 8
-	s_hover.content_margin_right = 8
-	s_hover.content_margin_top = 4
-	s_hover.content_margin_bottom = 4
-	btn.add_theme_stylebox_override("hover", s_hover)
-	btn.add_theme_color_override("font_color", Color.WHITE)
-	btn.pressed.connect(func(): editor_requested.emit(self))
-	add_child(btn)
+	# Row 1: hint label to use detail panel
+	var hint := _make_dim_label("doble-click: editar")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(hint)
 	set_slot_enabled_left(1, false)
 	set_slot_enabled_right(1, false)
 

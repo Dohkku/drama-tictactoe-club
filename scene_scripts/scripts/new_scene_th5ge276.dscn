@@ -1,0 +1,5 @@
+@scene new_scene
+
+[fullscreen]
+[camera_mode smooth]
+
