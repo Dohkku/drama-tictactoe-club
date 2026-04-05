@@ -1,0 +1,160 @@
+@scene demo_ch2_arrival
+
+[background res://backgrounds/background_2.png]
+[music res://audio/music/bgm_tense.wav]
+[title_card La Prueba | Capitulo 2]
+[wait 2.0]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora left left]
+[expression sora happy]
+[pose sora excited]
+[wait 0.3]
+
+Sora: ¡Genial! Tu primera sesión oficial en el club.
+
+[expression sora focused]
+[pose sora idle]
+Sora: Hoy quiero que conozcas a—
+
+[wait 0.2]
+
+[camera_mode snappy]
+[shake 0.4 0.3]
+[flash #223366 0.06]
+
+[enter ryu far_right right]
+[expression ryu cold]
+[pose ryu arms_crossed]
+[wait 0.3]
+
+[camera_mode smooth]
+[expression sora nervous]
+[pose sora tense]
+[look_at sora ryu]
+
+Sora: ...Ryu.
+
+[focus ryu]
+[depth ryu 1.2 0.5]
+[close_up ryu 1.3 0.5]
+
+[wait 0.5]
+
+Ryu: He oído que hay alguien nuevo.
+
+[camera_reset 0.4]
+[depth ryu 1.0 0.4]
+[clear_focus]
+
+[move ryu center_right]
+[wait 0.2]
+
+[look_at ryu sora]
+Ryu "neutral": Sora. ¿Este es el que dices que tiene potencial?
+
+[look_at sora ryu]
+[expression sora nervous]
+Sora: Ryu, dale un respiro. Acaba de llegar.
+
+[focus ryu]
+[expression ryu cold]
+[pose ryu confident]
+Ryu: No necesita un respiro. Necesita una prueba.
+
+[clear_focus]
+
+[expression sora serious]
+[pose sora arms_crossed]
+Sora: No puedes simplemente aparecer y—
+
+[camera_snap ryu 1.4]
+[flash #ffffff 0.04]
+[expression ryu intense]
+[pose ryu leaning_forward]
+Ryu: Puedo. Y lo hago.
+
+[camera_reset 0.3]
+[wait 0.3]
+
+[depth sora 0.8 0.3]
+[focus ryu]
+[move ryu center]
+
+[expression ryu cold]
+[pose ryu arms_crossed]
+Ryu → Tú: Escucha. No me importa lo que Sora te haya dicho.
+
+Ryu: Este club no es un refugio. No es un lugar para pasar el rato.
+
+[close_up ryu 1.2 0.4]
+Ryu "intense": Es un campo de batalla. Y si no puedes aguantar la presión...
+
+[camera_reset 0.3]
+[expression ryu neutral]
+Ryu: ...no mereces estar aquí.
+
+[clear_focus]
+[depth sora 1.0 0.3]
+
+[expression sora serious]
+[pose sora leaning_forward]
+Sora: Ryu, ya basta. No tienes derecho a decidir quién—
+
+[look_at ryu sora]
+Ryu "cold": Tengo todo el derecho. Soy el mejor jugador de este club.
+
+[wait 0.3]
+
+[expression ryu neutral]
+[pose ryu thinking]
+Ryu: Pero no soy injusto.
+
+[look_at ryu center]
+Ryu → Tú: Una partida. Tú contra mí. Sin piedad.
+
+[close_up ryu 1.3 0.4]
+[expression ryu intense]
+Ryu: Si aguantas... te respetaré. Si no...
+
+[camera_reset 0.3]
+[pose ryu arms_crossed]
+[expression ryu cold]
+Ryu: ...ya sabes dónde está la puerta.
+
+[wait 0.3]
+
+[depth ryu 0.9 0.3]
+[focus sora]
+[expression sora nervous]
+[pose sora tense]
+[look_at sora center]
+
+Sora → Tú: No tienes que hacer esto. De verdad.
+
+[wait 0.3]
+
+[expression sora serious]
+[pose sora confident]
+Sora: Pero si quieres... yo estaré aquí. Pase lo que pase.
+
+[clear_focus]
+[depth ryu 1.0 0.3]
+
+[look_at ryu sora]
+[expression ryu neutral]
+Ryu: Qué tierno.
+
+[exit sora left]
+[wait 0.3]
+
+[move ryu center]
+[expression ryu cold]
+[pose ryu confident]
+[focus ryu]
+
+Ryu → Tú: Al tablero.
+
+[clear_focus]
+[wait 0.3]

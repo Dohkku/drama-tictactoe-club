@@ -1,0 +1,85 @@
+@reactions demo_ch3_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[shake 0.5 0.3]
+[flash #ff6600 0.12]
+[expression akira angry]
+[pose akira idle]
+[wait 0.4]
+Akira: ...No.
+[wait 0.3]
+Akira: No, no, no.
+[expression akira neutral]
+[wait 0.3]
+Akira: El tablero grande era {b}mi{/b} ventaja. Mi territorio.
+[expression akira confident]
+Akira → Tú: ¿Cómo has leído mis movimientos en un 5x5?
+[wait 0.3]
+[enter sora far_left left]
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Increíble! ¡Has ganado en el tablero grande!
+[look_at akira sora]
+[expression akira angry]
+Akira: Cállate, Sora.
+[expression sora nervous]
+Sora: ...Perdona.
+[look_at akira center]
+[expression akira neutral]
+Akira → Tú: La próxima vez elegiré yo las reglas.
+[expression akira confident]
+Akira: Y no seré tan amable.
+[exit sora left]
+[set_flag defeated_akira]
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[flash #ff4400 0.1]
+[expression akira confident]
+[pose akira confident]
+Akira: {shake}¡Así se juega!{/shake}
+[wait 0.3]
+Akira: Estrellas giratorias contra triángulos. No hay competición.
+[expression akira neutral]
+Akira → Tú: El tablero grande te tragó. Demasiadas opciones, demasiada duda.
+[wait 0.2]
+[expression akira confident]
+Akira: Vuelve cuando sepas pensar en grande.
+[enter sora far_left left]
+[expression sora sad]
+[pose sora idle]
+Sora: Ha sido una buena partida...
+[expression akira angry]
+[look_at akira sora]
+Akira: No. Ha sido una partida corta.
+[exit sora left]
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression akira neutral]
+[pose akira idle]
+Akira: Empate. En un 5x5.
+[wait 0.3]
+[expression akira confident]
+Akira: Eso significa que ninguno de los dos cometió un error fatal.
+Akira → Tú: Pero tampoco tuviste el valor de arriesgar.
+[expression akira neutral]
+Akira: En el ajedrez, un empate es respeto. Aquí... es frustración.
+@end
+
+@on near_win
+[expression akira angry]
+[pose akira confident]
+Akira: No te atrevas...
+@end
+
+@on center_taken
+[expression akira neutral]
+[pose akira idle]
+@end

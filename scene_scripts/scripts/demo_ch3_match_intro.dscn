@@ -1,0 +1,38 @@
+@scene demo_ch3_match_intro
+
+[background res://backgrounds/background_3.png]
+[music res://audio/music/bgm_tense.wav]
+[camera_mode smooth]
+[fullscreen]
+
+[enter akira center left]
+[expression akira confident]
+[pose akira confident]
+[wait 0.3]
+
+Akira: Cinco por cinco. Cuatro en raya.
+
+[close_up akira 1.2 0.4]
+[expression akira angry]
+Akira: Mis fichas son {b}estrellas{/b}. Giran cuando las coloco. Efecto {b}destello{/b}.
+
+[camera_reset 0.3]
+
+[expression akira confident]
+Akira: Las tuyas son triángulos. Bonitos. Pero no te van a salvar.
+
+[wait 0.2]
+
+[camera_snap akira 1.3]
+[flash #ff4400 0.06]
+Akira → Tú: En un tablero grande hay más espacio para {b}equivocarse{/b}.
+
+[camera_reset 0.3]
+[wait 0.2]
+
+[expression akira confident]
+[pose akira idle]
+Akira: Prepárate.
+
+[split]
+[board_enable]

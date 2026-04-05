@@ -1,0 +1,74 @@
+@reactions demo_ch1_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression sora surprised]
+[pose sora defeated]
+[shake 0.3 0.2]
+[wait 0.3]
+Sora: ...Vaya.
+[wait 0.4]
+[expression sora happy]
+[pose sora excited]
+Sora: {b}¡Lo sabía!{/b}
+[flash #ffcc00 0.1]
+Sora: ¡Sabía que tenías algo especial!
+[wait 0.3]
+[expression sora focused]
+[pose sora leaning_forward]
+Sora: Esa última jugada... no fue suerte. Fue {b}intención{/b}.
+[expression sora happy]
+[pose sora confident]
+Sora: Bienvenido al club. Oficialmente.
+[set_flag beat_sora]
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression sora happy]
+[pose sora excited]
+[flash #ffcc00 0.12]
+Sora: {shake}¡Sí!{/shake}
+[wait 0.3]
+[expression sora nervous]
+[pose sora idle]
+Sora: Perdón, perdón. Se supone que iba fácil...
+[expression sora happy]
+[pose sora leaning_forward]
+Sora: Pero oye, no estuvo mal. He visto cómo piensas.
+Sora: Hay algo ahí. Solo necesitas práctica.
+[expression sora confident]
+Sora: Y para eso... estás en el club.
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression sora focused]
+[pose sora thinking]
+Sora: Empate...
+[wait 0.3]
+[expression sora happy]
+[pose sora leaning_forward]
+Sora: ¿Sabes qué significa un empate en tu primera partida?
+[expression sora serious]
+Sora: Que no cometiste ningún error. Que pensaste cada movimiento.
+[expression sora happy]
+[pose sora excited]
+Sora: Eso es exactamente lo que buscamos. ¡Estás dentro!
+[set_flag beat_sora]
+@end
+
+@on center_taken
+[expression sora focused]
+[pose sora leaning_forward]
+Sora: Oh. Interesante elección.
+@end
+
+@on near_win
+[expression sora nervous]
+[pose sora tense]
+Sora: Espera... ¿eso es...?
+@end

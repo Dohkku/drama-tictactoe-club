@@ -33,12 +33,34 @@ var _popup_menu: PopupMenu = null
 var _add_menu: PopupMenu = null
 var _context_position: Vector2 = Vector2.ZERO
 var _file_dialog: FileDialog = null
+var _undo_redo: UndoRedo = null
 
 
 func _ready() -> void:
+	_undo_redo = UndoRedo.new()
 	_build_ui()
 	_setup_graph_edit()
 	_load_or_create_default()
+
+
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree():
+		return
+	if event is InputEventKey and event.pressed:
+		# Ctrl+Z: Undo
+		if event.keycode == KEY_Z and event.ctrl_pressed and not event.shift_pressed:
+			if _undo_redo.has_undo():
+				_undo_redo.undo()
+			get_viewport().set_input_as_handled()
+		# Ctrl+Shift+Z: Redo
+		elif event.keycode == KEY_Z and event.ctrl_pressed and event.shift_pressed:
+			if _undo_redo.has_redo():
+				_undo_redo.redo()
+			get_viewport().set_input_as_handled()
+		# Ctrl+S: Save
+		elif event.keycode == KEY_S and event.ctrl_pressed:
+			_on_save_pressed()
+			get_viewport().set_input_as_handled()
 
 
 # ── UI Construction ──
@@ -277,7 +299,35 @@ func _on_context_menu_selected(id: int) -> void:
 		5: type = "comment"
 		6: type = "end"
 	if type != "":
-		_create_node(type, _context_position)
+		_undo_create_node(type, _context_position)
+
+
+## Create node with undo support.
+func _undo_create_node(type: String, pos: Vector2) -> GraphNode:
+	var node := _create_node(type, pos)
+	if node == null:
+		return null
+	var node_name: StringName = node.name
+	_undo_redo.create_action("Create %s node" % type)
+	_undo_redo.add_do_method(_noop)
+	_undo_redo.add_undo_method(_remove_node_by_name.bind(node_name))
+	_undo_redo.commit_action(false)  # false = don't execute do (already done)
+	return node
+
+
+func _remove_node_by_name(node_name: StringName) -> void:
+	var node := graph_edit.get_node_or_null(String(node_name))
+	if node == null:
+		return
+	# Disconnect all connections
+	for conn in graph_edit.get_connection_list():
+		if conn.from_node == node_name or conn.to_node == node_name:
+			graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+	node.queue_free()
+
+
+func _noop() -> void:
+	pass
 
 
 # ── Connections ──
@@ -328,10 +378,34 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 	if to is BaseGraphNode:
 		to.on_connection_changed(to_port, true, from as BaseGraphNode)
 
+	# Register undo action
+	_undo_redo.create_action("Connect nodes")
+	_undo_redo.add_do_method(_noop)
+	_undo_redo.add_undo_method(_do_disconnect.bind(from_node, from_port, to_node, to_port))
+	_undo_redo.commit_action(false)
+
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
 	_notify_disconnection(to_node, to_port)
+	# Register undo
+	_undo_redo.create_action("Disconnect nodes")
+	_undo_redo.add_do_method(_noop)
+	_undo_redo.add_undo_method(_do_connect.bind(from_node, from_port, to_node, to_port))
+	_undo_redo.commit_action(false)
+
+
+func _do_disconnect(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
+	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
+	_notify_disconnection(to_node, to_port)
+
+
+func _do_connect(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
+	graph_edit.connect_node(from_node, from_port, to_node, to_port)
+	var to := graph_edit.get_node_or_null(String(to_node))
+	var from := graph_edit.get_node_or_null(String(from_node))
+	if to is BaseGraphNode and from is BaseGraphNode:
+		to.on_connection_changed(to_port, true, from)
 
 
 func _notify_disconnection(to_node_name: StringName, to_port: int) -> void:
@@ -361,15 +435,48 @@ func _on_delete_nodes_request(nodes: Array[StringName]) -> void:
 		# Don't delete the StartNode
 		if node is StartNodeScript:
 			continue
-		# Remove all connections involving this node
+		# Collect connections for undo
+		var removed_connections: Array = []
 		for conn in graph_edit.get_connection_list():
 			if conn.from_node == node_name or conn.to_node == node_name:
+				removed_connections.append(conn.duplicate())
 				graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+
+		# Save node data for undo
+		var node_type := ""
+		var node_data := {}
+		var node_pos: Vector2 = node.position_offset
+		if node is BaseGraphNode:
+			node_type = node.get_node_type()
+			node_data = node.get_node_data()
+
 		node.queue_free()
+
+		# Register undo
+		if node_type != "":
+			_undo_redo.create_action("Delete %s" % node_type)
+			_undo_redo.add_do_method(_noop)
+			_undo_redo.add_undo_method(_undo_delete_node.bind(node_type, node_pos, node_data, removed_connections))
+			_undo_redo.commit_action(false)
 
 	if _selected_node and is_instance_valid(_selected_node) == false:
 		_selected_node = null
 		_show_welcome_panel()
+
+
+func _undo_delete_node(type: String, pos: Vector2, data: Dictionary, connections: Array) -> void:
+	var node := _create_node(type, pos)
+	if node == null:
+		return
+	if node is BaseGraphNode:
+		node.set_node_data(data)
+	# Restore connections (best effort — names may differ)
+	await get_tree().process_frame
+	for conn in connections:
+		var fn: StringName = conn.from_node
+		var tn: StringName = conn.to_node
+		if graph_edit.get_node_or_null(String(fn)) and graph_edit.get_node_or_null(String(tn)):
+			graph_edit.connect_node(fn, conn.from_port, tn, conn.to_port)
 
 
 func _on_popup_request(at_position: Vector2) -> void:
@@ -550,6 +657,9 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		node.character_data = CharacterDataScript.new()
 	var data: Resource = node.character_data
 
+	# ── Identidad ──
+	_add_section_header(parent, "Identidad")
+
 	_add_field(parent, "ID", data.character_id, func(val: String):
 		data.character_id = val
 		node._refresh_display())
@@ -562,10 +672,40 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		data.color = val
 		node._refresh_display())
 
-	_add_field(parent, "Pieza", data.piece_type, func(val: String):
-		data.piece_type = val)
+	# ── Retrato ──
+	_add_section_header(parent, "Retrato")
 
-	_add_option_field(parent, "Estilo default", data.default_style,
+	# Portrait preview
+	if data.portrait_image:
+		var preview := TextureRect.new()
+		preview.texture = data.portrait_image
+		preview.custom_minimum_size = Vector2(120, 120)
+		preview.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		parent.add_child(preview)
+
+	_add_file_field(parent, "Imagen", data.portrait_image.resource_path if data.portrait_image else "", func(val: String):
+		if ResourceLoader.exists(val):
+			data.portrait_image = load(val)
+			node._refresh_display()
+			_show_detail_for_node(node))
+
+	_add_slider_field(parent, "Zoom", data.portrait_zoom, 0.5, 2.0, func(val: float):
+		data.portrait_zoom = val)
+
+	var _ox_cb := func(val: float): data.portrait_offset.x = val
+	_add_slider_field(parent, "Offset X", data.portrait_offset.x, -0.5, 0.5, _ox_cb)
+	var _oy_cb := func(val: float): data.portrait_offset.y = val
+	_add_slider_field(parent, "Offset Y", data.portrait_offset.y, -0.5, 0.5, _oy_cb)
+
+	# ── Gameplay ──
+	_add_section_header(parent, "Gameplay")
+
+	_add_option_field(parent, "Pieza", data.piece_type,
+		["X", "O"],
+		func(val: String): data.piece_type = val)
+
+	_add_option_field(parent, "Estilo", data.default_style,
 		["gentle", "slam", "spinning", "dramatic", "nervous"],
 		func(val: String): data.default_style = val)
 
@@ -576,12 +716,80 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		["left", "center", "right", "away"],
 		func(val: String): data.default_look = val)
 
-	parent.add_child(HSeparator.new())
-	var voice_header := Label.new()
-	voice_header.text = "Voz"
-	voice_header.add_theme_font_size_override("font_size", 15)
-	voice_header.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
-	parent.add_child(voice_header)
+	# ── Expresiones ──
+	_add_section_header(parent, "Expresiones (%d)" % data.expressions.size())
+
+	for expr_name in data.expressions:
+		var expr_color: Color = data.expressions[expr_name]
+		var hbox := HBoxContainer.new()
+		hbox.add_theme_constant_override("separation", 4)
+		var name_lbl := Label.new()
+		name_lbl.text = expr_name
+		name_lbl.custom_minimum_size.x = 80
+		name_lbl.add_theme_font_size_override("font_size", 12)
+		name_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+		hbox.add_child(name_lbl)
+		var color_rect := ColorRect.new()
+		color_rect.color = expr_color
+		color_rect.custom_minimum_size = Vector2(24, 16)
+		hbox.add_child(color_rect)
+		if data.expression_images.has(expr_name) and data.expression_images[expr_name] != null:
+			var img_lbl := Label.new()
+			img_lbl.text = "img"
+			img_lbl.add_theme_font_size_override("font_size", 10)
+			img_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_START)
+			hbox.add_child(img_lbl)
+		parent.add_child(hbox)
+
+	# Add expression button
+	var add_expr_hbox := HBoxContainer.new()
+	add_expr_hbox.add_theme_constant_override("separation", 4)
+	var new_expr_edit := LineEdit.new()
+	new_expr_edit.placeholder_text = "nueva expresion"
+	new_expr_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	new_expr_edit.add_theme_font_size_override("font_size", 12)
+	add_expr_hbox.add_child(new_expr_edit)
+	var add_expr_btn := Button.new()
+	add_expr_btn.text = "+"
+	add_expr_btn.add_theme_font_size_override("font_size", 12)
+	add_expr_btn.pressed.connect(func():
+		var ename: String = new_expr_edit.text.strip_edges()
+		if ename != "" and not data.expressions.has(ename):
+			data.expressions[ename] = data.color
+			_show_detail_for_node(node))
+	add_expr_hbox.add_child(add_expr_btn)
+	parent.add_child(add_expr_hbox)
+
+	# ── Poses ──
+	_add_section_header(parent, "Poses (%d)" % data.poses.size())
+
+	for pose_name in data.poses:
+		var pose_lbl := Label.new()
+		pose_lbl.text = "  %s" % pose_name
+		pose_lbl.add_theme_font_size_override("font_size", 12)
+		pose_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+		parent.add_child(pose_lbl)
+
+	var add_pose_hbox := HBoxContainer.new()
+	add_pose_hbox.add_theme_constant_override("separation", 4)
+	var new_pose_edit := LineEdit.new()
+	new_pose_edit.placeholder_text = "nueva pose"
+	new_pose_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	new_pose_edit.add_theme_font_size_override("font_size", 12)
+	add_pose_hbox.add_child(new_pose_edit)
+	var add_pose_btn := Button.new()
+	add_pose_btn.text = "+"
+	add_pose_btn.add_theme_font_size_override("font_size", 12)
+	add_pose_btn.pressed.connect(func():
+		var pname: String = new_pose_edit.text.strip_edges()
+		if pname != "" and not data.poses.has(pname):
+			data.poses[pname] = {"description": "", "energy": 0.5, "openness": 0.5}
+			_show_detail_for_node(node))
+	add_pose_hbox.add_child(add_pose_btn)
+	parent.add_child(add_pose_hbox)
+
+	# ── Voz ──
+	_add_section_header(parent, "Voz")
 
 	_add_slider_field(parent, "Pitch", data.voice_pitch, 50.0, 500.0, func(val: float):
 		data.voice_pitch = val)
@@ -589,16 +797,12 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 	_add_slider_field(parent, "Variacion", data.voice_variation, 0.0, 100.0, func(val: float):
 		data.voice_variation = val)
 
-	_add_option_field(parent, "Forma de onda", data.voice_waveform,
+	_add_option_field(parent, "Waveform", data.voice_waveform,
 		["sine", "square", "triangle"],
 		func(val: String): data.voice_waveform = val)
 
-	parent.add_child(HSeparator.new())
-	var style_header := Label.new()
-	style_header.text = "Estilo Dialogo"
-	style_header.add_theme_font_size_override("font_size", 15)
-	style_header.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
-	parent.add_child(style_header)
+	# ── Estilo Dialogo ──
+	_add_section_header(parent, "Dialogo")
 
 	_add_color_field(parent, "Fondo", data.dialogue_bg_color, func(val: Color):
 		data.dialogue_bg_color = val)
@@ -660,23 +864,101 @@ func _build_match_detail(parent: VBoxContainer, node) -> void:
 
 func _build_cutscene_detail(parent: VBoxContainer, node) -> void:
 	_add_file_field(parent, "Script", node.script_path, func(val: String):
-		node.set_script_path(val))
+		node.set_script_path(val)
+		_show_detail_for_node(node))
 
-	# Inline preview of the script content
+	# Create new script button
+	if node.script_path == "":
+		var create_btn := Button.new()
+		create_btn.text = "Crear nuevo script"
+		create_btn.add_theme_font_size_override("font_size", 13)
+		var cs := StyleBoxFlat.new()
+		cs.bg_color = GraphThemeC.COLOR_CUTSCENE.darkened(0.4)
+		cs.set_corner_radius_all(4)
+		cs.content_margin_left = 8
+		cs.content_margin_right = 8
+		cs.content_margin_top = 4
+		cs.content_margin_bottom = 4
+		create_btn.add_theme_stylebox_override("normal", cs)
+		create_btn.add_theme_color_override("font_color", Color.WHITE)
+		create_btn.pressed.connect(func():
+			var new_path := "res://scene_scripts/scripts/new_scene_%s.dscn" % node.node_id
+			var f := FileAccess.open(new_path, FileAccess.WRITE)
+			if f:
+				f.store_string("@scene new_scene\n\n[fullscreen]\n[camera_mode smooth]\n\n")
+				f.close()
+				node.set_script_path(new_path)
+				_show_detail_for_node(node))
+		parent.add_child(create_btn)
+
+	# Editable script content
 	if node.script_path != "" and FileAccess.file_exists(node.script_path):
-		parent.add_child(HSeparator.new())
-		var preview_label := Label.new()
-		preview_label.text = "Vista previa:"
-		preview_label.add_theme_font_size_override("font_size", 13)
-		preview_label.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
-		parent.add_child(preview_label)
+		_add_section_header(parent, "Editor de Script")
 
 		var code := CodeEdit.new()
-		code.custom_minimum_size = Vector2(0, 200)
-		code.editable = false
+		code.custom_minimum_size = Vector2(0, 300)
+		code.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		code.text = FileAccess.get_file_as_string(node.script_path)
 		code.add_theme_font_size_override("font_size", 11)
+		code.gutters_draw_line_numbers = true
 		parent.add_child(code)
+
+		# Save button
+		var save_script_btn := Button.new()
+		save_script_btn.text = "Guardar script"
+		save_script_btn.add_theme_font_size_override("font_size", 13)
+		var ss := StyleBoxFlat.new()
+		ss.bg_color = Color(0.2, 0.5, 0.3)
+		ss.set_corner_radius_all(4)
+		ss.content_margin_left = 8
+		ss.content_margin_right = 8
+		ss.content_margin_top = 4
+		ss.content_margin_bottom = 4
+		save_script_btn.add_theme_stylebox_override("normal", ss)
+		save_script_btn.add_theme_color_override("font_color", Color.WHITE)
+		var script_path_ref: String = node.script_path
+		save_script_btn.pressed.connect(func():
+			var f := FileAccess.open(script_path_ref, FileAccess.WRITE)
+			if f:
+				f.store_string(code.text)
+				f.close()
+				print("[GraphEditor] Script guardado: ", script_path_ref))
+		parent.add_child(save_script_btn)
+
+		# Quick command buttons
+		_add_section_header(parent, "Comandos rapidos")
+		var cmd_grid := GridContainer.new()
+		cmd_grid.columns = 3
+		cmd_grid.add_theme_constant_override("h_separation", 4)
+		cmd_grid.add_theme_constant_override("v_separation", 4)
+		var commands := [
+			["enter", "[enter char center left]"],
+			["exit", "[exit char left]"],
+			["expr", "[expression char neutral]"],
+			["pose", "[pose char idle]"],
+			["focus", "[focus char]"],
+			["unfocus", "[clear_focus]"],
+			["close_up", "[close_up char 1.3 0.4]"],
+			["cam_reset", "[camera_reset 0.3]"],
+			["flash", "[flash #ffffff 0.08]"],
+			["shake", "[shake 0.3 0.2]"],
+			["wait", "[wait 0.5]"],
+			["music", "[music bgm_chill.mp3]"],
+			["title", "[title_card Titulo | Sub]"],
+			["split", "[split]"],
+			["full", "[fullscreen]"],
+			["flag", "[set_flag flag_name]"],
+			["if", "[if flag name]\n\n[end_if]"],
+			["choose", "[choose]\n> Opcion -> flag\n[end_choose]"],
+		]
+		for cmd in commands:
+			var btn := Button.new()
+			btn.text = cmd[0]
+			btn.add_theme_font_size_override("font_size", 10)
+			var cmd_text: String = cmd[1]
+			btn.pressed.connect(func(): code.insert_text_at_caret(cmd_text + "\n"))
+			cmd_grid.add_child(btn)
+		parent.add_child(cmd_grid)
 
 
 func _build_board_config_detail(parent: VBoxContainer, node) -> void:
@@ -696,12 +978,35 @@ func _build_board_config_detail(parent: VBoxContainer, node) -> void:
 		node._refresh_display())
 	parent.add_child(default_check)
 
-	parent.add_child(HSeparator.new())
+	# Presets
+	_add_section_header(parent, "Preset")
+	var preset_hbox := HBoxContainer.new()
+	preset_hbox.add_theme_constant_override("separation", 4)
+	var presets := [["Std 3x3", 3, 3, -1, true], ["Rot 3", 3, 3, 3, false], ["Big 5x5", 5, 4, -1, true]]
+	for p in presets:
+		var btn := Button.new()
+		btn.text = p[0]
+		btn.add_theme_font_size_override("font_size", 11)
+		var p_ref: Array = p
+		btn.pressed.connect(func():
+			rules.board_size = p_ref[1]
+			rules.win_length = p_ref[2]
+			rules.max_pieces_per_player = p_ref[3]
+			rules.allow_draw = p_ref[4]
+			if p_ref[3] > 0:
+				rules.overflow_mode = "rotate"
+			node._refresh_display()
+			_show_detail_for_node(node))
+		preset_hbox.add_child(btn)
+	parent.add_child(preset_hbox)
+
+	# Rules
+	_add_section_header(parent, "Reglas")
 
 	var _bs_cb := func(val: float):
 		rules.board_size = int(val)
 		node._refresh_display()
-	_add_slider_field(parent, "Tamano tablero", float(rules.board_size), 3.0, 7.0, _bs_cb, 1.0)
+	_add_slider_field(parent, "Tamano", float(rules.board_size), 3.0, 7.0, _bs_cb, 1.0)
 
 	var _wl_cb := func(val: float):
 		rules.win_length = int(val)
@@ -724,6 +1029,38 @@ func _build_board_config_detail(parent: VBoxContainer, node) -> void:
 	draw_check.add_theme_font_size_override("font_size", 13)
 	draw_check.toggled.connect(func(pressed: bool): rules.allow_draw = pressed)
 	parent.add_child(draw_check)
+
+	# Visual config
+	_add_section_header(parent, "Visual")
+
+	_add_color_field(parent, "Celda vacia", config.cell_color_empty, func(val: Color):
+		config.cell_color_empty = val; node._refresh_display())
+
+	var checker := CheckBox.new()
+	checker.text = "Checkerboard"
+	checker.button_pressed = config.checkerboard_enabled
+	checker.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	checker.add_theme_font_size_override("font_size", 13)
+	checker.toggled.connect(func(p: bool): config.checkerboard_enabled = p; node._refresh_display())
+	parent.add_child(checker)
+
+	if config.checkerboard_enabled:
+		_add_color_field(parent, "Celda alt", config.cell_color_alt, func(val: Color):
+			config.cell_color_alt = val; node._refresh_display())
+
+	_add_color_field(parent, "Lineas", config.cell_line_color, func(val: Color):
+		config.cell_line_color = val; node._refresh_display())
+
+	_add_color_field(parent, "Fondo", config.board_bg_color, func(val: Color):
+		config.board_bg_color = val)
+
+	_add_section_header(parent, "Colores Jugadores")
+
+	_add_color_field(parent, "Jugador", config.default_player_color, func(val: Color):
+		config.default_player_color = val)
+
+	_add_color_field(parent, "Oponente", config.default_opponent_color, func(val: Color):
+		config.default_opponent_color = val)
 
 
 func _build_simultaneous_detail(parent: VBoxContainer, node) -> void:
@@ -864,6 +1201,15 @@ func _add_file_field(parent: VBoxContainer, label_text: String, value: String, o
 	browse.pressed.connect(_browse_cb)
 	hbox.add_child(browse)
 	parent.add_child(hbox)
+
+
+func _add_section_header(parent: VBoxContainer, text: String) -> void:
+	parent.add_child(HSeparator.new())
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+	parent.add_child(lbl)
 
 
 func _add_help_line(parent: VBoxContainer, key: String, desc: String) -> void:

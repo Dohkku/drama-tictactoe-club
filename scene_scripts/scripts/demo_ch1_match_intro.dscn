@@ -1,0 +1,47 @@
+@scene demo_ch1_match_intro
+
+[background res://backgrounds/background_1.png]
+[music res://audio/music/bgm_chill.mp3]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora center left]
+[expression sora happy]
+[pose sora confident]
+[wait 0.3]
+
+Sora: Muy bien. Aquí estamos.
+
+[expression sora focused]
+[pose sora leaning_forward]
+Sora: Las reglas son simples. Tres en raya. Tablero estándar.
+
+[pose sora idle]
+Sora: Tú pones tu ficha, yo pongo la mía.
+Sora: Tres en línea y ganas. Horizontal, vertical o diagonal.
+
+[wait 0.2]
+
+[expression sora happy]
+[pose sora excited]
+Sora: Yo iré fácil contigo. Solo quiero ver tu estilo.
+
+[expression sora focused]
+[pose sora confident]
+Sora: Mis fichas llevan efecto {b}destello{/b}. Las tuyas, {b}fuego{/b}.
+
+[wait 0.3]
+
+[close_up sora 1.2 0.4]
+[expression sora serious]
+Sora → Tú: No te contengas. Quiero ver quién eres de verdad.
+
+[camera_reset 0.3]
+[wait 0.2]
+
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Vamos allá!
+
+[split]
+[board_enable]

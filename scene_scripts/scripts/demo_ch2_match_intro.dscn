@@ -1,0 +1,38 @@
+@scene demo_ch2_match_intro
+
+[background res://backgrounds/background_2.png]
+[music res://audio/music/bgm_tense.wav]
+[camera_mode smooth]
+[fullscreen]
+
+[enter ryu center right]
+[expression ryu cold]
+[pose ryu arms_crossed]
+[wait 0.3]
+
+[close_up ryu 1.2 0.4]
+Ryu: Mis fichas son {b}diamantes{/b}. Cada una golpea como un terremoto.
+
+[camera_reset 0.3]
+
+[expression ryu intense]
+[pose ryu leaning_forward]
+Ryu: Efecto {b}shockwave{/b}. Cuando coloco una pieza, el tablero {b}tiembla{/b}.
+
+[wait 0.2]
+
+[expression ryu cold]
+[pose ryu confident]
+Ryu: Dificultad máxima. Sin compasión.
+
+[camera_snap ryu 1.4]
+[flash #4466aa 0.06]
+[shake 0.2 0.15]
+
+Ryu → Tú: {shake}Demuestra que mereces estar aquí.{/shake}
+
+[camera_reset 0.3]
+[wait 0.2]
+
+[split]
+[board_enable]

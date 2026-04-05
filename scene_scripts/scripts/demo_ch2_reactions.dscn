@@ -1,0 +1,117 @@
+@reactions demo_ch2_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[shake 0.6 0.4]
+[flash #4488ff 0.15]
+[expression ryu surprised]
+[pose ryu leaning_back]
+[wait 0.6]
+Ryu: ...
+[wait 0.5]
+[expression ryu neutral]
+[pose ryu thinking]
+Ryu: ¿Cómo?
+[wait 0.4]
+[expression ryu cold]
+[pose ryu arms_crossed]
+Ryu: No. No me voy a engañar. Ha sido limpio.
+[wait 0.3]
+[close_up ryu 1.2 0.4]
+[expression ryu neutral]
+Ryu → Tú: Me has ganado. Sin trucos. Sin suerte.
+[camera_reset 0.3]
+[wait 0.3]
+[expression ryu cold]
+[pose ryu confident]
+Ryu: Puede que Sora tenga razón sobre ti.
+[wait 0.2]
+Ryu: Puede.
+[enter sora left left]
+[expression sora happy]
+[pose sora excited]
+[flash #ffcc00 0.08]
+Sora: {shake}¡¡Lo has conseguido!!{/shake}
+Sora: ¡Le has ganado a Ryu! ¡A {b}Ryu{/b}!
+[look_at ryu sora]
+[expression ryu cold]
+Ryu: No grites, Sora.
+[look_at sora ryu]
+[expression sora happy]
+Sora: ¡Perdona, perdona! ¡Es que no me lo creo!
+[exit sora left]
+[set_flag defeated_ryu]
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[flash #ff2200 0.1]
+[expression ryu cold]
+[pose ryu confident]
+[wait 0.3]
+Ryu: {shake}Predecible.{/shake}
+[wait 0.4]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu: Los diamantes no mienten. Cada movimiento tuyo... lo vi venir.
+[wait 0.3]
+[close_up ryu 1.2 0.4]
+Ryu → Tú: Pero no huiste. Eso es algo.
+[camera_reset 0.3]
+[wait 0.2]
+[expression ryu cold]
+Ryu: No es suficiente. Pero es algo.
+[enter sora left left]
+[expression sora sad]
+[pose sora idle]
+Sora: Oye... no pasa nada.
+[expression sora serious]
+[pose sora confident]
+Sora: Ryu lleva años jugando. Nadie le gana a la primera.
+[look_at ryu sora]
+[expression ryu neutral]
+Ryu: Mentira. Tú me ganaste a la primera.
+[expression sora nervous]
+Sora: ...Eso fue diferente.
+[exit sora left]
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression ryu surprised]
+[pose ryu leaning_back]
+[wait 0.3]
+[expression ryu thinking]
+[pose ryu thinking]
+Ryu: ...Empate.
+[wait 0.4]
+Ryu: Contra mí. Con shockwave. Con dificultad máxima.
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu: Eso no es un empate. Es una declaración.
+[close_up ryu 1.2 0.4]
+Ryu → Tú: Que no pudiste ganar... pero te negaste a perder.
+[camera_reset 0.3]
+[wait 0.2]
+[expression ryu cold]
+[pose ryu confident]
+Ryu: Volveremos a jugar.
+[set_flag survived_ryu]
+@end
+
+@on near_win
+[expression ryu intense]
+[pose ryu leaning_forward]
+[shake 0.2 0.12]
+@end
+
+@on center_taken
+[expression ryu thinking]
+[pose ryu thinking]
+[wait 0.15]
+[expression ryu cold]
+[pose ryu arms_crossed]
+@end

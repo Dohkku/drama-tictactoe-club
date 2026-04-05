@@ -1,0 +1,117 @@
+@scene demo_ch1_prologue
+
+[background res://backgrounds/background_1.png]
+[music res://audio/music/bgm_chill.mp3]
+[title_card La Invitacion | Capitulo 1]
+[wait 2.0]
+[camera_mode smooth]
+[fullscreen]
+
+[wait 1.0]
+
+[enter sora far_right right]
+[expression sora happy]
+[pose sora idle]
+[wait 0.5]
+
+[move sora center_right]
+[wait 0.3]
+
+Sora "focused": ...Ah.
+
+[pose sora leaning_forward]
+[depth sora 1.1 0.4]
+Sora: Oye. Tú.
+
+[wait 0.3]
+[depth sora 1.0 0.3]
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Sabía que encontraría a alguien aquí!
+
+[move sora center]
+[wait 0.2]
+
+Sora: Siempre hay alguien en esta aula después de clase.
+Sora: Alguien que no tiene adónde ir. Que se queda mirando por la ventana.
+
+[expression sora nervous]
+[pose sora idle]
+Sora: No... no lo digo como algo malo.
+
+[wait 0.3]
+
+[expression sora serious]
+[pose sora arms_crossed]
+Sora: Yo también era así. Hace un año.
+
+[close_up sora 1.2 0.5]
+Sora "focused": Hasta que descubrí algo que cambió todo.
+
+[camera_reset 0.4]
+[wait 0.2]
+
+[expression sora happy]
+[pose sora excited]
+[flash #ffcc00 0.08]
+Sora: {b}¡El Club de Tres en Raya!{/b}
+
+[wait 0.3]
+
+Sora: Ya sé lo que estás pensando. Tres en raya. Un juego de niños.
+
+[expression sora serious]
+[pose sora leaning_forward]
+Sora: Pero aquí no jugamos para pasar el rato.
+
+[depth sora 1.15 0.3]
+Sora: Aquí cada partida es una {b}conversación{/b}.
+
+[depth sora 1.0 0.3]
+[expression sora happy]
+[pose sora idle]
+Sora: Cada ficha que pones dice algo de ti.
+Sora: Cómo piensas. Cómo reaccionas bajo presión.
+
+[wait 0.3]
+
+[expression sora nervous]
+[pose sora thinking]
+Sora: Bueno... la verdad es que el club necesita miembros.
+
+[expression sora sad]
+Sora: Somos pocos. Éramos cinco, pero este año...
+
+[wait 0.4]
+
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Pero eso da igual! Lo que importa es que estás aquí.
+
+[close_up sora 1.3 0.4]
+[expression sora focused]
+[pose sora confident]
+Sora → Tú: Voy a enseñarte cómo funciona esto.
+
+[camera_reset 0.3]
+[wait 0.2]
+
+Sora: Una partida. Tú y yo. Nada complicado.
+Sora: Solo quiero ver {b}cómo juegas{/b}.
+
+[expression sora happy]
+[pose sora leaning_forward]
+Sora: Me llamo Sora, por cierto. Presidenta del club.
+
+[wait 0.3]
+
+[expression sora nervous]
+Sora: Bueno, presidenta y fundadora y... básicamente todo.
+
+[expression sora happy]
+[pose sora confident]
+Sora: ¡Pero eso está a punto de cambiar!
+
+[wait 0.3]
+
+Sora: Ven. El tablero está preparado.

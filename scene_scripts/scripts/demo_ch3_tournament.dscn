@@ -1,0 +1,226 @@
+@scene demo_ch3_tournament
+
+[background res://backgrounds/background_3.png]
+[music res://audio/music/bgm_chill.mp3]
+[title_card El Torneo | Capitulo 3]
+[wait 2.0]
+[camera_mode smooth]
+[fullscreen]
+
+[enter sora far_left left]
+[expression sora happy]
+[pose sora excited]
+[wait 0.3]
+
+Sora: ¡Atención! ¡Reunión de club!
+
+[wait 0.3]
+
+[enter ryu far_right right]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+[wait 0.3]
+
+[if flag defeated_ryu]
+[look_at ryu center]
+Ryu: Hmph. Aquí estoy.
+[look_at sora ryu]
+Sora "focused": Sí, incluso Ryu. Aunque todavía le duela lo de la última vez.
+[expression ryu cold]
+Ryu: No me duele nada.
+[else]
+[look_at ryu center]
+Ryu: Esto más vale que sea importante.
+[look_at sora ryu]
+Sora "nervous": Lo es, lo es. Tranquilo.
+[end_if]
+
+[wait 0.3]
+
+[expression sora serious]
+[pose sora confident]
+[move sora center_left]
+Sora: El instituto ha aprobado nuestro primer {b}torneo oficial{/b}.
+
+[flash #ffcc00 0.1]
+[shake 0.15 0.1]
+
+Sora "happy": ¡Tenemos fecha, tenemos sala, tenemos todo!
+
+[wait 0.3]
+
+Sora "focused": Pero antes de enfrentarnos a otros colegios...
+Sora: ...necesitamos saber quién es nuestro {b}mejor jugador{/b}.
+
+[look_at ryu sora]
+Ryu: Yo. Siguiente pregunta.
+
+[expression sora serious]
+[pose sora arms_crossed]
+Sora: Ryu. Esto se decide en el tablero, no con palabras.
+
+[wait 0.4]
+
+Sora "happy": Pero primero... quiero que conozcáis a dos personas.
+
+[enter akira center_left left]
+[wait 0.3]
+[expression akira confident]
+[pose akira confident]
+
+[focus akira]
+[close_up akira 1.3 0.5]
+
+[wait 0.3]
+
+Akira: Ya era hora.
+
+[camera_reset 0.4]
+
+Akira: Llevo tres semanas esperando para jugar. Inscribí mi nombre el primer día.
+
+[clear_focus]
+
+[look_at sora akira]
+Sora "nervous": Akira... sí, bueno. Perdona por la espera.
+
+[focus akira]
+[expression akira angry]
+Akira: No quiero disculpas. Quiero un tablero.
+
+[clear_focus]
+
+[expression sora focused]
+[pose sora idle]
+Sora → Tú: Akira es... intensa. Viene del club de ajedrez.
+Sora: Dicen que dejó el ajedrez porque era {b}demasiado lento{/b} para ella.
+
+[focus akira]
+[expression akira confident]
+Akira: El ajedrez son cuarenta movimientos para decir lo que puedo decir en nueve.
+
+[clear_focus]
+
+[look_at akira center]
+Akira → Tú: Así que tú eres el nuevo. He oído cosas.
+
+[if flag defeated_ryu]
+Akira: Dicen que le ganaste a Ryu. Eso hay que {b}probarlo{/b}.
+[else]
+Akira: Dicen que aguantaste contra Ryu. No está mal. Para empezar.
+[end_if]
+
+[wait 0.4]
+
+[enter mei center_right right]
+[wait 0.3]
+[expression mei neutral]
+[pose mei thinking]
+
+[focus mei]
+[close_up mei 1.3 0.5]
+
+[wait 0.4]
+
+Mei: ...Hola.
+
+[camera_reset 0.4]
+
+[clear_focus]
+
+[expression sora happy]
+[pose sora leaning_forward]
+Sora: ¡Mei! Pensaba que no vendrías.
+
+[focus mei]
+[expression mei analytical]
+Mei: He estado observando. Desde lejos.
+
+[depth mei 1.1 0.3]
+Mei: He visto tus dos partidas anteriores. Las dos.
+
+[depth mei 1.0 0.3]
+[clear_focus]
+
+[look_at mei center]
+[expression mei thinking]
+Mei → Tú: Tu estilo es... irregular. Impredecible.
+
+[focus mei]
+Mei "analytical": No sé si es estrategia o instinto. Todavía.
+
+[clear_focus]
+
+[expression sora focused]
+[pose sora idle]
+Sora: Mei es nuestra analista. Ve patrones donde nadie más los ve.
+Sora: No juega muchas partidas, pero cuando juega...
+
+[focus mei]
+[expression mei neutral]
+Mei: Cada movimiento es información. No desperdicio ninguno.
+
+[clear_focus]
+
+[wait 0.4]
+
+[expression sora happy]
+[pose sora confident]
+Sora: Bien. El torneo interno será así:
+
+[depth akira 0.9 0.3]
+[depth mei 0.9 0.3]
+[depth ryu 0.9 0.3]
+[focus sora]
+
+Sora "focused": Primera ronda: nuestro nuevo miembro contra {b}Akira{/b}.
+Sora: Tablero {b}5x5{/b}. Cuatro en raya. Sin piedad.
+
+[clear_focus]
+[depth akira 1.0 0.3]
+[depth mei 1.0 0.3]
+[depth ryu 1.0 0.3]
+
+[focus akira]
+[expression akira confident]
+[close_up akira 1.2 0.3]
+Akira: Por fin.
+
+[camera_reset 0.3]
+[clear_focus]
+
+[wait 0.3]
+
+Sora "happy": Después vendrá Mei. Y luego... la final.
+
+[focus ryu]
+[close_up ryu 1.2 0.3]
+[expression ryu cold]
+Ryu: Llega hasta mí. Si puedes.
+
+[camera_reset 0.3]
+[clear_focus]
+
+[wait 0.3]
+
+[look_at akira center]
+[expression akira confident]
+Akira → Tú: Tablero grande. Piezas giratorias. Mi territorio.
+
+[expression akira angry]
+Akira: No me subestimes.
+
+[exit mei right]
+[exit ryu right]
+[exit sora left]
+[wait 0.3]
+
+[move akira center]
+[expression akira confident]
+[pose akira confident]
+[focus akira]
+
+Akira → Tú: Vamos.
+
+[clear_focus]
+[wait 0.3]
