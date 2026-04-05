@@ -37,6 +37,7 @@ var _preview_dscn_cache: String = ""
 var _preview_resyncing: bool = false
 var _preview_active_node_name: StringName = StringName("")
 var _preview_follow_node: bool = true
+var _preview_commands_locked: bool = false  # When true, sync won't overwrite commands
 
 
 func open(p_cutscene_node, p_characters: Array, parent: Control) -> void:
@@ -535,6 +536,8 @@ func _set_active_preview_node(step_index: int) -> void:
 
 func _refresh_preview_script() -> bool:
 	if graph_edit == null:
+		return false
+	if _preview_commands_locked:
 		return false
 	var dscn_text: String = SerializerScript.graph_to_dscn(graph_edit, scene_name, scene_background)
 	var changed := dscn_text != _preview_dscn_cache

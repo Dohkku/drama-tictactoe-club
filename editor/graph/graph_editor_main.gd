@@ -1495,12 +1495,13 @@ func _on_preview_toolbar_pressed() -> void:
 	if _cinematic_editor:
 		_cinematic_editor.open_preview()
 		return
-	# From main canvas: save and play (runtime handles all node types)
-	_on_play_pressed()
+	# From main canvas: combine all cutscene commands and open step-by-step preview
+	_open_combined_preview()
 
 
 ## Collect all CutsceneNodes following the flow from Start to End.
-func _get_all_cutscenes_in_flow() -> Array:
+## Walk flow from Start and return all event nodes (CutsceneNode + MatchNode) in order.
+func _get_all_flow_nodes() -> Array:
 	var start_node: GraphNode = null
 	for child in graph_edit.get_children():
 		if child is StartNodeScript:
@@ -1517,7 +1518,7 @@ func _get_all_cutscenes_in_flow() -> Array:
 			break
 		visited[current_name] = true
 		var node := graph_edit.get_node_or_null(String(current_name))
-		if node is CutsceneNodeScript:
+		if node is CutsceneNodeScript or node is MatchNodeScript:
 			result.append(node)
 		var next_name: StringName = StringName("")
 		for conn in graph_edit.get_connection_list():
@@ -1596,6 +1597,129 @@ func _open_preview_from_main(cutscene_nodes: Array) -> void:
 
 func _is_in_cinematic_editor() -> bool:
 	return _cinematic_editor != null
+
+
+func _open_combined_preview() -> void:
+	var flow_nodes: Array = _get_all_flow_nodes()
+	if flow_nodes.is_empty():
+		push_warning("Editor2: No hay nodos para previsualizar.")
+		return
+
+	_on_save_pressed()
+
+	const SceneParserScript = preload("res://systems/scene_runner/scene_parser.gd")
+	var all_commands: Array = []
+	var first_bg: String = ""
+	var first_cutscene = null
+
+	for node in flow_nodes:
+		if node is CutsceneNodeScript:
+			if first_cutscene == null:
+				first_cutscene = node
+			if node.script_path == "" or not FileAccess.file_exists(node.script_path):
+				continue
+			var text: String = FileAccess.get_file_as_string(node.script_path)
+			var parsed: Dictionary = SceneParserScript.parse(text)
+			if first_bg == "":
+				first_bg = parsed.get("background", "")
+			all_commands.append_array(parsed.get("commands", []))
+
+		elif node is MatchNodeScript:
+			# Get opponent name from connected character
+			var opponent_name: String = "???"
+			for conn in graph_edit.get_connection_list():
+				if conn.to_node == node.name and conn.to_port == 1:
+					var char_node := graph_edit.get_node_or_null(String(conn.from_node))
+					if char_node is CharacterNodeScript and char_node.character_data:
+						opponent_name = char_node.character_data.display_name if char_node.character_data.display_name != "" else char_node.character_data.character_id
+					break
+			var diff: float = node.match_data.get("ai_difficulty", 0.5)
+			# Insert synthetic commands to visualize the match in preview
+			all_commands.append({"type": "transition", "style": "fade_black", "duration": 0.6})
+			all_commands.append({"type": "title_card", "title": "PARTIDA vs %s" % opponent_name, "subtitle": "IA: %d%%" % int(diff * 100)})
+			all_commands.append({"type": "transition", "style": "fade_black", "duration": 0.6})
+
+	if first_cutscene == null:
+		push_warning("Editor2: No hay cinemáticas en el flujo.")
+		return
+	if all_commands.is_empty():
+		push_warning("Editor2: No hay comandos para previsualizar.")
+		return
+
+	# Cleanup previous
+	if _preview_temp_cinematic_editor and _preview_temp_cinematic_editor.has_method("dispose_without_save"):
+		_preview_temp_cinematic_editor.dispose_without_save()
+		_preview_temp_cinematic_editor = null
+
+	var chars: Array = []
+	for child in graph_edit.get_children():
+		if child is CharacterNodeScript and child.character_data:
+			chars.append(child.character_data)
+
+	var temp_editor := CinematicEditorScript.new()
+	_preview_temp_cinematic_editor = temp_editor
+	temp_editor.preview_closed.connect(func():
+		if temp_editor == _preview_temp_cinematic_editor:
+			temp_editor.dispose_without_save()
+			_preview_temp_cinematic_editor = null)
+	temp_editor.open(first_cutscene, chars, _graph_parent)
+	temp_editor.graph_edit.visible = false
+	if first_bg != "":
+		temp_editor.scene_background = first_bg
+	# Await open_preview fully (it has internal awaits)
+	await temp_editor.open_preview()
+
+	# Lock commands so sync timer doesn't overwrite, then set combined commands
+	temp_editor._preview_commands_locked = true
+	temp_editor._preview_commands = all_commands
+	# Set cache to current graph output so the sync timer doesn't overwrite
+	var SerializerScript2 = preload("res://editor/graph/cinematic/cinematic_serializer.gd")
+	temp_editor._preview_dscn_cache = SerializerScript2.graph_to_dscn(temp_editor.graph_edit, temp_editor.scene_name, temp_editor.scene_background)
+	temp_editor._preview_step_index = 0
+	temp_editor._update_step_label()
+
+
+var _game_preview_window: Window = null
+
+func _open_game_preview_window() -> void:
+	if _game_preview_window and is_instance_valid(_game_preview_window):
+		_game_preview_window.grab_focus()
+		return
+
+	_game_preview_window = Window.new()
+	_game_preview_window.title = "Preview — Juego completo"
+	_game_preview_window.size = Vector2i(960, 600)
+	_game_preview_window.unresizable = false
+	_game_preview_window.wrap_controls = true
+	_game_preview_window.close_requested.connect(func():
+		if _game_preview_window and is_instance_valid(_game_preview_window):
+			_game_preview_window.queue_free()
+		_game_preview_window = null)
+
+	var viewport_container := SubViewportContainer.new()
+	viewport_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	viewport_container.stretch = true
+	_game_preview_window.add_child(viewport_container)
+
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(960, 600)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport_container.add_child(viewport)
+
+	viewport_container.resized.connect(func():
+		var s := viewport_container.size
+		if s.x >= 32 and s.y >= 32:
+			viewport.size = Vector2i(int(s.x), int(s.y)))
+
+	# Load game scene inside the SubViewport
+	var game_scene := load("res://main.tscn")
+	var game_instance: Control = game_scene.instantiate()
+	game_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	viewport.add_child(game_instance)
+
+	get_viewport().set_embedding_subwindows(false)
+	get_tree().root.add_child(_game_preview_window)
+	_game_preview_window.popup_centered()
 
 
 # ── Save / Load / Play ──
