@@ -162,6 +162,10 @@ func _run(commands: Array) -> void:
 				_cmd_stop_music()
 			"title_card":
 				await _stage.show_title_card(cmd.get("title", ""), cmd.get("subtitle", ""))
+			"transition":
+				await _cmd_transition(cmd)
+			"clear_stage":
+				_stage.clear_stage()
 
 	_running = false
 
@@ -280,6 +284,39 @@ func _cmd_sfx(cmd: Dictionary) -> void:
 func _cmd_stop_music() -> void:
 	if _music_player and _music_player.playing:
 		_music_player.stop()
+
+
+func _cmd_transition(cmd: Dictionary) -> void:
+	var style: String = cmd.get("style", "fade_black")
+	var duration: float = cmd.get("duration", 0.5)
+	var color := Color.BLACK
+	match style:
+		"fade_black": color = Color.BLACK
+		"fade_white": color = Color.WHITE
+		"flash_red": color = Color(0.8, 0.1, 0.1)
+		"flash_blue": color = Color(0.1, 0.1, 0.8)
+
+	# Create overlay for transition
+	var overlay := ColorRect.new()
+	overlay.color = Color(color.r, color.g, color.b, 0.0)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.z_index = 100
+	_stage.add_child(overlay)
+
+	# Fade to color
+	var tween := _stage.create_tween()
+	tween.tween_property(overlay, "color:a", 1.0, duration / 2.0)
+	await tween.finished
+
+	# Hold briefly
+	await _stage.get_tree().create_timer(0.15).timeout
+
+	# Fade back
+	var tween2 := _stage.create_tween()
+	tween2.tween_property(overlay, "color:a", 0.0, duration / 2.0)
+	await tween2.finished
+
+	overlay.queue_free()
 
 
 func _setup_audio_players() -> void:

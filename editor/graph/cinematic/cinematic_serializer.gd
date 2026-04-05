@@ -45,6 +45,8 @@ const CMD_MAP := {
 	"title_card": ["ui", "title_card"],
 	"background": ["ui", "background"],
 	"wait": ["ui", "wait"],
+	"transition": ["effect", "transition"],
+	"clear_stage": ["char_action", "clear_stage"],
 }
 
 
@@ -224,5 +226,7 @@ static func _node_to_dscn_line(node) -> String:
 			return "[title_card %s]" % t
 		"background": return "[background %s]" % p.get("source", "")
 		"wait": return "[wait %s]" % p.get("duration", 1.0)
+		"transition": return "[transition %s %s]" % [p.get("style", "fade_black"), p.get("duration", 0.5)]
+		"clear_stage": return "[clear_stage]"
 
 	return ""

@@ -24,6 +24,7 @@ const CATEGORIES := {
 			"enter": {"character": "char", "position": "position", "enter_from": "direction"},
 			"exit": {"character": "char", "direction": "direction"},
 			"move": {"character": "char", "position": "position"},
+			"clear_stage": {},
 		}
 	},
 	"char_state": {
@@ -52,6 +53,7 @@ const CATEGORIES := {
 		"commands": {
 			"shake": {"intensity": "float:0.1:1.0", "duration": "float:0.1:1.0"},
 			"flash": {"color": "text_short", "duration": "float:0.05:0.5"},
+			"transition": {"style": "option:fade_black,fade_white,flash_red,flash_blue", "duration": "float:0.2:2.0"},
 		}
 	},
 	"layout": {

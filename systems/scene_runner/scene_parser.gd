@@ -202,6 +202,11 @@ static func _parse_bracket(content: String) -> Dictionary:
 			return {"type": "camera_snap", "character": _s(parts, 1), "zoom": _f(parts, 2, 1.4)}
 		"background":
 			return {"type": "background", "source": _s(parts, 1, "")}
+		"transition":
+			# [transition fade_black 0.5] or [transition fade_white 0.3]
+			return {"type": "transition", "style": _s(parts, 1, "fade_black"), "duration": _f(parts, 2, 0.5)}
+		"clear_stage":
+			return {"type": "clear_stage"}
 		"title_card":
 			# [title_card Title Text | Subtitle Text] or [title_card Title Text]
 			var full_text = " ".join(parts.slice(1))
