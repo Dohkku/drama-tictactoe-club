@@ -35,6 +35,7 @@ var _preview_time_scale: float = 0.25
 var _preview_dscn_cache: String = ""
 var _preview_resyncing: bool = false
 var _preview_active_node_name: StringName = StringName("")
+var _preview_follow_node: bool = true
 
 
 func open(p_cutscene_node, p_characters: Array, parent: Control) -> void:
@@ -308,6 +309,12 @@ func open_preview() -> void:
 			_preview_runner.auto_choose_first = v)
 	controls.add_child(auto_btn)
 
+	var follow_btn := CheckButton.new()
+	follow_btn.text = "Seguir"
+	follow_btn.button_pressed = _preview_follow_node
+	follow_btn.toggled.connect(func(v: bool): _preview_follow_node = v)
+	controls.add_child(follow_btn)
+
 	var step_label := Label.new()
 	step_label.text = "Paso: 0 / 0"
 	step_label.add_theme_font_size_override("font_size", 13)
@@ -481,6 +488,11 @@ func _set_active_preview_node(step_index: int) -> void:
 		if child is CmdNodeScript and child.step_number == step_index:
 			child.set_preview_active(true)
 			_preview_active_node_name = child.name
+			# Auto-center en el nodo activo si "Seguir" está activado
+			if _preview_follow_node:
+				var viewport_center: Vector2 = graph_edit.size / 2.0
+				var node_center: Vector2 = child.position_offset + (child.size / 2.0)
+				graph_edit.scroll_offset = (node_center * graph_edit.zoom) - viewport_center
 			break
 
 
@@ -516,7 +528,7 @@ func _preview_rebuild_to(step_count: int) -> void:
 		_preview_stage.set_background(Color(0.95, 0.91, 0.85))
 
 	# Salvar time_scale y usar 0 para rebuild instantáneo
-	var saved_scale := _preview_runner.time_scale
+	var saved_scale: float = _preview_runner.time_scale
 	_preview_runner.time_scale = 0.0
 
 	var target := clampi(step_count, 0, _preview_commands.size())

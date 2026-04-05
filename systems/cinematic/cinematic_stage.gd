@@ -410,8 +410,8 @@ func _calc_slot_position(fraction: float) -> Vector2:
 
 
 func _calc_slot_size() -> Vector2:
-	# Use base stage size for consistent character proportions across layout modes
-	var ref_size: Vector2 = _base_stage_size if _base_stage_size != Vector2.ZERO else character_layer.size
+	# Always use current layer size so characters scale proportionally to viewport
+	var ref_size: Vector2 = character_layer.size
 	var h: float = ref_size.y * char_height_ratio
 	var w: float = h * char_aspect
 	# Clamp to current layer width so characters don't overflow in split mode

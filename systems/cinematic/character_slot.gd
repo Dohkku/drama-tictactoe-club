@@ -36,6 +36,7 @@ func _ready() -> void:
 	visible = false
 	resized.connect(_update_pivot)
 	_update_pivot()
+	portrait_mask.resized.connect(_apply_portrait_crop)
 
 	# VBoxContainer order: NameLabel, _state_label, _look_indicator, PortraitRect
 	# Name and debug labels at TOP so they're never hidden by dialogue box
@@ -318,26 +319,23 @@ func _apply_portrait_crop() -> void:
 	if character_data == null or portrait_mask == null:
 		return
 
-	var zoom: float = 1.0
 	var offset: Vector2 = Vector2.ZERO
-	if "portrait_zoom" in character_data:
-		zoom = character_data.portrait_zoom
 	if "portrait_offset" in character_data:
 		offset = character_data.portrait_offset
-
-	zoom = clampf(zoom, 0.5, 3.0)
 	offset = Vector2(clampf(offset.x, -0.5, 0.5), clampf(offset.y, -0.5, 0.5))
 
-	_crop_base_scale = Vector2(zoom, zoom)
-
-	# The mask (PortraitMask) clips the portrait. We scale and offset
-	# the portrait INSIDE the mask so only the visible area renders.
-	var mask_size: Vector2 = portrait_mask.size
-	_crop_base_position = offset * mask_size
-
-	portrait_rect.pivot_offset = mask_size / 2.0
+	_crop_base_scale = Vector2.ONE
 	portrait_rect.scale = _crop_base_scale
-	portrait_rect.position = _crop_base_position
+
+	# Use anchor offsets to shift the portrait within the mask
+	# Anchors stay FULL_RECT so sizing works regardless of layout timing
+	var mask_size: Vector2 = portrait_mask.size
+	var shift: Vector2 = offset * mask_size
+	_crop_base_position = shift
+	portrait_rect.offset_left = shift.x
+	portrait_rect.offset_top = shift.y
+	portrait_rect.offset_right = shift.x
+	portrait_rect.offset_bottom = shift.y
 
 
 func _set_solid_color_fallback(color: Color) -> void:
