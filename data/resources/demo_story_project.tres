@@ -52,6 +52,31 @@ event_name = "Cap 1: La Invitacion"
 cutscene_script_path = "res://scene_scripts/scripts/demo_ch1_prologue.dscn"
 order_index = 0
 
+; ── Board: Sora (warm orange tones) ──
+[sub_resource type="Resource" id="rules_sora"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+
+[sub_resource type="Resource" id="board_sora"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_sora")
+max_board_size = 400
+cell_color_empty = Color(0.95, 0.88, 0.75, 1)
+cell_color_alt = Color(0.35, 0.25, 0.18, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(1.0, 0.92, 0.78, 1)
+cell_line_color = Color(0.7, 0.5, 0.3, 1)
+cell_line_width = 1.5
+board_border_enabled = true
+board_border_color = Color(0.8, 0.5, 0.2, 1)
+board_border_width = 10.0
+hand_area_height = 80
+piece_cell_ratio = 0.85
+default_player_color = Color(0.2, 0.5, 1, 1)
+default_opponent_color = Color(1.0, 0.5, 0.1, 1)
+board_bg_color = Color(0.35, 0.25, 0.15, 1)
+
 ; ── Event 1: Match vs Sora (standard 3x3, easy, fire vs sparkle) ──
 [sub_resource type="Resource" id="mc_sora"]
 script = ExtResource("mc")
@@ -66,6 +91,7 @@ player_effect_name = "fire"
 opponent_effect_name = "sparkle"
 player_piece_design = "x"
 opponent_piece_design = "o"
+board_config = SubResource("board_sora")
 
 [sub_resource type="Resource" id="evt_ch1_match"]
 script = ExtResource("te")
@@ -86,6 +112,31 @@ event_name = "Cap 2: La Prueba"
 cutscene_script_path = "res://scene_scripts/scripts/demo_ch2_arrival.dscn"
 order_index = 2
 
+; ── Board: Ryu (cold dark blue) ──
+[sub_resource type="Resource" id="rules_ryu"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+
+[sub_resource type="Resource" id="board_ryu"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_ryu")
+max_board_size = 400
+cell_color_empty = Color(0.72, 0.75, 0.85, 1)
+cell_color_alt = Color(0.12, 0.15, 0.25, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.65, 0.68, 0.82, 1)
+cell_line_color = Color(0.3, 0.3, 0.5, 1)
+cell_line_width = 2.0
+board_border_enabled = true
+board_border_color = Color(0.2, 0.2, 0.45, 1)
+board_border_width = 12.0
+hand_area_height = 80
+piece_cell_ratio = 0.85
+default_player_color = Color(0.3, 0.6, 1, 1)
+default_opponent_color = Color(0.15, 0.2, 0.5, 1)
+board_bg_color = Color(0.08, 0.1, 0.18, 1)
+
 ; ── Event 3: Match vs Ryu (3x3, max difficulty, slam/shockwave, diamond) ──
 [sub_resource type="Resource" id="mc_ryu"]
 script = ExtResource("mc")
@@ -101,6 +152,7 @@ opponent_effect_name = "shockwave"
 placement_offset = 0.3
 player_piece_design = "x"
 opponent_piece_design = "diamond"
+board_config = SubResource("board_ryu")
 
 [sub_resource type="Resource" id="evt_ch2_match"]
 script = ExtResource("te")
@@ -244,6 +296,31 @@ event_name = "Cap 5: La Final"
 cutscene_script_path = "res://scene_scripts/scripts/demo_ch5_finale.dscn"
 order_index = 8
 
+; ── Board: Ryu Final (intense dark red/black) ──
+[sub_resource type="Resource" id="rules_ryu_final"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+
+[sub_resource type="Resource" id="board_ryu_final"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_ryu_final")
+max_board_size = 420
+cell_color_empty = Color(0.65, 0.55, 0.55, 1)
+cell_color_alt = Color(0.18, 0.1, 0.12, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.75, 0.6, 0.58, 1)
+cell_line_color = Color(0.5, 0.2, 0.2, 1)
+cell_line_width = 2.5
+board_border_enabled = true
+board_border_color = Color(0.6, 0.15, 0.15, 1)
+board_border_width = 14.0
+hand_area_height = 80
+piece_cell_ratio = 0.88
+default_player_color = Color(1.0, 0.8, 0.2, 1)
+default_opponent_color = Color(0.2, 0.15, 0.4, 1)
+board_bg_color = Color(0.1, 0.05, 0.08, 1)
+
 ; ── Event 9: Final match vs Ryu (3x3 standard, max difficulty, dramatic/slam, fire/shockwave, star/diamond) ──
 [sub_resource type="Resource" id="mc_ryu_final"]
 script = ExtResource("mc")
@@ -259,6 +336,7 @@ opponent_effect_name = "shockwave"
 placement_offset = 0.2
 player_piece_design = "star"
 opponent_piece_design = "diamond"
+board_config = SubResource("board_ryu_final")
 
 [sub_resource type="Resource" id="evt_ch5_match"]
 script = ExtResource("te")

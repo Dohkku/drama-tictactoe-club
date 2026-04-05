@@ -8,13 +8,13 @@ const SpeedLinesEffectScript = preload("res://systems/cinematic/speed_lines_effe
 ## Named stage positions as fractions of stage width (0.0 = left edge, 1.0 = right edge)
 ## Spaced ~14% apart so 7 characters fit without overlap at standard size
 const POSITIONS = {
-	"far_left": 0.08,
-	"left": 0.22,
-	"center_left": 0.36,
+	"far_left": 0.12,
+	"left": 0.24,
+	"center_left": 0.37,
 	"center": 0.50,
-	"center_right": 0.64,
-	"right": 0.78,
-	"far_right": 0.92,
+	"center_right": 0.63,
+	"right": 0.76,
+	"far_right": 0.88,
 }
 
 const CHAR_ASPECT := 0.60       # Character width / height ratio (bust-style, wider)
@@ -402,6 +402,8 @@ func _calc_slot_position(fraction: float) -> Vector2:
 	var layer_size: Vector2 = character_layer.size
 	var sz: Vector2 = _calc_slot_size()
 	var x: float = layer_size.x * fraction - sz.x / 2.0
+	# Clamp so characters never go off-screen
+	x = clampf(x, 0.0, layer_size.x - sz.x)
 	# Anchor to bottom of stage
 	var y: float = layer_size.y - sz.y
 	return Vector2(x, y)

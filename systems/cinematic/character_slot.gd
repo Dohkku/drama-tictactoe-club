@@ -241,23 +241,22 @@ func _apply_body_state() -> void:
 
 
 func _apply_look_direction() -> void:
-	# No rotation — use subtle position shift to indicate direction
-	var offset := Vector2.ZERO
-	var shift: float = size.x * 0.03
+	# Flip portrait horizontally based on look direction.
+	# Default portraits face left, so "right" = flip on X axis.
+	var target_scale_x: float = _crop_base_scale.x
 	match look_target:
-		"left":
-			offset = Vector2(-shift, 0)
 		"right":
-			offset = Vector2(shift, 0)
+			target_scale_x = -_crop_base_scale.x  # Flip to face right
+		"left", "center", "":
+			target_scale_x = _crop_base_scale.x   # Normal (faces left)
 		"away":
-			offset = Vector2(0, -shift * 0.5)
-		"center", "":
-			offset = Vector2.ZERO
+			target_scale_x = _crop_base_scale.x
 
-	if offset != Vector2.ZERO:
+	var target_scale := Vector2(target_scale_x, _crop_base_scale.y)
+	if portrait_rect.scale != target_scale:
 		var tween := create_tween().set_ease(Tween.EASE_OUT)
-		tween.tween_property(portrait_rect, "position", portrait_rect.position + offset, 0.25)
-	# Always ensure no residual rotation
+		tween.tween_property(portrait_rect, "scale", target_scale, 0.2)
+
 	rotation = 0.0
 	portrait_rect.rotation = 0.0
 
