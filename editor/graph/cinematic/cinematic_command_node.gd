@@ -1,0 +1,353 @@
+extends "res://editor/graph/base_graph_node.gd"
+
+## Single polymorphic node for all cinematic DSL commands.
+## Uses category + command dropdowns that reconfigure parameters dynamically.
+
+const POSITIONS_LIST := ["far_left", "left", "center_left", "center", "center_right", "right", "far_right"]
+const DIRECTIONS := ["", "left", "right"]
+const STYLES := ["gentle", "slam", "spinning", "dramatic", "nervous"]
+const CAMERA_MODES := ["smooth", "snappy"]
+const LAYOUT_MODES := ["fullscreen", "split", "board_only"]
+
+# Category definitions: label, color, commands with parameter specs
+# Parameter types: "char", "text", "position", "direction", "float:min:max", "flag", "color_str", "track", "option:a,b,c"
+const CATEGORIES := {
+	"dialogue": {
+		"label": "DIALOGO", "color": Color(0.3, 0.65, 0.9),
+		"commands": {
+			"dialogue": {"character": "char", "expression": "text_short", "text": "text", "target": "char_opt"},
+		}
+	},
+	"char_action": {
+		"label": "ACCION", "color": Color(1.0, 0.65, 0.2),
+		"commands": {
+			"enter": {"character": "char", "position": "position", "enter_from": "direction"},
+			"exit": {"character": "char", "direction": "direction"},
+			"move": {"character": "char", "position": "position"},
+		}
+	},
+	"char_state": {
+		"label": "ESTADO", "color": Color(0.9, 0.45, 0.6),
+		"commands": {
+			"expression": {"character": "char", "expression": "text_short"},
+			"pose": {"character": "char", "state": "text_short"},
+			"look_at": {"character": "char", "target": "text_short"},
+			"depth": {"character": "char", "depth": "float:0.5:1.5", "duration": "float:0.1:2.0"},
+		}
+	},
+	"camera": {
+		"label": "CAMARA", "color": Color(0.6, 0.35, 0.85),
+		"commands": {
+			"focus": {"character": "char_opt"},
+			"clear_focus": {},
+			"close_up": {"character": "char", "zoom": "float:1.0:2.0", "duration": "float:0.1:1.0"},
+			"pull_back": {"character": "char", "zoom": "float:0.5:1.0", "duration": "float:0.1:1.0"},
+			"camera_reset": {"duration": "float:0.1:1.0"},
+			"camera_mode": {"mode": "option:smooth,snappy"},
+			"camera_snap": {"character": "char", "zoom": "float:1.0:2.0"},
+		}
+	},
+	"effect": {
+		"label": "EFECTO", "color": Color(0.9, 0.3, 0.3),
+		"commands": {
+			"shake": {"intensity": "float:0.1:1.0", "duration": "float:0.1:1.0"},
+			"flash": {"color": "text_short", "duration": "float:0.05:0.5"},
+		}
+	},
+	"layout": {
+		"label": "LAYOUT", "color": Color(0.85, 0.75, 0.2),
+		"commands": {
+			"layout_fullscreen": {},
+			"layout_split": {},
+			"layout_board_only": {},
+		}
+	},
+	"audio": {
+		"label": "AUDIO", "color": Color(0.2, 0.7, 0.65),
+		"commands": {
+			"music": {"track": "text_short"},
+			"sfx": {"sound": "text_short"},
+			"stop_music": {},
+		}
+	},
+	"board": {
+		"label": "TABLERO", "color": Color(0.3, 0.8, 0.85),
+		"commands": {
+			"board_enable": {},
+			"board_disable": {},
+			"set_style": {"target": "option:player,opponent", "style": "option:gentle,slam,spinning,dramatic,nervous"},
+			"set_emotion": {"target": "option:player,opponent", "emotion": "text_short"},
+		}
+	},
+	"logic": {
+		"label": "LOGICA", "color": Color(0.35, 0.75, 0.35),
+		"commands": {
+			"if_flag": {"flag": "text_short"},
+			"else": {},
+			"end_if": {},
+			"set_flag": {"flag": "text_short"},
+			"clear_flag": {"flag": "text_short"},
+		}
+	},
+	"ui": {
+		"label": "UI", "color": Color(0.6, 0.6, 0.65),
+		"commands": {
+			"title_card": {"title": "text_short", "subtitle": "text_short"},
+			"background": {"source": "text_short"},
+			"wait": {"duration": "float:0.1:5.0"},
+		}
+	},
+}
+
+var category: String = ""
+var command: String = ""
+var params: Dictionary = {}
+var available_characters: Array = []  # Array[CharacterData]
+
+var _category_btn: OptionButton = null
+var _command_btn: OptionButton = null
+var _params_container: VBoxContainer = null
+var _command_keys: Array = []  # Maps command_btn index → command key
+
+
+func _init() -> void:
+	super._init()
+	accent_color = Color(0.5, 0.5, 0.55)
+
+
+func _ready() -> void:
+	title = "COMANDO"
+	custom_minimum_size.x = 200
+	super._ready()
+
+	# Slot 0: flow through
+	var top_hbox := HBoxContainer.new()
+	top_hbox.add_theme_constant_override("separation", 4)
+
+	_category_btn = OptionButton.new()
+	_category_btn.add_theme_font_size_override("font_size", 11)
+	_category_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cat_idx := 0
+	for cat_key in CATEGORIES:
+		_category_btn.add_item(CATEGORIES[cat_key].label, cat_idx)
+		cat_idx += 1
+	_category_btn.item_selected.connect(_on_category_selected)
+	top_hbox.add_child(_category_btn)
+
+	_command_btn = OptionButton.new()
+	_command_btn.add_theme_font_size_override("font_size", 11)
+	_command_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_command_btn.item_selected.connect(_on_command_selected)
+	top_hbox.add_child(_command_btn)
+
+	add_child(top_hbox)
+	add_flow_through(0)
+
+	# Slot 1+: dynamic params
+	_params_container = VBoxContainer.new()
+	_params_container.add_theme_constant_override("separation", 4)
+	add_child(_params_container)
+	set_slot_enabled_left(1, false)
+	set_slot_enabled_right(1, false)
+
+	# Apply initial state
+	if category != "":
+		_select_category(category)
+		_select_command(command)
+	elif _category_btn.item_count > 0:
+		_on_category_selected(0)
+
+
+func get_node_type() -> String:
+	return "cinematic_command"
+
+
+func get_node_data() -> Dictionary:
+	return {"category": category, "command": command, "params": params.duplicate()}
+
+
+func set_node_data(data: Dictionary) -> void:
+	category = data.get("category", "")
+	command = data.get("command", "")
+	params = data.get("params", {}).duplicate()
+	if is_inside_tree() and category != "":
+		_select_category(category)
+		_select_command(command)
+
+
+func setup_as(cat: String, cmd: String, p: Dictionary = {}) -> void:
+	category = cat
+	command = cmd
+	params = p.duplicate()
+	if is_inside_tree():
+		_select_category(cat)
+		_select_command(cmd)
+
+
+# ── Category/Command selection ──
+
+func _on_category_selected(idx: int) -> void:
+	var keys: Array = CATEGORIES.keys()
+	if idx < 0 or idx >= keys.size():
+		return
+	category = keys[idx]
+	var cat_data: Dictionary = CATEGORIES[category]
+	accent_color = cat_data.color
+	title = cat_data.label
+	_apply_base_theme()
+
+	# Populate command dropdown
+	_command_btn.clear()
+	_command_keys.clear()
+	var cmd_idx := 0
+	for cmd_key in cat_data.commands:
+		_command_btn.add_item(cmd_key, cmd_idx)
+		_command_keys.append(cmd_key)
+		cmd_idx += 1
+	if _command_btn.item_count > 0:
+		_on_command_selected(0)
+
+
+func _on_command_selected(idx: int) -> void:
+	if idx < 0 or idx >= _command_keys.size():
+		return
+	command = _command_keys[idx]
+	_rebuild_params()
+
+
+func _select_category(cat: String) -> void:
+	var keys: Array = CATEGORIES.keys()
+	var idx: int = keys.find(cat)
+	if idx >= 0 and _category_btn:
+		_category_btn.selected = idx
+		_on_category_selected(idx)
+
+
+func _select_command(cmd: String) -> void:
+	var idx: int = _command_keys.find(cmd)
+	if idx >= 0 and _command_btn:
+		_command_btn.selected = idx
+		command = cmd
+		_rebuild_params()
+
+
+# ── Dynamic parameter widgets ──
+
+func _rebuild_params() -> void:
+	if _params_container == null:
+		return
+	for child in _params_container.get_children():
+		child.queue_free()
+
+	var cat_data: Dictionary = CATEGORIES.get(category, {})
+	var cmd_params: Dictionary = cat_data.get("commands", {}).get(command, {})
+
+	for param_name in cmd_params:
+		var param_type: String = cmd_params[param_name]
+		var current_val = params.get(param_name, "")
+		_add_param_widget(param_name, param_type, current_val)
+
+
+func _add_param_widget(param_name: String, param_type: String, current_val) -> void:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 4)
+
+	var lbl := Label.new()
+	lbl.text = param_name
+	lbl.custom_minimum_size.x = 60
+	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+	hbox.add_child(lbl)
+
+	if param_type == "char" or param_type == "char_opt":
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if param_type == "char_opt":
+			opt.add_item("(ninguno)")
+		for ch in available_characters:
+			opt.add_item(ch.display_name if ch.display_name != "" else ch.character_id)
+		# Select current
+		var cur: String = str(current_val)
+		for i in range(opt.item_count):
+			if opt.get_item_text(i) == cur or (i < available_characters.size() and available_characters[i].character_id == cur):
+				opt.selected = i
+				break
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int):
+			var offset: int = 1 if param_type == "char_opt" else 0
+			var idx: int = i - offset
+			if idx >= 0 and idx < available_characters.size():
+				params[pname] = available_characters[idx].character_id
+			elif param_type == "char_opt":
+				params[pname] = "")
+		hbox.add_child(opt)
+
+	elif param_type == "text" or param_type == "text_short":
+		var edit := LineEdit.new()
+		edit.text = str(current_val)
+		edit.add_theme_font_size_override("font_size", 10)
+		edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if param_type == "text":
+			edit.custom_minimum_size.x = 120
+		var pname: String = param_name
+		edit.text_changed.connect(func(val: String): params[pname] = val)
+		hbox.add_child(edit)
+
+	elif param_type == "position":
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		for p in POSITIONS_LIST:
+			opt.add_item(p)
+		var cur: String = str(current_val)
+		var idx: int = POSITIONS_LIST.find(cur)
+		if idx >= 0:
+			opt.selected = idx
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int): params[pname] = POSITIONS_LIST[i])
+		hbox.add_child(opt)
+
+	elif param_type == "direction":
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		for d in DIRECTIONS:
+			opt.add_item(d if d != "" else "(auto)")
+		var cur: String = str(current_val)
+		var idx: int = DIRECTIONS.find(cur)
+		if idx >= 0:
+			opt.selected = idx
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int): params[pname] = DIRECTIONS[i])
+		hbox.add_child(opt)
+
+	elif param_type.begins_with("float:"):
+		var parts: PackedStringArray = param_type.split(":")
+		var min_v: float = float(parts[1]) if parts.size() > 1 else 0.0
+		var max_v: float = float(parts[2]) if parts.size() > 2 else 1.0
+		var slider := HSlider.new()
+		slider.min_value = min_v
+		slider.max_value = max_v
+		slider.step = 0.05
+		slider.value = float(current_val) if current_val != "" else (min_v + max_v) / 2.0
+		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		slider.custom_minimum_size.x = 60
+		var pname: String = param_name
+		slider.value_changed.connect(func(val: float): params[pname] = val)
+		hbox.add_child(slider)
+
+	elif param_type.begins_with("option:"):
+		var options: PackedStringArray = param_type.substr(7).split(",")
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		for o in options:
+			opt.add_item(o.strip_edges())
+		var cur: String = str(current_val)
+		for i in range(opt.item_count):
+			if opt.get_item_text(i) == cur:
+				opt.selected = i
+				break
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int): params[pname] = opt.get_item_text(i))
+		hbox.add_child(opt)
+
+	_params_container.add_child(hbox)

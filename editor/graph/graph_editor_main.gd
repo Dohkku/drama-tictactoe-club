@@ -23,6 +23,8 @@ const ProjectDataScript = preload("res://data/project_data.gd")
 const BoardConfigResScript = preload("res://data/board_config.gd")
 const CharacterDataScript = preload("res://characters/character_data.gd")
 
+const CinematicEditorScript = preload("res://editor/graph/cinematic/cinematic_editor.gd")
+
 const SAVE_PATH := "user://current_project.tres"
 
 var graph_edit: GraphEdit = null
@@ -37,6 +39,9 @@ var _undo_redo: UndoRedo = null
 var _stage_height_ratio: float = 0.92
 var _stage_aspect: float = 0.60
 var _stage_max_width: float = 0.45
+var _cinematic_editor: RefCounted = null
+var _graph_parent: Control = null  # Parent container for graph_edit (to add sub-editors)
+var _breadcrumb_label: Label = null
 
 
 func _ready() -> void:
@@ -89,6 +94,8 @@ func _build_ui() -> void:
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split.split_offset = -350
 	vbox.add_child(split)
+
+	_graph_parent = split  # Save reference for sub-editors
 
 	graph_edit = GraphEdit.new()
 	graph_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -152,17 +159,21 @@ func _build_toolbar() -> PanelContainer:
 
 	# Back button
 	var back_btn := _make_toolbar_button("< Volver", Color(0.5, 0.5, 0.6))
-	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://systems/dev_menu.tscn"))
+	back_btn.pressed.connect(func():
+		if _is_in_cinematic_editor():
+			_close_cinematic_editor()
+		else:
+			get_tree().change_scene_to_file("res://systems/dev_menu.tscn"))
 	hbox.add_child(back_btn)
 
 	hbox.add_child(VSeparator.new())
 
-	# Title
-	var title_lbl := Label.new()
-	title_lbl.text = "Editor 2.0 — Canvas"
-	title_lbl.add_theme_font_size_override("font_size", 16)
-	title_lbl.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
-	hbox.add_child(title_lbl)
+	# Breadcrumb / Title
+	_breadcrumb_label = Label.new()
+	_breadcrumb_label.text = "Editor 2.0 — Canvas"
+	_breadcrumb_label.add_theme_font_size_override("font_size", 16)
+	_breadcrumb_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
+	hbox.add_child(_breadcrumb_label)
 
 	# Spacer
 	var spacer := Control.new()
@@ -295,6 +306,11 @@ func _create_node(type: String, pos: Vector2 = Vector2.ZERO) -> GraphNode:
 	node.position_offset = pos
 	node.name = StringName(node.node_id)
 	graph_edit.add_child(node)
+
+	# Connect CutsceneNode sub-editor signal
+	if node is CutsceneNodeScript and node.has_signal("editor_requested"):
+		node.editor_requested.connect(_open_cinematic_editor)
+
 	return node
 
 
@@ -1357,6 +1373,42 @@ func _add_help_line(parent: VBoxContainer, key: String, desc: String) -> void:
 	desc_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
 	hbox.add_child(desc_lbl)
 	parent.add_child(hbox)
+
+
+# ── Cinematic Sub-Editor ──
+
+func _open_cinematic_editor(cutscene_node) -> void:
+	if _cinematic_editor != null:
+		return
+
+	# Collect characters from root canvas
+	var chars: Array = []
+	for child in graph_edit.get_children():
+		if child is CharacterNodeScript and child.character_data:
+			chars.append(child.character_data)
+
+	_cinematic_editor = CinematicEditorScript.new()
+	_cinematic_editor.open(cutscene_node, chars, _graph_parent)
+
+	# Hide main graph, show cinematic sub-canvas
+	graph_edit.visible = false
+	_breadcrumb_label.text = "Canvas > %s" % (cutscene_node.script_path.get_file().get_basename() if cutscene_node.script_path != "" else "nueva escena")
+	_clear_detail()
+	_show_welcome_panel()
+
+
+func _close_cinematic_editor() -> void:
+	if _cinematic_editor == null:
+		return
+	_cinematic_editor.close()
+	_cinematic_editor = null
+	graph_edit.visible = true
+	_breadcrumb_label.text = "Editor 2.0 — Canvas"
+	_show_welcome_panel()
+
+
+func _is_in_cinematic_editor() -> bool:
+	return _cinematic_editor != null
 
 
 # ── Save / Load / Play ──
