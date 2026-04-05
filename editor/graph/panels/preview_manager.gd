@@ -28,24 +28,14 @@ func _init(main: Control) -> void:
 
 
 func open_cinematic_editor(cutscene_node) -> void:
-	if _preview_temp_cinematic_editor and _preview_temp_cinematic_editor.has_method("dispose_without_save"):
-		_preview_temp_cinematic_editor.dispose_without_save()
-		_preview_temp_cinematic_editor = null
-	if _cinematic_editor != null:
+	# Node-based cutscene editing was removed from Editor 2.0.
+	# Keep this entry point for compatibility and redirect to script editing.
+	if cutscene_node == null:
 		return
-
-	var chars: Array = []
-	for child in _main.graph_edit.get_children():
-		if child is CharacterNodeScript and child.character_data:
-			chars.append(child.character_data)
-
-	_cinematic_editor = CinematicEditorScript.new()
-	_cinematic_editor.open(cutscene_node, chars, _main._graph_parent)
-
-	_main.graph_edit.visible = false
-	_main._breadcrumb_label.text = "Canvas > %s" % (cutscene_node.script_path.get_file().get_basename() if cutscene_node.script_path != "" else "nueva escena")
-	_main._detail_builder.clear_detail()
-	_main._detail_builder.show_welcome_panel()
+	if cutscene_node.script_path == "":
+		push_warning("Editor2: Asigna un script .dscn para editar la cinematica.")
+		return
+	open_script_editor(cutscene_node.script_path)
 
 
 func close_cinematic_editor() -> void:

@@ -477,11 +477,23 @@ func _load_audio_stream(path_or_key: String) -> AudioStream:
 		return null
 
 	# Convenience lookup by simple name.
+	var alias_key := candidate.to_lower().replace(" ", "_").replace("-", "_")
+	var aliases := {
+		"ryu_pressure": "bgm_tournament_drive",
+		"bgm_ryu_pressure": "bgm_tournament_drive",
+		"mei_payoff": "bgm_sora_intimate",
+		"bgm_mei_payoff": "bgm_sora_intimate",
+	}
+	if aliases.has(alias_key):
+		candidate = aliases[alias_key]
+
 	var candidates = [
 		"res://audio/music/%s.ogg" % candidate,
 		"res://audio/music/%s.wav" % candidate,
+		"res://audio/music/%s.mp3" % candidate,
 		"res://audio/sfx/%s.ogg" % candidate,
 		"res://audio/sfx/%s.wav" % candidate,
+		"res://audio/sfx/%s.mp3" % candidate,
 	]
 	for p in candidates:
 		if ResourceLoader.exists(p):

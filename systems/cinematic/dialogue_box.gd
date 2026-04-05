@@ -26,6 +26,9 @@ func _ready() -> void:
 	name_label = owner.get_node("%SpeakerName") if owner else get_node("MarginContainer/VBoxContainer/SpeakerName")
 	text_label = owner.get_node("%DialogueText") if owner else get_node("MarginContainer/VBoxContainer/DialogueText")
 	advance_indicator = owner.get_node("%AdvanceIndicator") if owner else get_node("MarginContainer/VBoxContainer/AdvanceIndicator")
+	if text_label:
+		text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text_label.scroll_active = false
 	visible = false
 	if advance_indicator:
 		advance_indicator.visible = false

@@ -1,102 +1,67 @@
 @scene demo_ch2_arrival
 
-[title_card ]
+[background res://assets/backgrounds/classroom_afternoon.png]
+[music res://audio/music/bgm_chill.mp3]
 [title_card La Prueba | Capítulo 2]
-[title_card ]
-[focus]
+[camera_mode smooth]
 [fullscreen]
-[music bgm_chill.mp3]
-[enter sora left left]
+[wait 0.4]
+
+[enter sora center_left left]
 [expression sora happy]
-[expression sora neutral]
-[title_card ]
-Sora: ¡Bien! Tu primera sesión oficial. Hoy quiero presentarte a—
-[title_card ]
-[focus]
-[shake 0.4 0.3]
-[shake 0.5 0.06]
-[shake 0.5 0.3]
-[music ]
-[music bgm_tense.wav]
+[pose sora excited]
+sora: Bienvenido a tu segunda sesión.
+sora: Hoy te iba a enseñar variantes de presión por diagonales y, si te portabas bien, aperturas sucias de torneo.
+
+[expression sora nervous]
+[pose sora idle]
+sora: ...Aunque quizá no nos dé tiempo.
+
+[shake 0.4 0.12]
+[music res://audio/music/bgm_finale_build.wav]
 [enter ryu far_right right]
 [expression ryu cold]
-[expression ryu neutral]
-[title_card ]
-[focus]
-[expression sora nervous]
-[expression sora neutral]
-[expression sora neutral]
-Sora: ...Ryu.
-[focus ryu]
-[expression ryu neutral]
-[focus ryu]
-[title_card ]
-Ryu: He oído que hay alguien nuevo.
-[focus]
-[expression ryu neutral]
-[focus]
-[enter ryu center_right ]
-[title_card ]
-[expression ryu neutral]
-Ryu "neutral": Sora. ¿Este es tu gran descubrimiento? ¿El que supuestamente «tiene potencial»?
-[expression sora neutral]
-[expression sora nervous]
-Sora: Ryu, dale un respiro. Acaba de llegar.
-[focus ryu]
-[expression ryu cold]
-[expression ryu neutral]
-Ryu: No necesita un respiro. Necesita una prueba. Si le das un respiro ahora, nunca sabrás de qué está hecho.
-[focus]
+[pose ryu arms_crossed]
+[wait 0.25]
+
+ryu: Quítate del medio, Sora.
+
 [expression sora serious]
-[expression sora neutral]
-Sora: No puedes simplemente aparecer y—
-[focus ryu]
-[shake 0.5 0.04]
+sora: Ryu, no empieces.
+
+[move ryu center_right]
 [expression ryu intense]
-[expression ryu neutral]
-[shake 0.5 0.3]
-Ryu: Puedo. Y lo hago. Porque alguien tiene que mantener el nivel de este sitio mientras tú te dedicas a reclutar gente en aulas vacías.
-[focus]
-[title_card ]
-[expression sora neutral]
 [focus ryu]
-[enter ryu center ]
-[expression ryu cold]
-[expression ryu neutral]
-Ryu → Tú: Escucha. No me importa lo que Sora te haya contado. No me importa si cree que eres especial.
-Ryu: Este club no es un refugio para gente que no tiene adónde ir después de clase.
+ryu -> player: Esta semana nos evalúa el Consejo Prisma.
+ryu: Si bajamos nivel, cierran el club y congelan becas. No pienso permitirlo.
+[clear_focus]
+
+[expression sora sad]
+[pose sora confident]
+sora: No eres el único al que le importa el club.
+
+[expression ryu defensive]
+[pose ryu thinking]
+ryu: Entonces deja de protegerle.
+ryu: Si quiere estar aquí, que lo demuestre en tablero real.
+
+[wait 0.2]
+
 [focus ryu]
-Ryu "intense": Es el único lugar de este instituto donde las palabras no sirven. Donde no puedes mentir, ni esconderte, ni fingir.
-[focus]
-Ryu: El tablero lo muestra todo. {b}Todo.{/b}
-[expression ryu neutral]
-Ryu: Y si lo que muestra es que no das la talla...
+[close_up ryu 1.25 0.35]
 [expression ryu cold]
-[expression ryu neutral]
-Ryu: ...ya sabes dónde está la puerta. Nadie te va a juzgar por irte. Pero yo sí te voy a juzgar si te quedas y no estás a la altura.
-[focus]
-[expression sora neutral]
-[expression ryu neutral]
-[focus sora]
+ryu: Yo no juego para caer bien.
+ryu: Juego para sostener a este grupo cuando nadie más puede.
+[camera_reset 0.3]
+[clear_focus]
+
 [expression sora nervous]
-[expression sora neutral]
-[expression sora neutral]
-Sora → Tú: No tienes que hacer esto. De verdad. No tienes que demostrarle nada a nadie.
-[title_card ]
-[expression sora serious]
-[expression sora neutral]
-Sora: Pero si quieres... yo estaré aquí. Pase lo que pase.
-[focus]
-[expression ryu neutral]
-[expression ryu neutral]
-[expression ryu neutral]
-Ryu: Qué conmovedor.
-[enter sora center ]
-[title_card ]
-[enter ryu center ]
-[expression ryu cold]
-[expression ryu neutral]
-[focus ryu]
-Ryu → Tú: Al tablero. Ahora.
-[focus]
-[title_card ]
+sora -> player: No tienes obligación de aceptar.
+sora: Pero si decides jugar, no te suelto la mano... metafóricamente.
+
+[expression ryu intense]
+[pose ryu confident]
+ryu -> player: Al tablero. Ahora.
+
+[wait 0.2]
+@end

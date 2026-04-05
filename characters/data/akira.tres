@@ -4,6 +4,11 @@
 [ext_resource type="Texture2D" path="res://characters/portraits/akira_neutral.png" id="akira_neutral"]
 [ext_resource type="Texture2D" path="res://characters/portraits/akira_confident.png" id="akira_confident"]
 [ext_resource type="Texture2D" path="res://characters/portraits/akira_angry.png" id="akira_angry"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_focused_competitive.png" id="akira_focused_competitive"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_jealous.png" id="akira_jealous"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_pretending_calm.png" id="akira_pretending_calm"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_rattled.png" id="akira_rattled"]
+[ext_resource type="Texture2D" path="res://characters/portraits/akira_smirk.png" id="akira_smirk"]
 
 [resource]
 script = ExtResource("1_6v4kc")
@@ -12,14 +17,24 @@ display_name = "Akira"
 color = Color(0.9, 0.2, 0.2, 1)
 portrait_image = ExtResource("akira_neutral")
 expression_images = {
-"neutral": ExtResource("akira_neutral"),
+"angry": ExtResource("akira_angry"),
 "confident": ExtResource("akira_confident"),
-"angry": ExtResource("akira_angry")
+"focused_competitive": ExtResource("akira_focused_competitive"),
+"jealous": ExtResource("akira_jealous"),
+"neutral": ExtResource("akira_neutral"),
+"pretending_calm": ExtResource("akira_pretending_calm"),
+"rattled": ExtResource("akira_rattled"),
+"smirk": ExtResource("akira_smirk")
 }
 expressions = {
 "angry": Color(0.8, 0.1, 0.1, 1),
+"confident": Color(0.95, 0.3, 0.15, 1),
+"focused_competitive": Color(0.92, 0.22, 0.16, 1),
+"jealous": Color(0.65, 0.12, 0.15, 1),
 "neutral": Color(0.9, 0.2, 0.2, 1),
-"confident": Color(0.95, 0.3, 0.15, 1)
+"pretending_calm": Color(0.8, 0.2, 0.2, 1),
+"rattled": Color(0.7, 0.18, 0.18, 1),
+"smirk": Color(0.95, 0.28, 0.18, 1)
 }
 default_style = "spinning"
 default_pose = "idle"

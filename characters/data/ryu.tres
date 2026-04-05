@@ -6,6 +6,10 @@
 [ext_resource type="Texture2D" path="res://characters/portraits/ryu_intense.png" id="ryu_intense"]
 [ext_resource type="Texture2D" path="res://characters/portraits/ryu_surprised.png" id="ryu_surprised"]
 [ext_resource type="Texture2D" path="res://characters/portraits/ryu_thinking.png" id="ryu_thinking"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_cracked.png" id="ryu_cracked"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_defensive.png" id="ryu_defensive"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_exhausted.png" id="ryu_exhausted"]
+[ext_resource type="Texture2D" path="res://characters/portraits/ryu_insecure.png" id="ryu_insecure"]
 
 [resource]
 script = ExtResource("1_ryu01")
@@ -16,13 +20,21 @@ portrait_image = ExtResource("ryu_neutral")
 expression_images = {
 "neutral": ExtResource("ryu_neutral"),
 "cold": ExtResource("ryu_cold"),
+"cracked": ExtResource("ryu_cracked"),
+"defensive": ExtResource("ryu_defensive"),
+"exhausted": ExtResource("ryu_exhausted"),
+"insecure": ExtResource("ryu_insecure"),
 "intense": ExtResource("ryu_intense"),
 "surprised": ExtResource("ryu_surprised"),
 "thinking": ExtResource("ryu_thinking")
 }
 expressions = {
 "cold": Color(0.1, 0.15, 0.4, 1),
+"cracked": Color(0.28, 0.16, 0.48, 1),
+"defensive": Color(0.1, 0.13, 0.32, 1),
+"exhausted": Color(0.12, 0.14, 0.28, 1),
 "intense": Color(0.3, 0.15, 0.5, 1),
+"insecure": Color(0.2, 0.22, 0.38, 1),
 "neutral": Color(0.15, 0.2, 0.45, 1),
 "surprised": Color(0.2, 0.3, 0.55, 1),
 "thinking": Color(0.2, 0.25, 0.4, 1)

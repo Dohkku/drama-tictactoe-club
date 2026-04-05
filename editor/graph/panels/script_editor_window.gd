@@ -15,7 +15,7 @@ const CharacterNodeScript = preload("res://editor/graph/nodes/character_node.gd"
 var _main: Control  # GraphEditorMain
 var _path: String = ""
 var _window: Window = null
-var _code: CodeEdit = null
+var _code: TextEdit = null
 var _title_label: Label = null
 var _dirty: bool = false
 var _original_text: String = ""
@@ -108,14 +108,20 @@ func _build_body() -> Control:
 	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hbox.add_theme_constant_override("separation", 6)
 
-	_code = CodeEdit.new()
+	# Linux dead-key layouts (accent keys) can freeze/crash CodeEdit in Godot 4.6.x.
+	# Use TextEdit there as a stable fallback for the advanced script editor.
+	if OS.get_name() == "Linux":
+		_code = TextEdit.new()
+	else:
+		var code_edit := CodeEdit.new()
+		code_edit.minimap_draw = true
+		code_edit.auto_brace_completion_enabled = true
+		_code = code_edit
 	_code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_code.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_code.add_theme_font_size_override("font_size", _code_font_size)
 	_code.gutters_draw_line_numbers = true
-	_code.minimap_draw = true
 	_code.draw_tabs = true
-	_code.auto_brace_completion_enabled = true
 	_code.text_changed.connect(_on_text_changed)
 	hbox.add_child(_code)
 

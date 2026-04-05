@@ -1,178 +1,142 @@
 @scene demo_ch4_strategy
 
 [background res://assets/backgrounds/classroom_afternoon.png]
-[music res://audio/music/bgm_chill.mp3]
+[music res://audio/music/bgm_mei_mindgame.wav]
 [title_card La Estrategia | Capítulo 4]
-[wait 2.0]
+[wait 0.8]
 [camera_mode smooth]
 [fullscreen]
 
 [transition fade_black 0.6]
-
-[wait 0.5]
+[wait 0.4]
 
 [enter mei center_right right]
-[expression mei neutral]
+[expression mei composed]
 [pose mei thinking]
-[wait 0.5]
+[wait 0.4]
 
 [depth mei 1.1 0.3]
-Mei: Llegas temprano. Bien. Necesito hablar contigo. A solas.
+mei: Bien. Llegas antes que los demás.
+mei: Necesitaba hablar contigo sin público.
 
 [depth mei 1.0 0.3]
-[wait 0.3]
+[wait 0.2]
 
 [move mei center]
-[wait 0.3]
+[wait 0.2]
 
 [close_up mei 1.2 0.5]
 [expression mei analytical]
-Mei: He analizado todas tus partidas. Cada movimiento. Cada pausa. El tiempo que tardas en decidir. Dónde miras antes de poner la ficha.
+mei: He analizado tus partidas cuadro a cuadro.
+mei: Tiempo de reacción, rutas de mirada, microgestos antes de confirmar casilla.
 
 [camera_reset 0.4]
 
 [if flag defeated_ryu]
-Mei: Contra Ryu elegiste la esquina superior derecha tres veces. Eso no es aleatorio. Es un patrón. Probablemente ni siquiera lo sabes.
+mei: Contra Ryu cambiaste de ritmo en el turno cinco.
+mei: Ahí dejaste de jugar contra su estilo y empezaste a jugar contra su miedo.
 [else]
-Mei: Contra Ryu perdiste en el sexto turno. Pero el error fue en el tercero. Elegiste reaccionar en vez de anticipar. Jugaste su juego en lugar del tuyo.
+mei: Contra Ryu reaccionaste demasiado pronto.
+mei: Él vive de eso: de forzarte a entrar en su tempo.
 [end_if]
-
-[wait 0.3]
-
-[expression mei thinking]
-[pose mei idle]
-Mei: ¿Sabes cuál es la diferencia entre un buen jugador y uno excepcional?
-
-[wait 0.5]
-
-[close_up mei 1.3 0.4]
-[expression mei analytical]
-Mei: El bueno ve el tablero. El excepcional ve al {b}rival{/b}. Lee su miedo, su confianza, su hambre. Y usa todo eso.
-
-[camera_reset 0.3]
-
-[pose mei thinking]
-Mei: No importa dónde pongas la ficha. Importa {b}por qué{/b} la pones ahí. Y qué dice eso de ti.
-
-[wait 0.4]
-
-[enter sora left left]
-[expression sora happy]
-[pose sora idle]
-[depth sora 0.8 0.3]
-
-Sora: ¡Mei! No le agobies antes de la partida.
-
-[depth sora 1.0 0.3]
-[move sora center_left]
-
-[look_at mei sora]
-[expression mei neutral]
-Mei: No le agobio. Le preparo. Hay una diferencia.
-
-[look_at sora mei]
-[expression sora focused]
-Sora: Bueno, sí. Eso es verdad.
-
-[wait 0.3]
-
-[expression sora serious]
-[pose sora leaning_forward]
-[look_at sora center]
-Sora → Tú: El tablero de Mei es... diferente.
-
-Sora "focused": Tiene {b}rotación{/b}. Solo tres fichas por jugador.
-
-[expression sora nervous]
-Sora: Cuando pones la cuarta, la primera {b}desaparece{/b}.
-
-[look_at sora mei]
-[expression sora serious]
-Sora: Nada es permanente en su juego.
-
-[focus mei]
-[depth mei 1.15 0.4]
-[close_up mei 1.2 0.4]
-
-[expression mei analytical]
-Mei: Exacto. No hay empates. No puedes esconderte detrás de un tablero lleno. Cada decisión tiene un coste. Poner algo nuevo significa perder algo viejo.
-
-[camera_reset 0.3]
-[depth mei 1.0 0.3]
-[clear_focus]
-
-[expression mei thinking]
-[pose mei thinking]
-Mei: Es como todo en la vida, ¿no? No puedes tenerlo todo. Eliges qué conservar y qué dejar ir.
-
-[wait 0.6]
-
-[expression mei thinking]
-Mei: A veces me pregunto si alguien más lo ve.
-
-[wait 0.3]
-
-[camera_snap mei 1.3]
-[flash #112233 0.03]
-[expression mei analytical]
-Mei: Los ciclos. Cómo todo vuelve a empezar. Cómo siempre acabamos... aquí.
-
-[camera_reset 0.3]
-[wait 0.4]
-
-[expression mei neutral]
-Mei: ...En el tablero, quiero decir.
-
-[wait 0.4]
-
-[expression sora sad]
-[pose sora idle]
-Sora: Mei...
-
-[expression mei neutral]
-Mei: No es filosofía, Sora. Son matemáticas. Con un toque de algo que prefiero no nombrar.
 
 [wait 0.2]
 
+[expression mei direct]
+[pose mei idle]
+mei: ¿Sabes la diferencia entre un jugador fuerte y uno decisivo?
+
+[wait 0.4]
+
+[close_up mei 1.3 0.4]
 [expression mei analytical]
-[look_at mei center]
-Mei → Tú: He visto cómo juegas. Atacas en línea recta. Buscas el camino más corto.
-
-Mei: En mi tablero eso no funciona. El camino más corto ya no existirá en tres turnos. Tienes que pensar en {b}ciclos{/b}. En lo que vendrá después de lo que vendrá.
-
-[wait 0.3]
-
-[close_up mei 1.2 0.4]
-[expression mei thinking]
-Mei: El nerviosismo revela la duda. Y la duda es la información más valiosa que existe. Así que... intenta no temblar demasiado.
+mei: El fuerte calcula casillas.
+mei: El decisivo calcula personas.
+mei: Ambición, vergüenza, deseo de aprobación... todo eso también se juega.
 
 [camera_reset 0.3]
 
+[expression mei teasing]
+[depth mei 1.08 0.25]
+mei -> player: Por ejemplo, cuando yo me acerco, tardas medio segundo más en responder.
+mei: Puede ser nervios. Puede ser otra cosa.
+[depth mei 1.0 0.25]
+
+[expression mei composed]
+mei: Tranquilo. No voy a sacar conclusiones precipitadas.
+[expression mei cold_smile]
+mei: Todavía.
+
 [wait 0.3]
 
-[depth sora 0.8 0.3]
-[focus mei]
-[clear_focus]
-[depth sora 1.0 0.3]
+[enter sora center_left left]
+[expression sora happy]
+[pose sora idle]
+sora: ¿Interrumpo?
+
+[expression mei neutral]
+mei: Llegas justo cuando iba a ponérselo difícil.
 
 [expression sora focused]
 [pose sora confident]
-Sora → Tú: Puedes hacerlo. Solo... piensa diferente esta vez.
+sora -> player: Escucha bien: el tablero de Mei tiene rotación.
+sora: Solo tres fichas por jugador. Si pones una cuarta, desaparece la primera.
+sora: No hay empates. No hay refugio.
+
+[focus mei]
+[close_up mei 1.2 0.35]
+[expression mei analytical]
+mei: También hay algo que debes saber.
+mei: Ryu no está siendo cruel por deporte.
+
+[expression mei mask_slip]
+mei: Está agotado. Siente que si afloja una semana, pierde la beca, el puesto... y la identidad.
+[camera_reset 0.3]
+[clear_focus]
+
+[expression sora sad]
+sora: Mei...
+
+[expression mei composed]
+mei: No es traición. Es contexto.
+
+[wait 0.2]
+
+[focus mei]
+[expression mei direct]
+mei -> player: Yo organicé el orden de enfrentamientos.
+mei: Quería ver si podías soportar la presión acumulada de los tres.
+[clear_focus]
+
+[expression sora flustered]
+sora: ¿Lo hiciste tú sola?
+
+[expression mei cold_smile]
+mei: Sora, tú firmaste la hoja. Solo no la leíste.
+
+[expression sora nervous]
+sora: ...Eso suena a mí.
+
+[wait 0.2]
+
+[expression sora focused]
+[pose sora confident]
+sora -> player: Da igual. Has llegado hasta aquí.
+sora: Juega tu ritmo. No el nuestro.
 
 [exit sora left]
-[wait 0.3]
+[wait 0.2]
 
 [move mei center]
 [focus mei]
-[close_up mei 1.2 0.4]
-[expression mei analytical]
+[close_up mei 1.25 0.35]
+[expression mei private_setup]
+mei -> player: En mi tablero, cada decisión borra una decisión anterior.
+mei: Si quieres ganarme, tendrás que elegir qué perder sin temblar.
 
-Mei → Tú: Muéstrame cómo piensas cuando nada es seguro. Cuando el suelo se mueve bajo tus pies.
-
+[expression mei private_denial]
+mei: Y no, no estoy disfrutando de esto más de lo profesionalmente razonable.
 [camera_reset 0.3]
-
-[expression mei thinking]
-Mei: Eso es lo que quiero ver de ti.
-
 [clear_focus]
-[wait 0.3]
+[wait 0.2]
+@end

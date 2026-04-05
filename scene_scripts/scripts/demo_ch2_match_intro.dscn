@@ -1,7 +1,7 @@
 @scene demo_ch2_match_intro
 
 [background res://assets/backgrounds/classroom_afternoon.png]
-[music res://audio/music/bgm_tense.wav]
+[music res://audio/music/bgm_finale_build.wav]
 [camera_mode smooth]
 [fullscreen]
 
@@ -12,20 +12,25 @@
 [pose ryu arms_crossed]
 [wait 0.3]
 
-[close_up ryu 1.2 0.4]
-[expression ryu cold]
+[close_up ryu 1.2 0.35]
+[expression ryu intense]
 [pose ryu confident]
-Ryu: Dificultad máxima. Sin compasión. Así es como juego yo, así es como juega cualquiera que merezca estar en esta sala.
+ryu: Dificultad máxima. Inicio del oponente. Sin margen.
+ryu: Si parpadeas, te rompo la estructura.
 
-[camera_snap ryu 1.4]
-[flash #4466aa 0.06]
-[shake 0.2 0.15]
-[speed_lines radial 0.3]
-
-Ryu → Tú: {shake}Demuestra que mereces estar aquí. O vete.{/shake}
-
+[camera_snap ryu 1.35]
+[flash #4466aa 0.05]
+[shake 0.2 0.12]
+[speed_lines radial 0.25]
+ryu -> player: Juega para quedarte.
 [camera_reset 0.3]
-[wait 0.2]
 
+[wait 0.2]
+[expression ryu insecure]
+[pose ryu thinking]
+ryu: ...Y yo jugaré para no caer.
+
+[expression ryu cold]
+[pose ryu arms_crossed]
 [split]
 [board_enable]

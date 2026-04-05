@@ -3,57 +3,63 @@
 @on player_wins
 [fullscreen]
 [board_disable]
-[expression mei thinking]
+[expression mei mask_slip]
 [pose mei thinking]
-[wait 0.5]
-Mei: ...Fascinante.
 [wait 0.4]
+mei: ...Ah.
 [expression mei analytical]
-Mei: No seguiste un patrón. Cambiaste de estrategia a mitad de partida. Te adaptaste al ciclo en lugar de luchar contra él.
-[close_up mei 1.2 0.4]
-Mei: Eso es exactamente lo que la rotación exige. Y casi nadie lo entiende.
+mei: Te adaptaste al ciclo en dos turnos.
+mei: Rompiste la única ventaja que me quedaba.
+
+[close_up mei 1.2 0.35]
+[expression mei direct]
+mei -> player: Tenía razón sobre ti.
+mei: Eres peligroso cuando no intentas ser perfecto.
 [camera_reset 0.3]
-[wait 0.3]
-[expression mei neutral]
-Mei → Tú: Adaptación. Eso es lo que vi en ti desde el principio.
-[wait 0.2]
-Mei: Los demás juegan con fuerza. Tú juegas con {b}flexibilidad{/b}. Es... hermoso, en cierto modo.
+
+[expression mei guilty_micro]
+mei: Y sí, manipulé el orden del torneo.
+mei: Quería saber si podías llegar vivo a la final.
+
 [enter sora left left]
+[expression sora flustered]
+sora: ¿Lo admite en voz alta? Esto sí es histórico.
+[expression mei composed]
+mei: No te emociones.
 [expression sora happy]
-[pose sora excited]
-Sora: ¡Has ganado contra Mei! ¡Con rotación!
-[look_at mei sora]
-Mei: Sora. Baja la voz. Estoy teniendo un momento.
-[expression sora nervous]
-Sora: Perdona, perdona...
+sora -> player: Has ganado una de las partidas más difíciles del club.
 [exit sora left]
-[expression mei thinking]
-Mei: Bien jugado. De verdad. No te imaginas cuánto tiempo llevaba esperando que alguien jugara así.
+
+[expression mei cold_smile]
+mei: Guárdame una revancha.
+mei: Esta vez sin... interferencias teatrales.
 [set_flag defeated_mei]
 @end
 
 @on opponent_wins
 [fullscreen]
 [board_disable]
-[expression mei neutral]
+[expression mei composed]
 [pose mei idle]
-Mei: El humo se disipa. La victoria queda. Así funcionan los ciclos.
-[wait 0.4]
-[expression mei analytical]
-Mei: Intentaste mantener tus fichas en diagonal. Pero la rotación te las arrancó.
-[close_up mei 1.2 0.4]
-Mei → Tú: No puedes aferrarte a un plan en un tablero que cambia. Igual que no puedes aferrarte a nada que merezca la pena.
-[camera_reset 0.3]
+mei: La rotación te obligó a elegir, y elegiste tarde.
 [wait 0.3]
-[expression mei thinking]
-Mei: Aprende de esto. La derrota es el mejor maestro. Y a veces, el más íntimo.
+[expression mei analytical]
+mei: Te aferraste a una forma del tablero que ya no existía.
+
+[close_up mei 1.2 0.4]
+mei -> player: Aquí gana quien suelta primero lo que ya no sirve.
+[camera_reset 0.3]
+[expression mei playful]
+mei: Vuelve cuando quieras. No me molesta entrenarte.
+
 [enter sora left left]
 [expression sora sad]
 [pose sora idle]
-Sora: La rotación es brutal. No te preocupes.
+sora: Es normal perder aquí al principio.
 [expression sora serious]
 [pose sora confident]
-Sora: Lo que importa es que lo intentaste. Eso ya es valiente.
+sora -> player: Lo importante es que ya entendiste la lógica.
+sora: La próxima cambia.
 [exit sora left]
 @end
 
@@ -62,19 +68,18 @@ Sora: Lo que importa es que lo intentaste. Eso ya es valiente.
 [board_disable]
 [expression mei thinking]
 [wait 0.5]
-Mei: Imposible. Las reglas no permiten empate.
-[wait 0.6]
+mei: Empate... eso no debería pasar aquí.
+[wait 0.5]
 [camera_snap mei 1.4]
 [flash #ffffff 0.03]
 [expression mei analytical]
-Mei: ...A menos que haya un error en el sistema.
-[wait 0.8]
+mei: O hay una línea que no he modelado.
+[wait 0.6]
 [camera_reset 0.3]
-[expression mei thinking]
-Mei: Pero no hay errores. Yo lo revisé. Yo reviso {b}todo{/b}.
-[wait 0.4]
+[expression mei mask_slip]
+mei: No me gusta no entender algo.
 [expression mei neutral]
-Mei: ...Interesante. Muy interesante.
+mei: Muy interesante.
 @end
 
 @on before_opponent_move
@@ -87,19 +92,27 @@ Mei: ...Interesante. Muy interesante.
 [wait 0.3]
 
 [close_up mei 1.3 0.4]
-[expression mei teasing]
+[expression mei private_setup]
 [pose mei leaning_forward]
 
-Mei: ...¿Sabes? Hay algo que nunca te conté sobre la rotación.
+mei: ...Hay algo que nunca te conté sobre la rotación.
 
 [wait 0.5]
 
-Mei: Que mientras miras el tablero... yo te miro a ti.
+mei: A veces la partida se decide por una distracción... mínima...
 
 [wait 0.8]
-
-[expression mei teasing]
-Mei: Y mientras me miras a mí...
+mei: Y a mi...
+[wait 0.8]
+mei: Se me da bien distraer a las mentes de chicos como tu ´
+[music res://audio/music/bgm_mei_mindgame.wav]
+[expression mei private_payoff]
+[shake 0.18 0.08]
+mei: Ups.
+[wait 0.25]
+mei: ...Creo que se me cayó la peluca.
+[wait 0.45]
+mei: Dame un segundo.
 
 [camera_reset 0.3]
 [wait 0.3]
@@ -109,10 +122,10 @@ Mei: Y mientras me miras a mí...
 
 [wait 0.3]
 
-[expression mei analytical]
+[expression mei private_denial]
 [pose mei confident]
 
-Mei: ...las fichas se mueven solas.
+mei: ...Y en ese segundo, el tablero cambia.
 
 [wait 0.5]
 
@@ -121,10 +134,10 @@ Mei: ...las fichas se mueven solas.
 
 [expression mei neutral]
 [pose mei idle]
-Mei: ¿Hmm? ¿Qué pasa? Es tu turno. Ah, espera...
+mei: ¿Hmm? ¿Qué pasa? ¿Era tu turno?
 
 [expression mei thinking]
-Mei: ...Parece que ya no es tu turno.
+mei: ...Parece que ya no.
 
 [else]
 [set_flag mei_first_move_seen]
@@ -132,13 +145,26 @@ Mei: ...Parece que ya no es tu turno.
 [end_if]
 @end
 
-@on near_win
+@on player_near_win
 [expression mei analytical]
 [pose mei thinking]
-Mei: Mmm...
+mei: Mmm. Esa amenaza sí me interesa.
 @end
 
-@on center_taken
+@on opponent_near_win
+[expression mei direct]
+[pose mei confident]
+mei: Una jugada más y cierro el ciclo.
+@end
+
+@on center_taken_by_player
 [expression mei thinking]
 [pose mei idle]
+mei: Centro temprano.
+@end
+
+@on center_taken_by_opponent
+[expression mei composed]
+[pose mei idle]
+mei: Centro para mí. Empieza el ciclo.
 @end

@@ -1,12 +1,18 @@
 [gd_resource type="Resource" script_class="CharacterData" format=3]
 
 [ext_resource type="Script" path="res://characters/character_data.gd" id="1_orm75"]
+[ext_resource type="Texture2D" path="res://characters/portraits/male_base.png" id="player_base"]
 
 [resource]
 script = ExtResource("1_orm75")
 character_id = "player"
 display_name = "Tú"
 color = Color(0.2, 0.5, 1, 1)
+portrait_image = ExtResource("player_base")
+expression_images = {
+"determined": ExtResource("player_base"),
+"neutral": ExtResource("player_base")
+}
 expressions = {
 "determined": Color(0.1, 0.4, 1, 1),
 "neutral": Color(0.2, 0.5, 1, 1)

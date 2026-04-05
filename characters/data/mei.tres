@@ -5,6 +5,15 @@
 [ext_resource type="Texture2D" path="res://characters/portraits/mei_thinking.png" id="mei_thinking"]
 [ext_resource type="Texture2D" path="res://characters/portraits/mei_analytical.png" id="mei_analytical"]
 [ext_resource type="Texture2D" path="res://characters/portraits/mei_teasing.png" id="mei_teasing"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_cold_smile.png" id="mei_cold_smile"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_composed.png" id="mei_composed"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_direct.png" id="mei_direct"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_guilty_micro.png" id="mei_guilty_micro"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_mask_slip.png" id="mei_mask_slip"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_playful.png" id="mei_playful"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_private_denial.png" id="mei_private_denial"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_private_payoff.png" id="mei_private_payoff"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_private_setup.png" id="mei_private_setup"]
 
 [resource]
 script = ExtResource("1_y48ho")
@@ -13,14 +22,33 @@ display_name = "Mei"
 color = Color(0.6, 0.3, 0.9, 1)
 portrait_image = ExtResource("mei_neutral")
 expression_images = {
-"neutral": ExtResource("mei_neutral"),
-"thinking": ExtResource("mei_thinking"),
 "analytical": ExtResource("mei_analytical"),
-"teasing": ExtResource("mei_teasing")
+"cold_smile": ExtResource("mei_cold_smile"),
+"composed": ExtResource("mei_composed"),
+"direct": ExtResource("mei_direct"),
+"guilty_micro": ExtResource("mei_guilty_micro"),
+"mask_slip": ExtResource("mei_mask_slip"),
+"neutral": ExtResource("mei_neutral"),
+"playful": ExtResource("mei_playful"),
+"private_denial": ExtResource("mei_private_denial"),
+"private_payoff": ExtResource("mei_private_payoff"),
+"private_setup": ExtResource("mei_private_setup"),
+"teasing": ExtResource("mei_teasing"),
+"thinking": ExtResource("mei_thinking")
 }
 expressions = {
 "analytical": Color(0.5, 0.25, 0.95, 1),
+"cold_smile": Color(0.42, 0.24, 0.65, 1),
+"composed": Color(0.58, 0.3, 0.86, 1),
+"direct": Color(0.45, 0.22, 0.92, 1),
+"guilty_micro": Color(0.52, 0.28, 0.75, 1),
+"mask_slip": Color(0.56, 0.32, 0.84, 1),
 "neutral": Color(0.6, 0.3, 0.9, 1),
+"playful": Color(0.68, 0.35, 0.95, 1),
+"private_denial": Color(0.54, 0.28, 0.78, 1),
+"private_payoff": Color(0.72, 0.38, 1.0, 1),
+"private_setup": Color(0.66, 0.34, 0.96, 1),
+"teasing": Color(0.62, 0.32, 0.92, 1),
 "thinking": Color(0.55, 0.3, 0.85, 1)
 }
 default_style = "gentle"

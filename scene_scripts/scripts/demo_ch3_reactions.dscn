@@ -3,85 +3,105 @@
 @on player_wins
 [fullscreen]
 [board_disable]
-[shake 0.5 0.3]
-[flash #ff6600 0.12]
-[expression akira angry]
+[shake 0.45 0.28]
+[flash #ff6600 0.1]
+[expression akira rattled]
 [pose akira idle]
-[wait 0.4]
-Akira: ...No.
 [wait 0.3]
-Akira: No, no, no. Eso no puede ser.
-[expression akira neutral]
-[wait 0.3]
-Akira: El tablero grande era {b}mi{/b} ventaja. Mi territorio. Donde yo mando.
-[expression akira confident]
-Akira → Tú: ¿Cómo has leído mis movimientos en un 5x5? Nadie hace eso.
-[wait 0.3]
-[close_up akira 1.2 0.4]
-Akira: ...Ahora entiendo por qué no podía dejar de pensar en ti.
+akira: Vale.
+akira: Vale, esto duele más de lo que debería.
+
+[expression akira angry]
+akira: Ese tablero era mío.
+[expression akira jealous]
+akira: Era el único sitio donde podía jurar que estaba por encima del resto.
+
+[close_up akira 1.2 0.35]
+[expression akira focused_competitive]
+akira -> player: Me ganaste porque no te dio miedo arriesgar cuando yo quise asegurar.
+akira: Te envidio por eso.
 [camera_reset 0.3]
+
 [enter sora far_left left]
 [expression sora happy]
 [pose sora excited]
-Sora: ¡Increíble! ¡Has ganado en el tablero grande!
-[look_at akira sora]
-[expression akira angry]
-Akira: Cállate, Sora. Déjame procesar esto.
+sora: ¡Partidón!
+[expression akira pretending_calm]
+akira: No lo repitas con esa sonrisa o me vuelvo insoportable.
 [expression sora nervous]
-Sora: ...Perdona.
-[look_at akira center]
-[expression akira confident]
-Akira → Tú: La próxima vez elegiré yo las reglas. Y el tablero. Y todo lo demás.
-Akira: Porque esto no ha terminado. Ni de lejos.
+sora: Demasiado tarde para eso.
 [exit sora left]
+
+[expression akira smirk]
+akira -> player: Te debo revancha.
+akira: Y esta vez no voy a esconder cuánto me importa.
 [set_flag defeated_akira]
 @end
 
 @on opponent_wins
 [fullscreen]
 [board_disable]
-[flash #ff4400 0.1]
+[flash #ff4400 0.08]
 [expression akira confident]
 [pose akira confident]
-Akira: {shake}¡Así se juega!{/shake}
-[wait 0.3]
-Akira: El tablero grande te tragó. Demasiadas opciones, demasiada duda. Te ahogaste en tus propias posibilidades.
-[expression akira neutral]
-Akira → Tú: Pero me has dado un buen rato. Eso no se lo doy a cualquiera.
-[wait 0.2]
-[expression akira confident]
-Akira: Vuelve cuando sepas pensar en grande. Te estaré esperando.
+akira: Así sí.
+[wait 0.25]
+[expression akira smirk]
+akira: Te forzé a abrir demasiado pronto y te faltó plan B.
+akira: El 5x5 castiga la ansiedad.
+
+[close_up akira 1.2 0.35]
+[expression akira focused_competitive]
+akira -> player: Pero me empujaste lo bastante para que dejara de fingir.
+akira: Gracias por eso. No lo digo casi nunca.
+[camera_reset 0.3]
+
 [enter sora far_left left]
 [expression sora sad]
 [pose sora idle]
-Sora: Ha sido una buena partida...
-[expression akira angry]
-[look_at akira sora]
-Akira: No. Ha sido una partida corta. Pero interesante.
+sora: Fue mejor de lo que parece.
+[expression akira pretending_calm]
+akira: Fue útil. Eso basta.
 [exit sora left]
 @end
 
 @on draw
 [fullscreen]
 [board_disable]
-[expression akira neutral]
+[expression akira rattled]
 [pose akira idle]
-Akira: Empate. En un 5x5. ¿Sabes lo raro que es eso?
-[wait 0.3]
-[expression akira confident]
-Akira: Significa que ninguno de los dos cometió un error fatal. Pero tampoco tuviste el valor de arriesgar.
-Akira → Tú: En el ajedrez, un empate es respeto. Aquí... es frustración. Para los dos.
-[expression akira angry]
-Akira: Necesito una revancha. Esto no puede quedarse así.
+akira: Empate en 5x5...
+[wait 0.25]
+[expression akira jealous]
+akira: Qué asco de resultado.
+akira: Ni gano yo ni ganas tú. Solo seguimos con hambre.
+
+[close_up akira 1.2 0.35]
+[expression akira smirk]
+akira -> player: Perfecto. Así tengo excusa para obsesionarme contigo otra semana.
+[camera_reset 0.3]
 @end
 
-@on near_win
-[expression akira angry]
+@on player_near_win
+[expression akira focused_competitive]
 [pose akira confident]
-Akira: No te atrevas...
+akira: Te estoy viendo.
 @end
 
-@on center_taken
-[expression akira neutral]
+@on opponent_near_win
+[expression akira smirk]
+[pose akira confident]
+akira: Una más y te saco de la partida.
+@end
+
+@on center_taken_by_player
+[expression akira pretending_calm]
 [pose akira idle]
+akira: Centro en 5x5... clásico.
+@end
+
+@on center_taken_by_opponent
+[expression akira focused_competitive]
+[pose akira idle]
+akira: Buen centro. Te vi.
 @end

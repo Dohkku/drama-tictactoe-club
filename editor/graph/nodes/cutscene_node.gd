@@ -2,9 +2,7 @@ extends "res://editor/graph/base_graph_node.gd"
 
 ## Cutscene event node.
 ## Flow in/out. References a .dscn scene script.
-## Double-click or button opens the cinematic sub-editor.
-
-signal editor_requested(node)
+## Editing is done from the detail panel script controls.
 
 var script_path: String = ""
 var _path_label: Label = null
@@ -28,7 +26,7 @@ func _ready() -> void:
 	add_flow_through(0)
 
 	# Row 1: hint label to use detail panel
-	var hint := _make_dim_label("doble-click: editar")
+	var hint := _make_dim_label("editar script en panel")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(hint)
 	set_slot_enabled_left(1, false)

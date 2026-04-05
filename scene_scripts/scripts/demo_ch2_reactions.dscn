@@ -3,41 +3,39 @@
 @on player_wins
 [fullscreen]
 [board_disable]
-[shake 0.6 0.4]
-[flash #4488ff 0.15]
+[shake 0.55 0.35]
+[flash #4488ff 0.12]
 [expression ryu surprised]
 [pose ryu leaning_back]
-[wait 0.6]
-Ryu: ...
 [wait 0.5]
-[expression ryu neutral]
+ryu: ...
+[expression ryu cracked]
 [pose ryu thinking]
-Ryu: ¿Cómo?
-[wait 0.4]
-[expression ryu cold]
-[pose ryu arms_crossed]
-Ryu: No. No me voy a engañar. Ha sido limpio. Brutalmente limpio.
-[wait 0.3]
-[close_up ryu 1.2 0.4]
-[expression ryu neutral]
-Ryu → Tú: Me has ganado. Sin trucos. Sin suerte. Y eso me jode más de lo que imaginas.
+ryu: Lo he leído tarde.
+ryu: Por primera vez en meses... llegué tarde.
+
+[close_up ryu 1.2 0.35]
+[expression ryu insecure]
+ryu -> player: El Consejo me exige mantener el primer puesto para renovar mi beca.
+ryu: Si caigo, no solo caigo yo. Arrastro al club conmigo.
 [camera_reset 0.3]
-[wait 0.3]
-[expression ryu cold]
-[pose ryu confident]
-Ryu: Puede que Sora tenga razón sobre ti. Puede. No lo voy a admitir dos veces.
+
+[expression ryu defensive]
+[pose ryu arms_crossed]
+ryu: Y aun así me ganaste.
+ryu: Odio esto. Pero lo respeto.
+
 [enter sora left left]
 [expression sora happy]
 [pose sora excited]
-[flash #ffcc00 0.08]
-Sora: {shake}¡¡Lo has conseguido!!{/shake}
-Sora: ¡Le has ganado a Ryu! ¡A {b}Ryu{/b}!
+sora: ¡Eso fue increíble!
+[expression sora focused]
+sora -> player: Acabas de cambiar el eje del club.
 [look_at ryu sora]
 [expression ryu cold]
-Ryu: No grites, Sora. Todavía me duelen los oídos. Y el orgullo.
-[look_at sora ryu]
-[expression sora happy]
-Sora: ¡Perdona, perdona! ¡Es que no me lo creo!
+ryu: No dramatices.
+[expression sora nervous]
+sora: Estoy siendo precisa.
 [exit sora left]
 [set_flag defeated_ryu]
 @end
@@ -45,34 +43,29 @@ Sora: ¡Perdona, perdona! ¡Es que no me lo creo!
 @on opponent_wins
 [fullscreen]
 [board_disable]
-[flash #ff2200 0.1]
+[flash #ff2200 0.08]
 [expression ryu cold]
 [pose ryu confident]
+ryu: Predecible.
 [wait 0.3]
-Ryu: {shake}Predecible.{/shake}
-[wait 0.4]
 [expression ryu neutral]
 [pose ryu arms_crossed]
-Ryu: Cada movimiento tuyo... lo vi venir. Como leer un libro abierto. Un libro infantil.
-[wait 0.3]
-[close_up ryu 1.2 0.4]
-Ryu → Tú: Pero no huiste. Eso es algo. La mayoría se derrumba mucho antes.
+ryu: Te forcé a reaccionar y abandonaste el centro emocional de la partida.
+ryu: Ahí se pierden los duelos importantes.
+
+[close_up ryu 1.2 0.35]
+[expression ryu defensive]
+ryu -> player: No confundas dureza con desprecio.
+ryu: Te aprieto porque necesito saber si aguantas.
 [camera_reset 0.3]
-[wait 0.2]
-[expression ryu cold]
-Ryu: No es suficiente. Pero es algo. Y algo es más de lo que esperaba, si te soy sincero.
+
 [enter sora left left]
 [expression sora sad]
 [pose sora idle]
-Sora: Oye... no pasa nada.
+sora: Respira. Era el examen más duro del club.
 [expression sora serious]
 [pose sora confident]
-Sora: Ryu lleva años jugando. Nadie le gana a la primera.
-[look_at ryu sora]
-[expression ryu neutral]
-Ryu: Mentira. Tú me ganaste a la primera.
-[expression sora nervous]
-Sora: ...Eso fue diferente. Y lo sabes.
+sora -> player: Si vuelves mañana, seguimos desde aquí.
 [exit sora left]
 @end
 
@@ -81,35 +74,51 @@ Sora: ...Eso fue diferente. Y lo sabes.
 [board_disable]
 [expression ryu surprised]
 [pose ryu leaning_back]
-[wait 0.3]
+[wait 0.25]
 [expression ryu thinking]
-[pose ryu thinking]
-Ryu: ...Empate.
-[wait 0.4]
-Ryu: Contra mí. A dificultad máxima. En tu segunda partida de club.
+ryu: Empate...
+[wait 0.25]
 [expression ryu neutral]
 [pose ryu arms_crossed]
-Ryu: Eso no es un empate. Es una declaración de intenciones.
-[close_up ryu 1.2 0.4]
-Ryu → Tú: No pudiste ganar... pero te negaste a perder. Y eso dice más de ti que cualquier victoria.
+ryu: A esta dificultad, un empate es violencia contenida.
+ryu: Ni tú cediste, ni yo cerré.
+
+[close_up ryu 1.2 0.35]
+[expression ryu insecure]
+ryu -> player: Me obligaste a respetarte.
+ryu: No sé si eso me tranquiliza o me preocupa.
 [camera_reset 0.3]
-[wait 0.2]
+
 [expression ryu cold]
 [pose ryu confident]
-Ryu: Volveremos a jugar. Y la próxima vez no me pillarás con la guardia baja.
+ryu: Habrá desempate. Y no será amable.
 [set_flag survived_ryu]
 @end
 
-@on near_win
+@on player_near_win
 [expression ryu intense]
 [pose ryu leaning_forward]
-[shake 0.2 0.12]
+[shake 0.2 0.1]
+ryu: No cierres esa línea.
 @end
 
-@on center_taken
+@on opponent_near_win
+[expression ryu cold]
+[pose ryu confident]
+ryu: Un turno más y te cierro.
+@end
+
+@on center_taken_by_player
 [expression ryu thinking]
 [pose ryu thinking]
-[wait 0.15]
+[wait 0.12]
+ryu: Centro otra vez...
 [expression ryu cold]
 [pose ryu arms_crossed]
+@end
+
+@on center_taken_by_opponent
+[expression ryu intense]
+[pose ryu arms_crossed]
+ryu: Centro mío. Ven a por él.
 @end

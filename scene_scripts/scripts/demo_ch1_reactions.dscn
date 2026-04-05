@@ -5,25 +5,21 @@
 [board_disable]
 [expression sora nervous]
 [pose sora defeated]
-[shake 0.3 0.2]
-[wait 0.3]
-Sora: ...Vaya.
-[wait 0.4]
+[wait 0.25]
+sora: ...Me acabas de desmontar.
+[wait 0.25]
 [expression sora happy]
 [pose sora excited]
-[flash #ffcc00 0.1]
-Sora: {b}¡Lo sabía!{/b}
-Sora: Sabía que había algo detrás de esa mirada tranquila.
-[wait 0.3]
+[flash #ffcc00 0.08]
+sora: ¡Y me encanta!
+sora: Esa línea final fue agresiva, limpia y con sangre fría. Exactamente lo que necesitábamos.
 [expression sora focused]
-[pose sora leaning_forward]
-Sora: Esa última jugada... no fue suerte. Fue {b}intención{/b}. Pura y limpia.
-[expression sora happy]
 [pose sora confident]
-Sora: Bienvenido al club. Oficialmente.
-[wait 0.2]
-[expression sora nervous]
-Sora: Y... gracias por no contenerte. Necesitaba ver eso.
+sora -> player: Bienvenido oficialmente al club.
+sora: Voy a avisar a Ryu. Se va a poner insoportable.
+[expression sora blush]
+sora: Y... gracias por mirarme así durante la partida.
+sora: Quiero decir, por mantener la concentración. Eso.
 [set_flag beat_sora]
 @end
 
@@ -32,18 +28,17 @@ Sora: Y... gracias por no contenerte. Necesitaba ver eso.
 [board_disable]
 [expression sora happy]
 [pose sora excited]
-[flash #ffcc00 0.12]
-Sora: {shake}¡Sí!{/shake}
-[wait 0.3]
+sora: ¡Sí! ...Perdón, reflejo competitivo.
 [expression sora nervous]
 [pose sora idle]
-Sora: Perdón, perdón. Se suponía que iba a ir suave contigo...
+sora: Te gané, pero no te rompiste.
+sora: Eso vale más que una victoria fácil.
 [expression sora focused]
 [pose sora leaning_forward]
-Sora: Pero oye, he visto cómo piensas. Hay algo ahí. Algo que la mayoría no tiene.
-Sora: Solo necesitas un poco de práctica. Y para eso... estás en el club.
-[expression sora happy]
-Sora: Además, así tengo excusa para que vuelvas.
+sora -> player: Si vuelves mañana, te enseño cómo castigar mi apertura.
+sora: Lo digo en serio. Quiero que me obligues a jugar mejor.
+[expression sora tender]
+sora: Y me haría ilusión verte de nuevo. Por práctica. Claro.
 @end
 
 @on draw
@@ -51,27 +46,39 @@ Sora: Además, así tengo excusa para que vuelvas.
 [board_disable]
 [expression sora focused]
 [pose sora thinking]
-Sora: Empate...
-[wait 0.3]
+sora: Empate en tu estreno.
+[wait 0.2]
 [expression sora serious]
-Sora: ¿Sabes lo que significa un empate en tu primera partida? Que no cometiste ningún error. Que pensaste cada movimiento.
+sora: Eso significa dos cosas: tienes disciplina y no te asusta pensar a largo plazo.
 [expression sora happy]
 [pose sora excited]
-Sora: Eso es exactamente lo que buscamos. ¡Estás dentro!
-[wait 0.2]
-[expression sora nervous]
-Sora: Aunque... la próxima vez, intenta ganarme. Necesito saber cómo se siente.
+sora: Estás dentro.
+[expression sora curious_repressed]
+sora -> player: La próxima, sin piedad conmigo.
+sora: Quiero saber si este nudo en el estómago es miedo... o emoción táctica.
 [set_flag beat_sora]
 @end
 
-@on center_taken
+@on center_taken_by_player
 [expression sora focused]
 [pose sora leaning_forward]
-Sora: Oh... Interesante.
+sora: Centro temprano. Vale. Vienes a discutir control.
 @end
 
-@on near_win
+@on center_taken_by_opponent
+[expression sora happy]
+[pose sora confident]
+sora: Centro para mí. A ver cómo respondes.
+@end
+
+@on player_near_win
 [expression sora nervous]
 [pose sora tense]
-Sora: Espera... ¿eso es...?
+sora: Espera... esa amenaza es real.
+@end
+
+@on opponent_near_win
+[expression sora focused]
+[pose sora leaning_forward]
+sora: Si no bloqueas ahora, cierro.
 @end

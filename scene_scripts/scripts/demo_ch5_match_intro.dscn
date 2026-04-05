@@ -1,7 +1,7 @@
 @scene demo_ch5_match_intro
 
 [background res://assets/backgrounds/classroom_afternoon.png]
-[music res://audio/music/bgm_tense.wav]
+[music res://audio/music/bgm_finale_clash.mp3]
 [camera_mode snappy]
 [fullscreen]
 
@@ -16,22 +16,27 @@
 [flash #ffffff 0.04]
 [shake 0.2 0.15]
 
-Ryu: Dificultad máxima. Tablero estándar. Sin excusas.
+ryu: Dificultad máxima. Tablero limpio. Sin excusas.
 
 [camera_reset 0.3]
 
 [wait 0.2]
 
 [close_up ryu 1.3 0.3]
-[expression ryu cold]
-[pose ryu confident]
+[expression ryu intense]
+[pose ryu leaning_forward]
 
 [speed_lines right 0.3]
-Ryu → Tú: {shake}La última partida. La que importa de verdad.{/shake}
+ryu -> player: {shake}Última partida. La que decide quién carga con todo.{/shake}
 
 [camera_reset 0.3]
 [camera_mode smooth]
 [wait 0.2]
+
+[expression ryu defensive]
+[pose ryu arms_crossed]
+ryu: No me tengas piedad.
+ryu: Yo no la tendré.
 
 [split]
 [board_enable]

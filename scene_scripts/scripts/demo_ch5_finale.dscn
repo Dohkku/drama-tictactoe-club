@@ -3,85 +3,80 @@
 [background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_chill.mp3]
 [title_card La Final | Capítulo 5]
-[wait 2.0]
+[wait 0.8]
 [camera_mode smooth]
 [fullscreen]
 
 [transition fade_black 0.5]
-
-[wait 0.5]
+[wait 0.4]
 
 [enter sora far_left left]
 [enter akira left left]
 [enter mei center_right right]
 [wait 0.5]
 
-[expression sora happy]
-[pose sora excited]
-[expression akira neutral]
-[pose akira idle]
-[expression mei neutral]
-[pose mei thinking]
-
-[depth akira 0.85 0.3]
-[depth mei 0.85 0.3]
-
-Sora: Esto es. La final del torneo interno.
-
-[wait 0.3]
-
 [expression sora serious]
 [pose sora confident]
-Sora: Has llegado hasta aquí. No importa cómo. Estás aquí. Y eso ya dice algo.
+[expression akira pretending_calm]
+[pose akira idle]
+[expression mei composed]
+[pose mei thinking]
+
+sora: Llegamos al cierre.
+sora: La partida que decide el representante oficial del instituto.
 
 [if flag defeated_akira]
-[focus akira]
-[depth akira 1.0 0.3]
-[expression akira confident]
-Akira: Me ganaste limpio. No voy a mentir... dolió. Dolió más de lo que esperaba.
-[expression akira neutral]
-Akira → Tú: Pero si le ganas a Ryu... todo habrá valido la pena. Hazlo por mí también.
-[depth akira 0.85 0.3]
-[clear_focus]
+[expression akira jealous]
+akira: Sigues aquí. Bien.
+akira: Me ganaste, me enfadé, me entrené más... y sigo con ganas de verte caer.
+[expression akira smirk]
+akira -> player: O de verte ganar. Aún no lo tengo claro.
 [else]
-[focus akira]
-[depth akira 1.0 0.3]
-[expression akira confident]
-Akira: Me ganaste en la mesa. Pero esto es otro nivel.
-[expression akira angry]
-Akira → Tú: Ryu es algo diferente. Lo sabes. Yo lo sé.
-[depth akira 0.85 0.3]
-[clear_focus]
+[expression akira focused_competitive]
+akira: No me ganaste, pero me obligaste a tomarme esto en serio.
+akira: Haz lo mismo con Ryu.
+[end_if]
+
+[wait 0.2]
+
+[if flag defeated_mei]
+[expression mei analytical]
+mei: Adaptaste tu estilo en rotación. Muy pocos lo hacen sin romperse.
+[expression mei direct]
+mei -> player: Con Ryu no basta adaptarse. Hay que desestabilizarle.
+[else]
+[expression mei thinking]
+mei: Te dejé un mapa en nuestra partida.
+mei: Si lo entendiste, hoy sobrevives.
 [end_if]
 
 [wait 0.3]
 
-[if flag defeated_mei]
-[focus mei]
-[depth mei 1.0 0.3]
-[expression mei analytical]
-Mei: Has demostrado adaptación. Eso es raro. Raro y... fascinante.
-[expression mei thinking]
-Mei → Tú: Pero Ryu no se adapta. Ryu {b}domina{/b}. Es una fuerza diferente.
-[depth mei 0.85 0.3]
+[focus sora]
+[expression sora focused]
+sora: Antes de que entre Ryu... hay algo que debes saber.
 [clear_focus]
-[else]
-[focus mei]
-[depth mei 1.0 0.3]
-[expression mei thinking]
-Mei: Aprende de lo que pasó en nuestra partida. Cada error es un mapa.
-[expression mei analytical]
-Mei → Tú: Contra Ryu, no tendrás segundas oportunidades. Él no las da.
-[depth mei 0.85 0.3]
-[clear_focus]
-[end_if]
 
-[wait 0.5]
+[expression mei composed]
+mei: Ryu me pidió un modelo para encontrar a alguien capaz de vencerle.
+mei: Tu perfil fue el único compatible con su patrón de juego.
+
+[expression sora nervous]
+sora: Yo fui a buscarte a esa aula por eso.
+sora: No fue casualidad.
+
+[expression sora sad]
+sora -> player: No te manipulamos para usarte.
+sora: Te buscamos porque sin alguien como tú, Ryu se iba a hundir solo.
+
+[wait 0.2]
+[expression akira smirk]
+akira: Bienvenido al club. Aquí todos ocultamos algo.
 
 [wipe left 0.8]
 [wipe_out left 0.8]
 
-[music res://audio/music/bgm_tense.wav]
+[music res://audio/music/bgm_finale_clash.mp3]
 [camera_mode snappy]
 [speed_lines right 0.3]
 [shake 0.3 0.25]
@@ -93,50 +88,41 @@ Mei → Tú: Contra Ryu, no tendrás segundas oportunidades. Él no las da.
 [wait 0.3]
 
 [camera_mode smooth]
-[depth akira 0.7 0.3]
-[depth mei 0.7 0.3]
-[depth sora 0.7 0.3]
+[depth akira 0.8 0.3]
+[depth mei 0.8 0.3]
+[depth sora 0.8 0.3]
 
 [focus ryu]
 [move ryu center_right]
 [close_up ryu 1.3 0.5]
 
-[wait 0.4]
-
-Ryu: Estás aquí.
-
-[camera_reset 0.4]
+ryu: Estás aquí.
 
 [if flag defeated_ryu]
-[expression ryu intense]
+[expression ryu cracked]
 [pose ryu leaning_forward]
-Ryu: La última vez me ganaste. No he dejado de pensar en eso. Ni un solo día. Ni una sola noche.
-[wait 0.3]
-[expression ryu cold]
-[pose ryu arms_crossed]
-Ryu: No fue suerte. Lo sé. Pero necesito {b}confirmarlo{/b}. Necesito saber si fue real o si me estoy volviendo loco.
+ryu: Me ganaste una vez y me dejaste sin excusas.
+ryu: Necesito saber si puedo superarlo... o si solo estoy fingiendo control.
 [else]
 [if flag survived_ryu]
-[expression ryu neutral]
+[expression ryu defensive]
 [pose ryu thinking]
-Ryu: La última vez empatamos. Eso me sorprendió. Nadie me había llevado a un empate.
-[wait 0.3]
-[expression ryu cold]
-[pose ryu arms_crossed]
-Ryu: Hoy no habrá empate. Hoy uno de los dos se rompe.
+ryu: Me llevaste a tablas. Nadie hacía eso desde hace años.
+[expression ryu intense]
+ryu: Hoy no acepto tablas.
 [else]
 [expression ryu cold]
 [pose ryu arms_crossed]
-Ryu: La última vez fue fácil. Demasiado fácil. Casi me aburro.
-[wait 0.3]
-[expression ryu intense]
-Ryu: Pero has llegado hasta aquí. Algo habrás aprendido. Espero que sí, por tu bien.
+ryu: La última vez te faltó filo.
+[expression ryu defensive]
+ryu: Ahora has llegado a la final. Así que algo cambió.
 [end_if]
 [end_if]
 
+[camera_reset 0.4]
 [clear_focus]
 
-[wait 0.3]
+[wait 0.2]
 
 [depth sora 1.0 0.3]
 [depth akira 1.0 0.3]
@@ -145,42 +131,37 @@ Ryu: Pero has llegado hasta aquí. Algo habrás aprendido. Espero que sí, por t
 [focus sora]
 [expression sora serious]
 [pose sora confident]
-Sora: Las reglas de la final: tablero 3x3 estándar. Sin trucos. Sin reglas especiales.
-
-Sora "focused": Solo dos jugadores, un tablero, y todo lo que habéis aprendido.
+sora: Reglas de final: 3x3 estándar.
+sora: Sin rotación, sin condiciones especiales, sin teatro.
 
 [clear_focus]
 
-[wait 0.3]
-
 [focus ryu]
-[expression ryu cold]
-Ryu: Así es como debe ser. Sin distracciones. Sin excusas. La verdad desnuda sobre el tablero.
+[expression ryu intense]
+ryu: Una partida. Una verdad.
 
 [clear_focus]
 
 [focus sora]
-[expression sora serious]
-[pose sora confident]
-Sora → Tú: Ya no eres el novato que encontré en aquella aula. Juegas como uno de nosotros.
-
+[expression sora focused]
+sora -> player: Ya no eres novato.
+sora: Juega como tú.
 [clear_focus]
-
-[wait 0.4]
 
 [focus mei]
 [expression mei analytical]
-Mei → Tú: Recuerda. No mires el tablero. Mira a {b}él{/b}. Ahí está toda la información que necesitas.
+mei -> player: No mires casillas. Mírale a él.
+mei: Ahí está la información real.
 
 [clear_focus]
 
 [focus akira]
-[expression akira confident]
-Akira → Tú: Dale fuerte. Sin miedo. Hazle sentir lo que yo sentí.
+[expression akira focused_competitive]
+akira -> player: Si le haces dudar un turno, tienes la partida.
 
 [clear_focus]
 
-[wait 0.3]
+[wait 0.2]
 
 [exit sora left]
 [exit akira left]
@@ -195,15 +176,15 @@ Akira → Tú: Dale fuerte. Sin miedo. Hazle sentir lo que yo sentí.
 [expression ryu intense]
 [pose ryu leaning_forward]
 
-[wait 0.4]
-
-Ryu → Tú: He esperado esto. Más de lo que me gustaría admitir.
+ryu -> player: He esperado esto más de lo que voy a admitir.
 
 [camera_reset 0.3]
 
-[expression ryu cold]
-[pose ryu confident]
-Ryu: Demuéstrame quién eres. Y yo te mostraré quién soy yo.
+[expression ryu defensive]
+[pose ryu arms_crossed]
+ryu: Si me ganas, no habrá excusas.
+ryu: Si te gano, tampoco.
 
 [clear_focus]
 [wait 0.3]
+@end

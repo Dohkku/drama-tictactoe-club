@@ -49,9 +49,6 @@ func create_node(type: String, pos: Vector2 = Vector2.ZERO) -> GraphNode:
 	node.name = StringName(node.node_id)
 	_main.graph_edit.add_child(node)
 
-	if node is CutsceneNodeScript and node.has_signal("editor_requested"):
-		node.editor_requested.connect(_main._preview_manager.open_cinematic_editor)
-
 	_main.call_deferred("validate_all_nodes")
 	return node
 

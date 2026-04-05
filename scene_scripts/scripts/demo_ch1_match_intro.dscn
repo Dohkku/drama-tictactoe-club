@@ -8,32 +8,29 @@
 [enter sora center left]
 [expression sora happy]
 [pose sora confident]
-[wait 0.3]
+[wait 0.25]
 
-Sora: Bien. Aquí estamos. Las reglas son simples: tablero estándar, tres en línea.
+sora: Primera regla del club: respira antes de mover.
+sora: Segunda regla: no finjas calma si no la sientes. Se nota.
 
 [expression sora focused]
 [pose sora leaning_forward]
-Sora: Tú pones tu ficha, yo pongo la mía. Horizontal, vertical, diagonal. Ya sabes.
+sora: Voy a jugar limpio y sin trucos.
+sora: Quiero ver tu base real, no una versión impostada.
 
-[pose sora idle]
-[wait 0.2]
-Sora: Voy a jugar suave. No porque no pueda ir en serio...
-
-[close_up sora 1.2 0.4]
-[expression sora serious]
-Sora: ...sino porque quiero verte. Quiero entender cómo piensas antes de decidir nada.
-
-[wait 0.3]
-
-Sora → Tú: No te contengas. Quiero ver quién eres {b}de verdad{/b}.
-
+[close_up sora 1.2 0.35]
+[expression sora curious_repressed]
+sora -> player: Y quiero ver qué cara pones cuando te presiono una esquina.
+sora: Digo... por análisis técnico. Solo análisis técnico.
 [camera_reset 0.3]
-[wait 0.2]
 
-[expression sora happy]
+[expression sora flustered]
+[wait 0.2]
+sora: Olvida eso. Empieza.
+
+[expression sora focused]
 [pose sora excited]
-Sora: ¡Vamos!
+sora: Enséñame tu primera línea.
 
 [split]
 [board_enable]

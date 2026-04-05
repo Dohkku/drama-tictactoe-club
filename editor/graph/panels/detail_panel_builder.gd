@@ -278,6 +278,29 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		node.character_data = CharacterDataScript.new()
 	var data: Resource = node.character_data
 
+	if data.resource_path != "":
+		var reload_hbox := HBoxContainer.new()
+		reload_hbox.add_theme_constant_override("separation", 4)
+		var path_lbl := Label.new()
+		path_lbl.text = data.resource_path.get_file()
+		path_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		path_lbl.add_theme_font_size_override("font_size", 10)
+		path_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+		reload_hbox.add_child(path_lbl)
+		var reload_btn := Button.new()
+		reload_btn.text = "Recargar"
+		reload_btn.tooltip_text = "Recargar esta resource desde disco (descarta cambios no guardados)"
+		reload_btn.add_theme_font_size_override("font_size", 11)
+		var reload_path: String = data.resource_path
+		reload_btn.pressed.connect(func():
+			var fresh = ResourceLoader.load(reload_path, "", ResourceLoader.CACHE_MODE_REPLACE)
+			if fresh:
+				node.character_data = fresh
+				node._refresh_display()
+				show_detail_for_node(node))
+		reload_hbox.add_child(reload_btn)
+		parent.add_child(reload_hbox)
+
 	_add_section_header(parent, "Identidad")
 	_add_field(parent, "ID", data.character_id, func(val: String):
 		data.character_id = val; node._refresh_display())
@@ -287,12 +310,21 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		data.color = val; node._refresh_display())
 
 	_add_section_header(parent, "Retrato")
+	var portrait_preview := TextureRect.new()
+	portrait_preview.custom_minimum_size = Vector2(96, 144)
+	portrait_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait_preview.texture = data.portrait_image
+	var preview_center := CenterContainer.new()
+	preview_center.add_child(portrait_preview)
+	parent.add_child(preview_center)
 	var _img_change := func(val: String):
 		if ResourceLoader.exists(val):
 			data.portrait_image = load(val)
+			portrait_preview.texture = data.portrait_image
 			node._refresh_display()
 	_add_file_field(parent, "Imagen", data.portrait_image.resource_path if data.portrait_image else "", _img_change,
-		PackedStringArray(["*.png,*.jpg,*.jpeg,*.webp ; Portrait Images"]), "res://")
+		PackedStringArray(["*.png,*.jpg,*.jpeg,*.webp ; Portrait Images"]), "res://characters/portraits/")
 	var size_hint := Label.new()
 	size_hint.text = "Formato: 512x768 px (2:3)"
 	size_hint.add_theme_font_size_override("font_size", 10)
@@ -311,41 +343,148 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		["left", "center", "right", "away"],
 		func(val: String): data.default_look = val)
 
-	_add_section_header(parent, "Expresiones (%d)" % data.expressions.size())
+	var auto_linked_count: int = _auto_link_expression_images(data)
+	if auto_linked_count > 0:
+		node._refresh_display()
+		var auto_info := Label.new()
+		auto_info.text = "Auto-asignadas %d imagenes por nombre de archivo" % auto_linked_count
+		auto_info.add_theme_font_size_override("font_size", 11)
+		auto_info.add_theme_color_override("font_color", Color(0.6, 0.8, 0.55))
+		parent.add_child(auto_info)
+
+	var missing_count: int = 0
+	for expr_name in data.expressions:
+		if data.expression_images.get(expr_name) == null:
+			missing_count += 1
+	var header_text: String = "Expresiones (%d)" % data.expressions.size()
+	if missing_count > 0:
+		header_text += "  ⚠ %d sin imagen" % missing_count
+	_add_section_header(parent, header_text)
+
+	var expr_grid := GridContainer.new()
+	expr_grid.columns = 2
+	expr_grid.add_theme_constant_override("h_separation", 6)
+	expr_grid.add_theme_constant_override("v_separation", 8)
+	parent.add_child(expr_grid)
+
 	for expr_name in data.expressions:
 		var expr_color: Color = data.expressions[expr_name]
-		var hbox := HBoxContainer.new()
-		hbox.add_theme_constant_override("separation", 4)
+		var tex: Texture2D = data.expression_images.get(expr_name)
+
+		var cell := PanelContainer.new()
+		cell.custom_minimum_size = Vector2(110, 0)
+		var cell_style := StyleBoxFlat.new()
+		cell_style.bg_color = Color(0.12, 0.12, 0.16, 0.6)
+		cell_style.set_corner_radius_all(4)
+		cell_style.set_content_margin_all(4)
+		if tex == null:
+			cell_style.border_color = Color(0.9, 0.4, 0.2)
+			cell_style.set_border_width_all(2)
+		else:
+			cell_style.border_color = Color(0.3, 0.3, 0.4)
+			cell_style.set_border_width_all(1)
+		cell.add_theme_stylebox_override("panel", cell_style)
+
+		var cell_vbox := VBoxContainer.new()
+		cell_vbox.add_theme_constant_override("separation", 3)
+		cell.add_child(cell_vbox)
+
+		# Thumbnail
+		var thumb := TextureRect.new()
+		thumb.custom_minimum_size = Vector2(96, 144)
+		thumb.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		thumb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		thumb.texture = tex
+		thumb.tooltip_text = expr_name
+		if tex == null:
+			thumb.modulate = Color(1, 1, 1, 0.4)
+		cell_vbox.add_child(thumb)
+
+		# Name + missing badge
 		var name_lbl := Label.new()
-		name_lbl.text = expr_name
-		name_lbl.custom_minimum_size.x = 70
-		name_lbl.add_theme_font_size_override("font_size", 12)
-		name_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
-		hbox.add_child(name_lbl)
+		name_lbl.text = expr_name if tex != null else "%s (sin img)" % expr_name
+		name_lbl.add_theme_font_size_override("font_size", 11)
+		name_lbl.add_theme_color_override("font_color",
+			GraphThemeC.COLOR_TEXT if tex != null else Color(1.0, 0.6, 0.4))
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cell_vbox.add_child(name_lbl)
+
+		# Controls row: color, browse, clear, delete
+		var ctrl_hbox := HBoxContainer.new()
+		ctrl_hbox.add_theme_constant_override("separation", 2)
+		ctrl_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+
 		var color_pick := ColorPickerButton.new()
 		color_pick.color = expr_color
-		color_pick.custom_minimum_size = Vector2(28, 20)
+		color_pick.custom_minimum_size = Vector2(22, 18)
 		var ename_ref: String = expr_name
 		color_pick.color_changed.connect(func(c: Color): data.expressions[ename_ref] = c)
-		hbox.add_child(color_pick)
-		if data.expression_images.has(expr_name) and data.expression_images[expr_name] != null:
-			var img_lbl := Label.new()
-			img_lbl.text = "img"
-			img_lbl.add_theme_font_size_override("font_size", 9)
-			img_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_START)
-			hbox.add_child(img_lbl)
+		ctrl_hbox.add_child(color_pick)
+
+		var browse_btn := Button.new()
+		browse_btn.text = "..."
+		browse_btn.tooltip_text = "Elegir imagen"
+		browse_btn.add_theme_font_size_override("font_size", 10)
+		browse_btn.custom_minimum_size = Vector2(24, 18)
+		var browse_ename: String = expr_name
+		var browse_thumb: TextureRect = thumb
+		var browse_name_lbl: Label = name_lbl
+		var browse_cell_style: StyleBoxFlat = cell_style
+		browse_btn.pressed.connect(func():
+			var fd = _main._file_dialog
+			fd.filters = PackedStringArray(["*.png,*.jpg,*.jpeg,*.webp ; Portrait Images"])
+			fd.current_dir = "res://characters/portraits/"
+			var _on_pick := func(path: String):
+				if ResourceLoader.exists(path):
+					var new_tex = load(path)
+					data.expression_images[browse_ename] = new_tex
+					browse_thumb.texture = new_tex
+					browse_thumb.modulate = Color(1, 1, 1, 1)
+					browse_name_lbl.text = browse_ename
+					browse_name_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
+					browse_cell_style.border_color = Color(0.3, 0.3, 0.4)
+					browse_cell_style.set_border_width_all(1)
+					node._refresh_display()
+			fd.file_selected.connect(_on_pick, CONNECT_ONE_SHOT)
+			fd.popup_centered(Vector2i(600, 400)))
+		ctrl_hbox.add_child(browse_btn)
+
+		var clear_img_btn := Button.new()
+		clear_img_btn.text = "o"
+		clear_img_btn.tooltip_text = "Quitar imagen (usar color)"
+		clear_img_btn.add_theme_font_size_override("font_size", 10)
+		clear_img_btn.custom_minimum_size = Vector2(20, 18)
+		var clear_ename: String = expr_name
+		var clear_thumb: TextureRect = thumb
+		var clear_name_lbl: Label = name_lbl
+		var clear_cell_style: StyleBoxFlat = cell_style
+		clear_img_btn.pressed.connect(func():
+			data.expression_images[clear_ename] = null
+			clear_thumb.texture = null
+			clear_thumb.modulate = Color(1, 1, 1, 0.4)
+			clear_name_lbl.text = "%s (sin img)" % clear_ename
+			clear_name_lbl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.4))
+			clear_cell_style.border_color = Color(0.9, 0.4, 0.2)
+			clear_cell_style.set_border_width_all(2)
+			node._refresh_display())
+		ctrl_hbox.add_child(clear_img_btn)
+
 		var del_btn := Button.new()
-		del_btn.text = "x"
+		del_btn.text = "X"
+		del_btn.tooltip_text = "Borrar expresion"
 		del_btn.add_theme_font_size_override("font_size", 10)
 		del_btn.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
-		del_btn.custom_minimum_size = Vector2(20, 0)
+		del_btn.custom_minimum_size = Vector2(20, 18)
 		var del_ename: String = expr_name
 		del_btn.pressed.connect(func():
 			data.expressions.erase(del_ename)
 			data.expression_images.erase(del_ename)
 			show_detail_for_node(node))
-		hbox.add_child(del_btn)
-		parent.add_child(hbox)
+		ctrl_hbox.add_child(del_btn)
+
+		cell_vbox.add_child(ctrl_hbox)
+		expr_grid.add_child(cell)
 
 	var add_expr_hbox := HBoxContainer.new()
 	add_expr_hbox.add_theme_constant_override("separation", 4)
@@ -532,24 +671,12 @@ func _build_cutscene_detail(parent: VBoxContainer, node) -> void:
 	parent.add_child(preview_btn)
 	parent.add_child(HSeparator.new())
 
-	var edit_btn := Button.new()
-	edit_btn.text = "EDITAR ESCENA EN NODOS"
-	edit_btn.custom_minimum_size = Vector2(0, 44)
-	edit_btn.add_theme_font_size_override("font_size", 16)
-	edit_btn.add_theme_color_override("font_color", Color.WHITE)
-	var eb_style := StyleBoxFlat.new()
-	eb_style.bg_color = Color(0.25, 0.45, 0.85)
-	eb_style.set_corner_radius_all(6)
-	eb_style.content_margin_left = 12
-	eb_style.content_margin_right = 12
-	eb_style.content_margin_top = 8
-	eb_style.content_margin_bottom = 8
-	edit_btn.add_theme_stylebox_override("normal", eb_style)
-	var eb_hover := eb_style.duplicate()
-	eb_hover.bg_color = Color(0.35, 0.55, 0.95)
-	edit_btn.add_theme_stylebox_override("hover", eb_hover)
-	edit_btn.pressed.connect(func(): _main._preview_manager.open_cinematic_editor(node))
-	parent.add_child(edit_btn)
+	var edit_info := Label.new()
+	edit_info.text = "Edicion de cinematica: usa el script (.dscn) en este panel."
+	edit_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	edit_info.add_theme_font_size_override("font_size", 11)
+	edit_info.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+	parent.add_child(edit_info)
 
 	parent.add_child(HSeparator.new())
 
@@ -710,6 +837,102 @@ func _build_simultaneous_detail(parent: VBoxContainer, node) -> void:
 		var opp_data: Dictionary = node.opponent_configs[i]
 		_add_slider_field(parent, "Dificultad IA", opp_data.get("ai_difficulty", 0.5), 0.0, 1.0, func(val: float):
 			opp_data["ai_difficulty"] = val)
+
+
+# ── Character Portrait Auto-Link ──
+
+func _auto_link_expression_images(data: Resource) -> int:
+	if data == null:
+		return 0
+	if data.character_id == "":
+		return 0
+	if not (data.expressions is Dictionary):
+		return 0
+	if data.expressions.is_empty():
+		return 0
+	if not (data.expression_images is Dictionary):
+		data.expression_images = {}
+
+	var linked_count: int = 0
+	var portrait_index: Dictionary = _build_portrait_index()
+	for expr_key in data.expressions:
+		if data.expression_images.get(expr_key) != null:
+			continue
+		var tex: Texture2D = _find_expression_texture(data.character_id, str(expr_key), portrait_index)
+		if tex != null:
+			data.expression_images[expr_key] = tex
+			linked_count += 1
+
+	if data.portrait_image == null:
+		var neutral_tex: Texture2D = _find_expression_texture(data.character_id, "neutral", portrait_index)
+		if neutral_tex != null:
+			data.portrait_image = neutral_tex
+
+	return linked_count
+
+
+func _build_portrait_index() -> Dictionary:
+	var index: Dictionary = {}
+	var dir := DirAccess.open("res://characters/portraits")
+	if dir == null:
+		return index
+
+	dir.list_dir_begin()
+	while true:
+		var file_name: String = dir.get_next()
+		if file_name == "":
+			break
+		if dir.current_is_dir():
+			continue
+
+		var ext := file_name.get_extension().to_lower()
+		if ext != "png" and ext != "jpg" and ext != "jpeg" and ext != "webp":
+			continue
+
+		var base_name := file_name.get_basename().to_lower()
+		if not index.has(base_name):
+			index[base_name] = "res://characters/portraits/%s" % file_name
+	dir.list_dir_end()
+	return index
+
+
+func _find_expression_texture(character_id: String, expr_name: String, portrait_index: Dictionary) -> Texture2D:
+	var char_key := _normalize_expression_token(character_id)
+	var expr_key := _normalize_expression_token(expr_name)
+	if char_key == "" or expr_key == "":
+		return null
+
+	var portrait_key := "%s_%s" % [char_key, expr_key]
+	var portrait_path: String = portrait_index.get(portrait_key, "")
+	if portrait_path == "":
+		return null
+	if not ResourceLoader.exists(portrait_path):
+		return null
+	var tex := load(portrait_path)
+	return tex as Texture2D
+
+
+func _normalize_expression_token(value: String) -> String:
+	var raw := value.to_lower().strip_edges()
+	var normalized := ""
+	var previous_was_sep := false
+
+	for i in raw.length():
+		var ch := raw.substr(i, 1)
+		var is_alpha_num := (ch >= "a" and ch <= "z") or (ch >= "0" and ch <= "9")
+		if is_alpha_num:
+			normalized += ch
+			previous_was_sep = false
+		elif not previous_was_sep:
+			normalized += "_"
+			previous_was_sep = true
+
+	while normalized.begins_with("_"):
+		normalized = normalized.substr(1)
+	while normalized.ends_with("_"):
+		normalized = normalized.substr(0, normalized.length() - 1)
+
+	return normalized
 
 
 # ── Field Helpers ──
