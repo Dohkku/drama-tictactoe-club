@@ -871,20 +871,36 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 		hbox.add_theme_constant_override("separation", 4)
 		var name_lbl := Label.new()
 		name_lbl.text = expr_name
-		name_lbl.custom_minimum_size.x = 80
+		name_lbl.custom_minimum_size.x = 70
 		name_lbl.add_theme_font_size_override("font_size", 12)
 		name_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
 		hbox.add_child(name_lbl)
-		var color_rect := ColorRect.new()
-		color_rect.color = expr_color
-		color_rect.custom_minimum_size = Vector2(24, 16)
-		hbox.add_child(color_rect)
+		# Editable color picker
+		var color_pick := ColorPickerButton.new()
+		color_pick.color = expr_color
+		color_pick.custom_minimum_size = Vector2(28, 20)
+		var ename_ref: String = expr_name
+		color_pick.color_changed.connect(func(c: Color): data.expressions[ename_ref] = c)
+		hbox.add_child(color_pick)
+		# Image indicator
 		if data.expression_images.has(expr_name) and data.expression_images[expr_name] != null:
 			var img_lbl := Label.new()
 			img_lbl.text = "img"
-			img_lbl.add_theme_font_size_override("font_size", 10)
+			img_lbl.add_theme_font_size_override("font_size", 9)
 			img_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_START)
 			hbox.add_child(img_lbl)
+		# Delete button
+		var del_btn := Button.new()
+		del_btn.text = "x"
+		del_btn.add_theme_font_size_override("font_size", 10)
+		del_btn.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
+		del_btn.custom_minimum_size = Vector2(20, 0)
+		var del_ename: String = expr_name
+		del_btn.pressed.connect(func():
+			data.expressions.erase(del_ename)
+			data.expression_images.erase(del_ename)
+			_show_detail_for_node(node))
+		hbox.add_child(del_btn)
 		parent.add_child(hbox)
 
 	# Add expression button
@@ -910,11 +926,25 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 	_add_section_header(parent, "Poses (%d)" % data.poses.size())
 
 	for pose_name in data.poses:
+		var pose_hbox := HBoxContainer.new()
+		pose_hbox.add_theme_constant_override("separation", 4)
 		var pose_lbl := Label.new()
-		pose_lbl.text = "  %s" % pose_name
+		pose_lbl.text = pose_name
+		pose_lbl.custom_minimum_size.x = 100
 		pose_lbl.add_theme_font_size_override("font_size", 12)
 		pose_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT)
-		parent.add_child(pose_lbl)
+		pose_hbox.add_child(pose_lbl)
+		var del_pose_btn := Button.new()
+		del_pose_btn.text = "x"
+		del_pose_btn.add_theme_font_size_override("font_size", 10)
+		del_pose_btn.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
+		del_pose_btn.custom_minimum_size = Vector2(20, 0)
+		var del_pname: String = pose_name
+		del_pose_btn.pressed.connect(func():
+			data.poses.erase(del_pname)
+			_show_detail_for_node(node))
+		pose_hbox.add_child(del_pose_btn)
+		parent.add_child(pose_hbox)
 
 	var add_pose_hbox := HBoxContainer.new()
 	add_pose_hbox.add_theme_constant_override("separation", 4)
@@ -960,8 +990,20 @@ func _build_character_detail(parent: VBoxContainer, node) -> void:
 func _build_match_detail(parent: VBoxContainer, node) -> void:
 	var data: Dictionary = node.match_data
 
-	_add_slider_field(parent, "Dificultad IA", data.get("ai_difficulty", 0.5), 0.0, 1.0, func(val: float):
+	# Difficulty with label
+	var diff_val: float = data.get("ai_difficulty", 0.5)
+	var diff_label_text: String = "Facil" if diff_val < 0.3 else ("Normal" if diff_val < 0.6 else ("Dificil" if diff_val < 0.85 else "Experto"))
+	var diff_info := Label.new()
+	diff_info.text = "Nivel: %s (%d%%)" % [diff_label_text, int(diff_val * 100)]
+	diff_info.add_theme_font_size_override("font_size", 12)
+	diff_info.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+	parent.add_child(diff_info)
+
+	_add_slider_field(parent, "Dificultad IA", diff_val, 0.0, 1.0, func(val: float):
 		data["ai_difficulty"] = val
+		diff_info.text = "Nivel: %s (%d%%)" % [
+			"Facil" if val < 0.3 else ("Normal" if val < 0.6 else ("Dificil" if val < 0.85 else "Experto")),
+			int(val * 100)]
 		node._refresh_display())
 
 	_add_option_field(parent, "Estilo jugador", data.get("player_style", "slam"),

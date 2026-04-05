@@ -15,7 +15,7 @@ const CATEGORIES := {
 	"dialogue": {
 		"label": "DIALOGO", "color": Color(0.3, 0.65, 0.9),
 		"commands": {
-			"dialogue": {"character": "char", "expression": "text_short", "text": "text", "target": "char_opt"},
+			"dialogue": {"character": "char", "expression": "expr", "text": "text", "target": "char_opt"},
 		}
 	},
 	"char_action": {
@@ -29,8 +29,8 @@ const CATEGORIES := {
 	"char_state": {
 		"label": "ESTADO", "color": Color(0.9, 0.45, 0.6),
 		"commands": {
-			"expression": {"character": "char", "expression": "text_short"},
-			"pose": {"character": "char", "state": "text_short"},
+			"expression": {"character": "char", "expression": "expr"},
+			"pose": {"character": "char", "state": "pose_select"},
 			"look_at": {"character": "char", "target": "text_short"},
 			"depth": {"character": "char", "depth": "float:0.5:1.5", "duration": "float:0.1:2.0"},
 		}
@@ -65,8 +65,8 @@ const CATEGORIES := {
 	"audio": {
 		"label": "AUDIO", "color": Color(0.2, 0.7, 0.65),
 		"commands": {
-			"music": {"track": "text_short"},
-			"sfx": {"sound": "text_short"},
+			"music": {"track": "audio_music"},
+			"sfx": {"sound": "audio_sfx"},
 			"stop_music": {},
 		}
 	},
@@ -349,5 +349,97 @@ func _add_param_widget(param_name: String, param_type: String, current_val) -> v
 		var pname: String = param_name
 		opt.item_selected.connect(func(i: int): params[pname] = opt.get_item_text(i))
 		hbox.add_child(opt)
+
+	elif param_type == "expr":
+		# Expression dropdown populated from selected character
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		opt.add_item("neutral")
+		var char_id: String = params.get("character", "")
+		for ch in available_characters:
+			if ch.character_id == char_id:
+				opt.clear()
+				for expr_name in ch.expressions:
+					opt.add_item(expr_name)
+				break
+		var cur: String = str(current_val)
+		for i in range(opt.item_count):
+			if opt.get_item_text(i) == cur:
+				opt.selected = i
+				break
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int): params[pname] = opt.get_item_text(i))
+		hbox.add_child(opt)
+
+	elif param_type == "pose_select":
+		# Pose dropdown populated from selected character
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		opt.add_item("idle")
+		var char_id: String = params.get("character", "")
+		for ch in available_characters:
+			if ch.character_id == char_id:
+				opt.clear()
+				for pose_name in ch.poses:
+					opt.add_item(pose_name)
+				if opt.item_count == 0:
+					opt.add_item("idle")
+				break
+		var cur: String = str(current_val)
+		for i in range(opt.item_count):
+			if opt.get_item_text(i) == cur:
+				opt.selected = i
+				break
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int): params[pname] = opt.get_item_text(i))
+		hbox.add_child(opt)
+
+	elif param_type == "audio_music" or param_type == "audio_sfx":
+		# Audio dropdown + play button
+		var audio_hbox := HBoxContainer.new()
+		audio_hbox.add_theme_constant_override("separation", 4)
+		var opt := OptionButton.new()
+		opt.add_theme_font_size_override("font_size", 10)
+		opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# Scan audio directory
+		var dir_path: String = "res://audio/music" if param_type == "audio_music" else "res://audio/sfx"
+		var dir := DirAccess.open(dir_path)
+		if dir:
+			dir.list_dir_begin()
+			var fname: String = dir.get_next()
+			while fname != "":
+				if not fname.ends_with(".import") and not fname.begins_with("."):
+					opt.add_item(fname)
+				fname = dir.get_next()
+		var cur: String = str(current_val)
+		for i in range(opt.item_count):
+			if opt.get_item_text(i) == cur or cur.ends_with(opt.get_item_text(i)):
+				opt.selected = i
+				break
+		var pname: String = param_name
+		opt.item_selected.connect(func(i: int): params[pname] = opt.get_item_text(i))
+		audio_hbox.add_child(opt)
+		# Play button
+		var play_btn := Button.new()
+		play_btn.text = ">"
+		play_btn.add_theme_font_size_override("font_size", 10)
+		play_btn.custom_minimum_size = Vector2(24, 0)
+		play_btn.pressed.connect(func():
+			var selected_file: String = opt.get_item_text(opt.selected) if opt.selected >= 0 else ""
+			if selected_file != "":
+				var full_path: String = dir_path + "/" + selected_file
+				if ResourceLoader.exists(full_path):
+					var stream = load(full_path)
+					if stream:
+						var player := AudioStreamPlayer.new()
+						player.stream = stream
+						player.bus = "Master"
+						add_child(player)
+						player.play()
+						player.finished.connect(func(): player.queue_free()))
+		audio_hbox.add_child(play_btn)
+		hbox.add_child(audio_hbox)
 
 	_params_container.add_child(hbox)
