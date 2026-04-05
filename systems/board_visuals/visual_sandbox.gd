@@ -380,6 +380,7 @@ func _do_move(index: int, is_player: bool) -> void:
 
 	_animating = false
 	_position_hand_pieces()
+	_update_ghost_state()
 
 	var label = "J1" if is_player else "J2 (IA)"
 	_log("%s → celda %d" % [label, index])
@@ -411,6 +412,17 @@ func _do_move(index: int, is_player: bool) -> void:
 		_log("[color=yellow]EMPATE[/color]")
 
 	_update_status()
+
+
+var _ghost_enabled: bool = true
+
+func _update_ghost_state(enabled: bool = _ghost_enabled) -> void:
+	_ghost_enabled = enabled
+	var show: bool = _ghost_enabled and not _animating and not logic.game_over and logic.current_turn == 1
+	var ratio: float = 0.85
+	for cell in cells:
+		cell.set_ghost(player_design, PLAYER_COLOR, show)
+		cell.ghost_piece_ratio = ratio
 
 
 func _get_cell_size() -> Vector2:
@@ -547,6 +559,15 @@ func _build_ui() -> void:
 	ai_check.button_pressed = true
 	ai_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 	left.add_child(ai_check)
+
+	var ghost_check := CheckBox.new()
+	ghost_check.text = "Ghost piece (hover)"
+	ghost_check.button_pressed = true
+	ghost_check.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	ghost_check.toggled.connect(func(on: bool): _update_ghost_state(on))
+	left.add_child(ghost_check)
+	# Enable ghost by default
+	call_deferred("_update_ghost_state", true)
 
 	left.add_child(HSeparator.new())
 	_lbl(left, "Estilo de colocación", 13, Color(0.6, 0.6, 0.75))

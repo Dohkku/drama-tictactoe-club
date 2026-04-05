@@ -1,160 +1,102 @@
 @scene demo_ch2_arrival
 
-[background res://backgrounds/background_2.png]
-[music res://audio/music/bgm_tense.wav]
-[title_card La Prueba | Capitulo 2]
-[wait 2.0]
-[camera_mode smooth]
+[title_card ]
+[title_card La Prueba | Capítulo 2]
+[title_card ]
+[focus]
 [fullscreen]
-
+[music bgm_chill.mp3]
 [enter sora left left]
 [expression sora happy]
-[pose sora excited]
-[wait 0.3]
-
-Sora: ¡Genial! Tu primera sesión oficial en el club.
-
-[expression sora focused]
-[pose sora idle]
-Sora: Hoy quiero que conozcas a—
-
-[wait 0.2]
-
-[camera_mode snappy]
+[expression sora neutral]
+[title_card ]
+Sora: ¡Bien! Tu primera sesión oficial. Hoy quiero presentarte a—
+[title_card ]
+[focus]
 [shake 0.4 0.3]
-[flash #223366 0.06]
-
+[shake 0.5 0.06]
+[shake 0.5 0.3]
+[music ]
+[music bgm_tense.wav]
 [enter ryu far_right right]
 [expression ryu cold]
-[pose ryu arms_crossed]
-[wait 0.3]
-
-[camera_mode smooth]
+[expression ryu neutral]
+[title_card ]
+[focus]
 [expression sora nervous]
-[pose sora tense]
-[look_at sora ryu]
-
+[expression sora neutral]
+[expression sora neutral]
 Sora: ...Ryu.
-
 [focus ryu]
-[depth ryu 1.2 0.5]
-[close_up ryu 1.3 0.5]
-
-[wait 0.5]
-
+[expression ryu neutral]
+[focus ryu]
+[title_card ]
 Ryu: He oído que hay alguien nuevo.
-
-[camera_reset 0.4]
-[depth ryu 1.0 0.4]
-[clear_focus]
-
-[move ryu center_right]
-[wait 0.2]
-
-[look_at ryu sora]
-Ryu "neutral": Sora. ¿Este es el que dices que tiene potencial?
-
-[look_at sora ryu]
+[focus]
+[expression ryu neutral]
+[focus]
+[enter ryu center_right ]
+[title_card ]
+[expression ryu neutral]
+Ryu "neutral": Sora. ¿Este es tu gran descubrimiento? ¿El que supuestamente «tiene potencial»?
+[expression sora neutral]
 [expression sora nervous]
 Sora: Ryu, dale un respiro. Acaba de llegar.
-
 [focus ryu]
 [expression ryu cold]
-[pose ryu confident]
-Ryu: No necesita un respiro. Necesita una prueba.
-
-[clear_focus]
-
+[expression ryu neutral]
+Ryu: No necesita un respiro. Necesita una prueba. Si le das un respiro ahora, nunca sabrás de qué está hecho.
+[focus]
 [expression sora serious]
-[pose sora arms_crossed]
+[expression sora neutral]
 Sora: No puedes simplemente aparecer y—
-
-[camera_snap ryu 1.4]
-[flash #ffffff 0.04]
-[expression ryu intense]
-[pose ryu leaning_forward]
-Ryu: Puedo. Y lo hago.
-
-[camera_reset 0.3]
-[wait 0.3]
-
-[depth sora 0.8 0.3]
 [focus ryu]
-[move ryu center]
-
-[expression ryu cold]
-[pose ryu arms_crossed]
-Ryu → Tú: Escucha. No me importa lo que Sora te haya dicho.
-
-Ryu: Este club no es un refugio. No es un lugar para pasar el rato.
-
-[close_up ryu 1.2 0.4]
-Ryu "intense": Es un campo de batalla. Y si no puedes aguantar la presión...
-
-[camera_reset 0.3]
-[expression ryu neutral]
-Ryu: ...no mereces estar aquí.
-
-[clear_focus]
-[depth sora 1.0 0.3]
-
-[expression sora serious]
-[pose sora leaning_forward]
-Sora: Ryu, ya basta. No tienes derecho a decidir quién—
-
-[look_at ryu sora]
-Ryu "cold": Tengo todo el derecho. Soy el mejor jugador de este club.
-
-[wait 0.3]
-
-[expression ryu neutral]
-[pose ryu thinking]
-Ryu: Pero no soy injusto.
-
-[look_at ryu center]
-Ryu → Tú: Una partida. Tú contra mí. Sin piedad.
-
-[close_up ryu 1.3 0.4]
+[shake 0.5 0.04]
 [expression ryu intense]
-Ryu: Si aguantas... te respetaré. Si no...
-
-[camera_reset 0.3]
-[pose ryu arms_crossed]
+[expression ryu neutral]
+[shake 0.5 0.3]
+Ryu: Puedo. Y lo hago. Porque alguien tiene que mantener el nivel de este sitio mientras tú te dedicas a reclutar gente en aulas vacías.
+[focus]
+[title_card ]
+[expression sora neutral]
+[focus ryu]
+[enter ryu center ]
 [expression ryu cold]
-Ryu: ...ya sabes dónde está la puerta.
-
-[wait 0.3]
-
-[depth ryu 0.9 0.3]
+[expression ryu neutral]
+Ryu → Tú: Escucha. No me importa lo que Sora te haya contado. No me importa si cree que eres especial.
+Ryu: Este club no es un refugio para gente que no tiene adónde ir después de clase.
+[focus ryu]
+Ryu "intense": Es el único lugar de este instituto donde las palabras no sirven. Donde no puedes mentir, ni esconderte, ni fingir.
+[focus]
+Ryu: El tablero lo muestra todo. {b}Todo.{/b}
+[expression ryu neutral]
+Ryu: Y si lo que muestra es que no das la talla...
+[expression ryu cold]
+[expression ryu neutral]
+Ryu: ...ya sabes dónde está la puerta. Nadie te va a juzgar por irte. Pero yo sí te voy a juzgar si te quedas y no estás a la altura.
+[focus]
+[expression sora neutral]
+[expression ryu neutral]
 [focus sora]
 [expression sora nervous]
-[pose sora tense]
-[look_at sora center]
-
-Sora → Tú: No tienes que hacer esto. De verdad.
-
-[wait 0.3]
-
+[expression sora neutral]
+[expression sora neutral]
+Sora → Tú: No tienes que hacer esto. De verdad. No tienes que demostrarle nada a nadie.
+[title_card ]
 [expression sora serious]
-[pose sora confident]
+[expression sora neutral]
 Sora: Pero si quieres... yo estaré aquí. Pase lo que pase.
-
-[clear_focus]
-[depth ryu 1.0 0.3]
-
-[look_at ryu sora]
+[focus]
 [expression ryu neutral]
-Ryu: Qué tierno.
-
-[exit sora left]
-[wait 0.3]
-
-[move ryu center]
+[expression ryu neutral]
+[expression ryu neutral]
+Ryu: Qué conmovedor.
+[enter sora center ]
+[title_card ]
+[enter ryu center ]
 [expression ryu cold]
-[pose ryu confident]
+[expression ryu neutral]
 [focus ryu]
-
-Ryu → Tú: Al tablero.
-
-[clear_focus]
-[wait 0.3]
+Ryu → Tú: Al tablero. Ahora.
+[focus]
+[title_card ]

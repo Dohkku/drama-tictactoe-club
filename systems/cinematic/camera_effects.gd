@@ -201,41 +201,52 @@ class _SpeedLinesOverlay extends Control:
 		var is_horizontal: bool = line_direction == "left" or line_direction == "right"
 		var is_radial: bool = line_direction == "radial"
 
-		for l in _lines:
-			var col: Color = Color(line_color)
-			col.a = l.alpha * _alpha
+		# Draw two passes: outline (black, thicker) then fill (color)
+		for pass_idx in 2:
+			for l in _lines:
+				var col: Color
+				var w: float
+				if pass_idx == 0:
+					# Outline pass
+					col = Color(0.0, 0.0, 0.0, l.alpha * _alpha * 0.8)
+					w = l.width + 2.0
+				else:
+					# Fill pass
+					col = Color(line_color)
+					col.a = l.alpha * _alpha
+					w = l.width
 
-			if is_radial:
-				var center: Vector2 = sz / 2.0
-				var angle: float = l.offset * TAU
-				var base_r: float = 30.0 + l.perp * 60.0
-				var grow: float = _movement * 300.0
-				var inner_r: float = base_r + grow
-				var outer_r: float = inner_r + l.length
-				var dir := Vector2(cos(angle), sin(angle))
-				draw_line(center + dir * inner_r, center + dir * outer_r, col, l.width, true)
-			elif is_horizontal:
-				var y: float = l.perp * sz.y
-				var travel: float = sz.x + l.length * 2
-				var raw: float = l.offset * travel + _movement * travel * 2.0
-				var wrapped: float = fmod(raw, travel)
-				if line_direction == "right":
-					var x: float = wrapped - l.length
-					draw_line(Vector2(x, y), Vector2(x + l.length, y), col, l.width, true)
-				else:
-					var x: float = sz.x - wrapped + l.length
-					draw_line(Vector2(x, y), Vector2(x - l.length, y), col, l.width, true)
-			else:  # up/down
-				var x: float = l.perp * sz.x
-				var travel: float = sz.y + l.length * 2
-				var raw: float = l.offset * travel + _movement * travel * 2.0
-				var wrapped: float = fmod(raw, travel)
-				if line_direction == "down":
-					var y: float = wrapped - l.length
-					draw_line(Vector2(x, y), Vector2(x, y + l.length), col, l.width, true)
-				else:
-					var y: float = sz.y - wrapped + l.length
-					draw_line(Vector2(x, y), Vector2(x, y - l.length), col, l.width, true)
+				if is_radial:
+					var center: Vector2 = sz / 2.0
+					var angle: float = l.offset * TAU
+					var base_r: float = 30.0 + l.perp * 60.0
+					var grow: float = _movement * 300.0
+					var inner_r: float = base_r + grow
+					var outer_r: float = inner_r + l.length
+					var dir := Vector2(cos(angle), sin(angle))
+					draw_line(center + dir * inner_r, center + dir * outer_r, col, w, true)
+				elif is_horizontal:
+					var y: float = l.perp * sz.y
+					var travel: float = sz.x + l.length * 2
+					var raw: float = l.offset * travel + _movement * travel * 2.0
+					var wrapped: float = fmod(raw, travel)
+					if line_direction == "right":
+						var x: float = wrapped - l.length
+						draw_line(Vector2(x, y), Vector2(x + l.length, y), col, w, true)
+					else:
+						var x: float = sz.x - wrapped + l.length
+						draw_line(Vector2(x, y), Vector2(x - l.length, y), col, w, true)
+				else:  # up/down
+					var x: float = l.perp * sz.x
+					var travel: float = sz.y + l.length * 2
+					var raw: float = l.offset * travel + _movement * travel * 2.0
+					var wrapped: float = fmod(raw, travel)
+					if line_direction == "down":
+						var y: float = wrapped - l.length
+						draw_line(Vector2(x, y), Vector2(x, y + l.length), col, w, true)
+					else:
+						var y: float = sz.y - wrapped + l.length
+						draw_line(Vector2(x, y), Vector2(x, y - l.length), col, w, true)
 
 
 # ── Wipe Inner Class ──

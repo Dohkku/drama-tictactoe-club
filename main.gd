@@ -156,6 +156,84 @@ func _log_debug(text: String) -> void:
 	debug_log.text = "\n".join(_debug_lines)
 
 
+## ── Editor preview bridge ─────────────────────────────────────────────
+## Minimal public API so the editor's PreviewManager can drive this
+## embedded main.tscn instance: pause/resume, step, snapshots, reload.
+
+func preview_pause() -> void:
+	if runner:
+		runner.pause()
+	if board:
+		board.input_enabled = false
+		if board.game_controller:
+			board.game_controller.update_input_state()
+
+
+func preview_resume() -> void:
+	if runner:
+		runner.resume()
+
+
+func preview_is_paused() -> bool:
+	return runner != null and runner.paused
+
+
+func preview_save_state() -> Dictionary:
+	## Capture a snapshot of board + stage + dialogue + runner + flags.
+	var snap := {}
+	if board and board.has_method("save_board_state"):
+		snap["board"] = board.save_board_state()
+	if cinematic_stage and cinematic_stage.has_method("save_state"):
+		snap["stage"] = cinematic_stage.save_state()
+	if dialogue_box and dialogue_box.has_method("save_state"):
+		snap["dialogue"] = dialogue_box.save_state()
+	if runner and runner.has_method("save_runner_state"):
+		snap["runner"] = runner.save_runner_state()
+	if board and board.ai:
+		snap["ai_difficulty"] = board.ai.difficulty
+	snap["flags"] = GameState.flags.duplicate()
+	snap["label"] = runner.current_context if runner else ""
+	return snap
+
+
+func preview_load_state(snap: Dictionary) -> void:
+	if runner:
+		runner.pause()
+	if snap.has("board") and board and board.has_method("load_board_state"):
+		await board.load_board_state(snap.board)
+	if snap.has("stage") and cinematic_stage and cinematic_stage.has_method("load_state"):
+		cinematic_stage.load_state(snap.stage)
+	if snap.has("dialogue") and dialogue_box and dialogue_box.has_method("load_state"):
+		dialogue_box.load_state(snap.dialogue)
+	if snap.has("runner") and runner and runner.has_method("load_runner_state"):
+		runner.load_runner_state(snap.runner)
+	if snap.has("ai_difficulty") and board and board.ai:
+		board.ai.difficulty = snap.ai_difficulty
+	if snap.has("flags"):
+		GameState.flags = snap.flags.duplicate()
+
+
+## Called from the editor preview manager when a ScriptEditorWindow saved a
+## .dscn file. Reloads reactions live if it matches the current match's
+## reactions_script, or restarts the current match if it matches the intro.
+func on_script_saved(path: String) -> void:
+	if match_manager == null or runner == null:
+		return
+	var config: Resource = match_manager.get_current_config()
+	if config == null:
+		return
+	if config.reactions_script != "" and path == config.reactions_script:
+		var parser = load("res://systems/scene_runner/scene_parser.gd")
+		var data = parser.parse_file(path)
+		runner.clear_reactions()
+		runner.load_reactions(data.reactions)
+		_log_debug("Reacciones recargadas: %s" % path.get_file())
+		return
+	if config.intro_script != "" and path == config.intro_script:
+		_log_debug("Intro cambio — reiniciando partida")
+		match_manager.restart_current()
+
+
 func _load_project_data() -> bool:
 	# Editor "Preview este nodo" path: one-shot override injected by the editor
 	# before opening the preview Window. Consume it so a later real play

@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://characters/character_data.gd" id="1_y48ho"]
 [ext_resource type="Texture2D" path="res://characters/portraits/mei_neutral.png" id="mei_neutral"]
 [ext_resource type="Texture2D" path="res://characters/portraits/mei_thinking.png" id="mei_thinking"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_analytical.png" id="mei_analytical"]
+[ext_resource type="Texture2D" path="res://characters/portraits/mei_teasing.png" id="mei_teasing"]
 
 [resource]
 script = ExtResource("1_y48ho")
@@ -12,7 +14,9 @@ color = Color(0.6, 0.3, 0.9, 1)
 portrait_image = ExtResource("mei_neutral")
 expression_images = {
 "neutral": ExtResource("mei_neutral"),
-"thinking": ExtResource("mei_thinking")
+"thinking": ExtResource("mei_thinking"),
+"analytical": ExtResource("mei_analytical"),
+"teasing": ExtResource("mei_teasing")
 }
 expressions = {
 "analytical": Color(0.5, 0.25, 0.95, 1),

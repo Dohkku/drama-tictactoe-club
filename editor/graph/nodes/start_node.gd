@@ -21,3 +21,11 @@ func _ready() -> void:
 
 func get_node_type() -> String:
 	return "start"
+
+
+func validate() -> Dictionary:
+	var errors: Array[String] = []
+	var ge := get_parent() as GraphEdit
+	if ge and not _has_flow_output_connection(ge, 0):
+		errors.append("Salida de flujo no conectada")
+	return {"valid": errors.is_empty(), "warnings": [] as Array[String], "errors": errors}

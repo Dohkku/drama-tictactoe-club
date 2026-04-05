@@ -4,6 +4,7 @@ var design: Resource = null  # PieceDesign
 var character_id: String = ""
 var piece_color: Color = Color.WHITE
 var effect_player: Node2D = null
+var placement_offset: Vector2 = Vector2.ZERO
 
 # Selection infrastructure (dormant — enable via set_selectable)
 var selectable: bool = false

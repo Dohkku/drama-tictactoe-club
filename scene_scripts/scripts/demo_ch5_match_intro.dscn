@@ -1,9 +1,11 @@
 @scene demo_ch5_match_intro
 
-[background res://backgrounds/background_5.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_tense.wav]
 [camera_mode snappy]
 [fullscreen]
+
+[transition fade_black 0.4]
 
 [enter ryu center right]
 [expression ryu cold]
@@ -18,17 +20,14 @@ Ryu: Dificultad máxima. Tablero estándar. Sin excusas.
 
 [camera_reset 0.3]
 
-[expression ryu intense]
-[pose ryu leaning_forward]
-Ryu: Diamantes contra estrellas. Shockwave contra fuego.
-
 [wait 0.2]
 
 [close_up ryu 1.3 0.3]
 [expression ryu cold]
 [pose ryu confident]
 
-Ryu → Tú: {shake}La última partida.{/shake}
+[speed_lines right 0.3]
+Ryu → Tú: {shake}La última partida. La que importa de verdad.{/shake}
 
 [camera_reset 0.3]
 [camera_mode smooth]

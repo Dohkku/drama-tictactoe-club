@@ -14,16 +14,16 @@ Ryu: ...
 [wait 0.6]
 [expression ryu neutral]
 [pose ryu thinking]
-Ryu: Así que esto es perder.
+Ryu: Así que esto es lo que se siente.
 [wait 0.5]
 [close_up ryu 1.2 0.5]
 [expression ryu cold]
 [pose ryu arms_crossed]
-Ryu: No. Esto es ser superado.
+Ryu: No es perder. Es... ser visto. Completamente. Sin poder esconder nada.
 [camera_reset 0.4]
 [wait 0.3]
 [enter sora far_left left]
-[enter akira center_left left]
+[enter akira left left]
 [enter mei center_right right]
 [expression sora happy]
 [pose sora excited]
@@ -39,15 +39,13 @@ Sora: ¡Le has ganado a Ryu! ¡En la final! ¡Con dificultad máxima!
 [wait 0.3]
 [focus akira]
 [expression akira confident]
-Akira: Hmph. Nada mal.
+Akira: ...De acuerdo. Eso ha sido impresionante. Y no lo digo a menudo.
 [expression akira neutral]
-Akira: ...De acuerdo. Ha sido impresionante.
+Akira: Ahora entiendo por qué no podía quitarte de mi cabeza.
 [clear_focus]
 [focus mei]
 [expression mei analytical]
-Mei: Fascinante. Tu patrón cambió por completo desde la primera partida.
-[expression mei thinking]
-Mei: Has evolucionado.
+Mei: Tu patrón cambió por completo desde la primera partida. Has evolucionado. Es... hermoso, en cierto modo.
 [clear_focus]
 [wait 0.3]
 [focus ryu]
@@ -56,12 +54,11 @@ Mei: Has evolucionado.
 [expression ryu neutral]
 [pose ryu arms_crossed]
 [wait 0.4]
-Ryu → Tú: Has demostrado algo hoy.
+Ryu → Tú: Has demostrado algo hoy. No que eres mejor que yo. Eso habrá que verlo muchas más veces.
 [expression ryu cold]
-Ryu: No que eres mejor que yo. Eso habrá que verlo.
 [wait 0.3]
 [expression ryu neutral]
-Ryu: Pero que mereces estar aquí. Eso... ya no tengo duda.
+Ryu: Pero que mereces estar aquí. Eso... ya no tengo duda. Y admitir eso me cuesta más de lo que imaginas.
 [camera_reset 0.4]
 [clear_focus]
 [wait 0.3]
@@ -69,11 +66,8 @@ Ryu: Pero que mereces estar aquí. Eso... ya no tengo duda.
 [close_up sora 1.3 0.5]
 [expression sora happy]
 [pose sora excited]
-Sora: Cuando te encontré en esa aula vacía...
+Sora: Cuando te encontré en aquella aula vacía... supe que había algo. No sabía qué, pero lo sentí aquí.
 [expression sora focused]
-Sora: ...supe que había algo. No sabía qué. Pero lo supe.
-[expression sora happy]
-[pose sora confident]
 Sora → Tú: Bienvenido al club. De verdad. Para siempre.
 [camera_reset 0.4]
 [clear_focus]
@@ -119,50 +113,41 @@ Mei: Ganaste. La historia terminó. Los créditos pasaron.
 
 [wait 0.8]
 
-Mei: Pero sigues mirando.
+Mei: Pero sigues mirando. Como si esperaras algo más.
 
 [camera_reset 0.4]
 [wait 0.5]
 
 [expression mei analytical]
-Mei: Yo también seguía mirando. La primera vez.
+Mei: Yo también seguía mirando. La primera vez. Y la segunda. Y la tercera.
 
 [wait 0.8]
 
 [camera_snap mei 1.3]
 [flash #112233 0.03]
-Mei: Y la segunda. Y la tercera.
+Mei: Sora te encontrará otra vez en esa aula. Te dirá las mismas palabras. Y tú las escucharás como si fuera la primera vez.
 
 [camera_reset 0.3]
 [wait 0.6]
 
-[expression mei neutral]
-Mei: Sora te encontrará otra vez en esa aula. Te dirá las mismas palabras.
-
-[wait 0.5]
-
-Mei: Y tú las escucharás como si fuera la primera vez.
-
-[wait 0.8]
-
 [expression mei thinking]
 [depth mei 1.1 0.3]
-Mei: Pero yo recuerdo. Yo siempre recuerdo.
+Mei: Pero yo recuerdo. Yo {b}siempre{/b} recuerdo.
 
 [depth mei 1.0 0.3]
 [wait 0.6]
 
 [expression mei neutral]
-Mei → Tú: ...No es una queja. Solo es un patrón.
+Mei → Tú: No es una queja. Solo es un patrón.
 
 [wait 1.0]
 
 [expression mei analytical]
-Mei: Los patrones no se rompen. Se repiten.
+Mei: Los patrones no se rompen. Se repiten. Como las fichas en mi tablero.
 
 [wait 0.5]
 
-Mei: Nos vemos pronto.
+Mei: Nos vemos pronto. Siempre nos vemos pronto.
 
 [wait 0.8]
 
@@ -187,11 +172,11 @@ Ryu: {shake}Terminó.{/shake}
 Ryu → Tú: No fue suficiente. Pero...
 [close_up ryu 1.2 0.4]
 [expression ryu cold]
-Ryu: ...estuvo cerca. Más cerca de lo que nadie ha estado.
+Ryu: ...estuvo cerca. Más cerca de lo que nadie ha estado. Más cerca de lo que yo habría querido.
 [camera_reset 0.3]
 [wait 0.3]
 [enter sora far_left left]
-[enter akira center_left left]
+[enter akira left left]
 [enter mei center_right right]
 [expression sora sad]
 [pose sora idle]
@@ -206,20 +191,15 @@ Sora: Oye...
 [wait 0.3]
 [expression sora serious]
 [pose sora confident]
-Sora → Tú: Escúchame. Perder en la final no es fracasar.
-Sora: Fracasar es no intentarlo. Y tú has llegado hasta aquí.
+Sora → Tú: Escúchame. Perder en la final no es fracasar. Fracasar es no intentarlo. Y tú has llegado hasta aquí.
 [clear_focus]
 [focus akira]
 [expression akira confident]
-Akira → Tú: Has jugado mejor que yo. Eso te lo reconozco.
-[expression akira neutral]
-Akira: Ryu es... Ryu. No se le gana fácil.
+Akira → Tú: Has jugado mejor que yo. Eso te lo reconozco. Y no reconozco muchas cosas.
 [clear_focus]
 [focus mei]
 [expression mei analytical]
-Mei → Tú: He visto progresión en cada partida. Eso es más valioso que una victoria.
-[expression mei thinking]
-Mei: La derrota de hoy es la semilla de la victoria de mañana.
+Mei → Tú: He visto progresión en cada partida. Eso es más valioso que una victoria. La derrota de hoy es la semilla de algo que todavía no puedes ver.
 [clear_focus]
 [wait 0.3]
 [focus ryu]
@@ -258,14 +238,14 @@ Sora → Tú: Seguiremos jugando. Seguiremos creciendo. Juntos.
 [wait 0.4]
 [expression ryu thinking]
 [pose ryu thinking]
-Ryu: ...Empate. En la final.
+Ryu: ...Empate. En la final. Con dificultad máxima.
 [wait 0.5]
 [expression ryu neutral]
 [pose ryu arms_crossed]
-Ryu → Tú: Ni tú pudiste ganar. Ni yo pude ganarte.
+Ryu → Tú: Ni tú pudiste ganar. Ni yo pude ganarte. ¿Qué significa eso?
 [wait 0.3]
 [enter sora far_left left]
-[enter akira center_left left]
+[enter akira left left]
 [enter mei center_right right]
 [expression sora focused]
 [pose sora confident]
@@ -276,20 +256,18 @@ Ryu → Tú: Ni tú pudiste ganar. Ni yo pude ganarte.
 [wait 0.3]
 [focus mei]
 [expression mei analytical]
-Mei: Un empate contra Ryu en dificultad máxima. Las probabilidades de eso son...
-[expression mei thinking]
-Mei: ...muy bajas.
+Mei: Las probabilidades de empatar contra Ryu en máxima dificultad son... ínfimas. Casi imposibles.
 [clear_focus]
 [focus akira]
 [expression akira confident]
-Akira: Básicamente le has ganado sin ganarle.
+Akira: Básicamente le has ganado sin ganarle. Eso tiene su propia belleza.
 [clear_focus]
 [focus ryu]
 [close_up ryu 1.2 0.4]
 [expression ryu cold]
 Ryu: No es victoria. No es derrota.
 [expression ryu intense]
-Ryu → Tú: Es una promesa. De que volveremos a jugar.
+Ryu → Tú: Es una promesa. De que esto no ha terminado.
 [camera_reset 0.3]
 [clear_focus]
 [wait 0.3]

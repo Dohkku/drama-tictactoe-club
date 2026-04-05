@@ -842,6 +842,28 @@ func _add_inline_script_editor(parent: VBoxContainer, title: String, script_path
 		empty.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
 		parent.add_child(empty)
 		return null
+
+	var open_btn := Button.new()
+	open_btn.text = "✎ Abrir en editor avanzado"
+	open_btn.add_theme_font_size_override("font_size", 12)
+	open_btn.add_theme_color_override("font_color", Color.WHITE)
+	var ob_style := StyleBoxFlat.new()
+	ob_style.bg_color = Color(0.35, 0.4, 0.6)
+	ob_style.set_corner_radius_all(4)
+	ob_style.content_margin_left = 8
+	ob_style.content_margin_right = 8
+	ob_style.content_margin_top = 3
+	ob_style.content_margin_bottom = 3
+	open_btn.add_theme_stylebox_override("normal", ob_style)
+	var ob_hover := ob_style.duplicate()
+	ob_hover.bg_color = Color(0.45, 0.5, 0.75)
+	open_btn.add_theme_stylebox_override("hover", ob_hover)
+	var path_for_editor: String = script_path
+	open_btn.pressed.connect(func():
+		if _main._preview_manager:
+			_main._preview_manager.open_script_editor(path_for_editor))
+	parent.add_child(open_btn)
+
 	var code := CodeEdit.new()
 	code.custom_minimum_size = Vector2(0, 260)
 	code.size_flags_vertical = Control.SIZE_EXPAND_FILL

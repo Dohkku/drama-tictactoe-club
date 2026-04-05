@@ -69,7 +69,8 @@ func do_move(index: int, is_player: bool) -> void:
 
 	var pieces = board.pieces
 
-	# Handle rotation: remove old piece visually
+	# Handle rotation: remove old piece visually and store for reuse
+	var rotation_piece: Control = null
 	if move_result.removed_cell >= 0:
 		var removed_idx = move_result.removed_cell
 		board.cells[removed_idx].set_occupied(false)
@@ -77,19 +78,18 @@ func do_move(index: int, is_player: bool) -> void:
 			var old_piece = pieces.cell_to_piece[removed_idx]
 			pieces.cell_to_piece.erase(removed_idx)
 			var fade = old_piece.create_tween()
-			fade.tween_property(old_piece, "modulate:a", 0.3, 0.2)
+			fade.tween_property(old_piece, "modulate:a", 0.0, 0.2)
 			await fade.finished
-			old_piece.modulate.a = 1.0
-			if is_player:
-				pieces.player_next = max(0, pieces.player_next - 1)
-			else:
-				pieces.opponent_next = max(0, pieces.opponent_next - 1)
+			rotation_piece = old_piece
 
 	board.cells[index].set_occupied(true)
 
-	# Pick the next available piece from hand
+	# Pick piece: reuse rotation piece if available, otherwise from hand
 	var piece_node: Control
-	if is_player:
+	if rotation_piece:
+		piece_node = rotation_piece
+		piece_node.modulate.a = 1.0
+	elif is_player:
 		if pieces.player_next >= pieces.player_pieces.size():
 			push_error("Board: player_next (%d) out of bounds (size %d)" % [pieces.player_next, pieces.player_pieces.size()])
 			board._animating = false
@@ -114,7 +114,11 @@ func do_move(index: int, is_player: bool) -> void:
 	var final_pos = target_pos + offset
 	if board.placement_offset_max > 0.0:
 		var max_px: float = cell_size.x * board.placement_offset_max
-		final_pos += Vector2(randf_range(-max_px, max_px), randf_range(-max_px, max_px))
+		var random_offset := Vector2(randf_range(-max_px, max_px), randf_range(-max_px, max_px))
+		piece_node.placement_offset = random_offset
+		final_pos += random_offset
+	else:
+		piece_node.placement_offset = Vector2.ZERO
 
 	# Style
 	var style = board._next_move_style_override if board._next_move_style_override else (board.player_style if is_player else board.opponent_style)
@@ -232,7 +236,7 @@ func handle_game_over() -> void:
 					positions.append(board.cells[idx].get_center_position())
 			if positions.size() >= 2:
 				var color: Color = board.player_color if board.logic.winner == board.player_piece else board.opponent_color
-				board._win_line_node = sfx.play_win_line(positions, color)
+				board._win_line_node = sfx.play_win_line(positions, color, 5.0, 0.5)
 
 		if audio:
 			audio.play_sfx("win", 3.5)
@@ -252,18 +256,13 @@ func handle_game_over() -> void:
 
 	await board.get_tree().create_timer(GAME_OVER_DELAY).timeout
 
-	# Clean up win line before layout transition
-	if board._win_line_node and is_instance_valid(board._win_line_node):
-		board._win_line_node.get_parent().remove_child(board._win_line_node)
-		board._win_line_node.free()
-		board._win_line_node = null
-
 	EventBus.match_ended.emit(result)
 
 
 func update_input_state() -> void:
 	for cell in board.cells:
 		cell.set_input_enabled(board.input_enabled)
+	board._update_ghost_state()
 
 
 func update_status(text: String) -> void:

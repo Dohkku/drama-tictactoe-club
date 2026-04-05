@@ -17,6 +17,7 @@ var match_data: Dictionary = {
 	"player_piece_design": "x",
 	"opponent_piece_design": "o",
 	"turns_per_visit": 1,
+	"starting_player": "player",
 	"intro_script": "",
 	"reactions_script": "",
 	"game_rules_preset": "standard",
@@ -77,6 +78,22 @@ func set_node_data(data: Dictionary) -> void:
 	_refresh_display()
 
 
+func validate() -> Dictionary:
+	var errors: Array[String] = []
+	var warnings: Array[String] = []
+	var ge := get_parent() as GraphEdit
+	if ge:
+		if not _has_flow_input_connection(ge, 0) and not _has_flow_output_connection(ge, 0):
+			errors.append("Flujo no conectado")
+		elif not _has_flow_input_connection(ge, 0):
+			errors.append("Entrada de flujo no conectada")
+		elif not _has_flow_output_connection(ge, 0):
+			errors.append("Salida de flujo no conectada")
+		if _connected_character == null:
+			warnings.append("Sin oponente conectado")
+	return {"valid": errors.is_empty(), "warnings": warnings, "errors": errors}
+
+
 func on_connection_changed(port: int, connected: bool, from_node: BaseGraphNode) -> void:
 	if port == 1:  # Opponent character port
 		if connected and from_node != null and "character_data" in from_node:
@@ -107,3 +124,5 @@ func _refresh_display() -> void:
 		var ps: String = match_data.get("player_style", "slam")
 		var os: String = match_data.get("opponent_style", "gentle")
 		_info_label.text = "IA:%d%%  %s/%s" % [diff_pct, ps.left(3), os.left(3)]
+
+	_notify_validation_needed()

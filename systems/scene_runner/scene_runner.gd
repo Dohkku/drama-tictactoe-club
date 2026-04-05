@@ -13,13 +13,18 @@ var _dialogue_box: Control  # DialogueBox
 var _reactions: Dictionary = {}  # event_name -> Array[Dictionary]
 var _running: bool = false
 signal execution_finished
+signal resumed
+signal command_executed(label: String)
 var _music_player: AudioStreamPlayer = null
 var _sfx_player: AudioStreamPlayer = null
 var auto_advance_dialogue: bool = false
 var auto_advance_dialogue_delay: float = 1.0
 var auto_choose_first: bool = false
 var time_scale: float = 1.0
+var paused: bool = false  # Editor preview cooperative pause
+var current_context: String = ""  # Label for snapshots: "intro"/"reaction:name"
 var _dialogue_auto_token: int = 0
+var _last_music: String = ""
 
 
 func setup(stage: Control, board: Control, dialogue_box: Control) -> void:
@@ -43,10 +48,44 @@ func has_reaction(event_name: String) -> bool:
 	return _reactions.has(event_name)
 
 
+func pause() -> void:
+	paused = true
+
+
+func resume() -> void:
+	if paused:
+		paused = false
+		resumed.emit()
+
+
+func get_reactions() -> Dictionary:
+	return _reactions
+
+
+func save_runner_state() -> Dictionary:
+	return {
+		"context": current_context,
+		"music": _last_music,
+	}
+
+
+func load_runner_state(state: Dictionary) -> void:
+	current_context = state.get("context", "")
+	var track: String = state.get("music", "")
+	if track != "" and track != _last_music:
+		_cmd_music({"track": track})
+	elif track == "" and _last_music != "":
+		_cmd_stop_music()
+
+
 func execute(data: Dictionary) -> void:
 	if data.get("background") != "" and data.get("background") != null:
 		_stage.set_background(data.background)
+	var prev_ctx: String = current_context
+	if current_context == "":
+		current_context = "intro"
 	await _run(data.commands)
+	current_context = prev_ctx
 
 
 func trigger_reaction(event_name: String) -> void:
@@ -54,7 +93,10 @@ func trigger_reaction(event_name: String) -> void:
 		return
 	if _running:
 		return  # Don't stack reactions
+	var prev_ctx: String = current_context
+	current_context = "reaction:%s" % event_name
 	await _run(_reactions[event_name])
+	current_context = prev_ctx
 
 
 # ---- Execution engine ----
@@ -62,8 +104,13 @@ func trigger_reaction(event_name: String) -> void:
 func _run(commands: Array) -> void:
 	_running = true
 	var skip_depth := 0  # > 0 = inside a false if-branch
+	var cmd_index := 0
 
 	for cmd in commands:
+		# Cooperative pause for editor preview toolbar.
+		if paused:
+			await resumed
+
 		# Conditional flow control while skipping
 		if skip_depth > 0:
 			match cmd.type:
@@ -74,6 +121,7 @@ func _run(commands: Array) -> void:
 						skip_depth = 0
 				"end_if":
 					skip_depth -= 1
+			cmd_index += 1
 			continue
 
 		match cmd.type:
@@ -196,6 +244,11 @@ func _run(commands: Array) -> void:
 				if _board:
 					await _cmd_board_cheat(cmd)
 
+		# After-command hook for editor snapshot system.
+		cmd_index += 1
+		var label: String = "%s:%d %s" % [current_context if current_context != "" else "cmd", cmd_index, cmd.get("type", "")]
+		command_executed.emit(label)
+
 	_running = false
 	execution_finished.emit()
 
@@ -316,6 +369,7 @@ func _cmd_music(cmd: Dictionary) -> void:
 
 	_music_player.stream = stream
 	_music_player.play()
+	_last_music = track
 
 
 func _cmd_sfx(cmd: Dictionary) -> void:
@@ -340,6 +394,7 @@ func _cmd_sfx(cmd: Dictionary) -> void:
 func _cmd_stop_music() -> void:
 	if _music_player and _music_player.playing:
 		_music_player.stop()
+	_last_music = ""
 
 
 func _cmd_transition(cmd: Dictionary) -> void:

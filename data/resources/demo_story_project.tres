@@ -152,6 +152,7 @@ opponent_effect_name = "shockwave"
 placement_offset = 0.3
 player_piece_design = "x"
 opponent_piece_design = "diamond"
+starting_player = "opponent"
 board_config = SubResource("board_ryu")
 
 [sub_resource type="Resource" id="evt_ch2_match"]

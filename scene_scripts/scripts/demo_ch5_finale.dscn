@@ -1,16 +1,18 @@
 @scene demo_ch5_finale
 
-[background res://backgrounds/background_5.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_chill.mp3]
-[title_card La Final | Capitulo 5]
+[title_card La Final | Capítulo 5]
 [wait 2.0]
 [camera_mode smooth]
 [fullscreen]
 
+[transition fade_black 0.5]
+
 [wait 0.5]
 
 [enter sora far_left left]
-[enter akira center_left left]
+[enter akira left left]
 [enter mei center_right right]
 [wait 0.5]
 
@@ -24,30 +26,30 @@
 [depth akira 0.85 0.3]
 [depth mei 0.85 0.3]
 
-Sora: Esto es. La final del torneo.
+Sora: Esto es. La final del torneo interno.
 
 [wait 0.3]
 
 [expression sora serious]
 [pose sora confident]
-Sora: Has llegado hasta aquí. No importa cómo. Estás aquí.
+Sora: Has llegado hasta aquí. No importa cómo. Estás aquí. Y eso ya dice algo.
 
 [if flag defeated_akira]
 [focus akira]
 [depth akira 1.0 0.3]
 [expression akira confident]
-Akira: Me ganaste limpio. No voy a mentir, me dolió.
+Akira: Me ganaste limpio. No voy a mentir... dolió. Dolió más de lo que esperaba.
 [expression akira neutral]
-Akira → Tú: Pero si le ganas a Ryu... habrá valido la pena.
+Akira → Tú: Pero si le ganas a Ryu... todo habrá valido la pena. Hazlo por mí también.
 [depth akira 0.85 0.3]
 [clear_focus]
 [else]
 [focus akira]
 [depth akira 1.0 0.3]
 [expression akira confident]
-Akira: Me ganaste en la mesa. Pero esto es diferente.
+Akira: Me ganaste en la mesa. Pero esto es otro nivel.
 [expression akira angry]
-Akira → Tú: Ryu es otro nivel. Lo sabes.
+Akira → Tú: Ryu es algo diferente. Lo sabes. Yo lo sé.
 [depth akira 0.85 0.3]
 [clear_focus]
 [end_if]
@@ -58,26 +60,30 @@ Akira → Tú: Ryu es otro nivel. Lo sabes.
 [focus mei]
 [depth mei 1.0 0.3]
 [expression mei analytical]
-Mei: Has demostrado adaptación. Eso es raro.
+Mei: Has demostrado adaptación. Eso es raro. Raro y... fascinante.
 [expression mei thinking]
-Mei → Tú: Pero Ryu no se adapta. Ryu {b}domina{/b}. Es diferente.
+Mei → Tú: Pero Ryu no se adapta. Ryu {b}domina{/b}. Es una fuerza diferente.
 [depth mei 0.85 0.3]
 [clear_focus]
 [else]
 [focus mei]
 [depth mei 1.0 0.3]
 [expression mei thinking]
-Mei: Aprende de lo que pasó en nuestra partida.
+Mei: Aprende de lo que pasó en nuestra partida. Cada error es un mapa.
 [expression mei analytical]
-Mei → Tú: Contra Ryu, no tendrás segundas oportunidades.
+Mei → Tú: Contra Ryu, no tendrás segundas oportunidades. Él no las da.
 [depth mei 0.85 0.3]
 [clear_focus]
 [end_if]
 
 [wait 0.5]
 
+[wipe left 0.8]
+[wipe_out left 0.8]
+
 [music res://audio/music/bgm_tense.wav]
 [camera_mode snappy]
+[speed_lines right 0.3]
 [shake 0.3 0.25]
 [flash #223366 0.06]
 
@@ -104,27 +110,27 @@ Ryu: Estás aquí.
 [if flag defeated_ryu]
 [expression ryu intense]
 [pose ryu leaning_forward]
-Ryu: La última vez me ganaste. No he dejado de pensar en eso.
+Ryu: La última vez me ganaste. No he dejado de pensar en eso. Ni un solo día. Ni una sola noche.
 [wait 0.3]
 [expression ryu cold]
 [pose ryu arms_crossed]
-Ryu: No fue suerte. Lo sé. Pero necesito {b}confirmarlo{/b}.
+Ryu: No fue suerte. Lo sé. Pero necesito {b}confirmarlo{/b}. Necesito saber si fue real o si me estoy volviendo loco.
 [else]
 [if flag survived_ryu]
 [expression ryu neutral]
 [pose ryu thinking]
-Ryu: La última vez empatamos. Eso me sorprendió.
+Ryu: La última vez empatamos. Eso me sorprendió. Nadie me había llevado a un empate.
 [wait 0.3]
 [expression ryu cold]
 [pose ryu arms_crossed]
-Ryu: Hoy no habrá empate. Uno de los dos caerá.
+Ryu: Hoy no habrá empate. Hoy uno de los dos se rompe.
 [else]
 [expression ryu cold]
 [pose ryu arms_crossed]
-Ryu: La última vez fue fácil. Demasiado fácil.
+Ryu: La última vez fue fácil. Demasiado fácil. Casi me aburro.
 [wait 0.3]
 [expression ryu intense]
-Ryu: Pero has llegado hasta aquí. Algo habrás aprendido.
+Ryu: Pero has llegado hasta aquí. Algo habrás aprendido. Espero que sí, por tu bien.
 [end_if]
 [end_if]
 
@@ -139,12 +145,9 @@ Ryu: Pero has llegado hasta aquí. Algo habrás aprendido.
 [focus sora]
 [expression sora serious]
 [pose sora confident]
-Sora: Las reglas de la final.
+Sora: Las reglas de la final: tablero 3x3 estándar. Sin trucos. Sin reglas especiales.
 
-Sora "focused": Tablero 3x3 estándar. Sin trucos. Sin reglas especiales.
-
-[expression sora serious]
-Sora: Solo dos jugadores. Un tablero. Y todo lo que habéis aprendido.
+Sora "focused": Solo dos jugadores, un tablero, y todo lo que habéis aprendido.
 
 [clear_focus]
 
@@ -152,22 +155,14 @@ Sora: Solo dos jugadores. Un tablero. Y todo lo que habéis aprendido.
 
 [focus ryu]
 [expression ryu cold]
-Ryu: Así es como debe ser. Sin distracciones.
-
-[expression ryu intense]
-[pose ryu leaning_forward]
-Ryu: Mis fichas son diamantes. Efecto {b}shockwave{/b}. Como la primera vez.
+Ryu: Así es como debe ser. Sin distracciones. Sin excusas. La verdad desnuda sobre el tablero.
 
 [clear_focus]
 
 [focus sora]
-[expression sora happy]
-[pose sora leaning_forward]
-Sora → Tú: Tus fichas esta vez son {b}estrellas{/b}. Con efecto {b}fuego{/b}. Estilo {b}dramático{/b}.
-
 [expression sora serious]
 [pose sora confident]
-Sora: Ya no eres el novato. Juegas como uno de nosotros.
+Sora → Tú: Ya no eres el novato que encontré en aquella aula. Juegas como uno de nosotros.
 
 [clear_focus]
 
@@ -175,13 +170,13 @@ Sora: Ya no eres el novato. Juegas como uno de nosotros.
 
 [focus mei]
 [expression mei analytical]
-Mei → Tú: Recuerda. No mires el tablero. Mira a {b}él{/b}.
+Mei → Tú: Recuerda. No mires el tablero. Mira a {b}él{/b}. Ahí está toda la información que necesitas.
 
 [clear_focus]
 
 [focus akira]
 [expression akira confident]
-Akira → Tú: Dale fuerte. Sin miedo.
+Akira → Tú: Dale fuerte. Sin miedo. Hazle sentir lo que yo sentí.
 
 [clear_focus]
 
@@ -202,13 +197,13 @@ Akira → Tú: Dale fuerte. Sin miedo.
 
 [wait 0.4]
 
-Ryu → Tú: He esperado esto.
+Ryu → Tú: He esperado esto. Más de lo que me gustaría admitir.
 
 [camera_reset 0.3]
 
 [expression ryu cold]
 [pose ryu confident]
-Ryu: Demuéstrame quién eres.
+Ryu: Demuéstrame quién eres. Y yo te mostraré quién soy yo.
 
 [clear_focus]
 [wait 0.3]

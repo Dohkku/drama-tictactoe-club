@@ -20,6 +20,14 @@ var _hover_blend: float = 0.0
 var _hover_tween: Tween = null
 const _HOVER_SPEED := 0.12
 
+# Ghost piece preview
+const PieceScript = preload("res://systems/board_visuals/piece.gd")
+var _ghost_piece: Control = null
+var ghost_design: Resource = null  # PieceDesign to show on hover
+var ghost_color: Color = Color.WHITE
+var ghost_enabled: bool = false
+var ghost_piece_ratio: float = 0.85
+
 
 func _ready() -> void:
 	mouse_entered.connect(_on_mouse_entered)
@@ -50,11 +58,14 @@ func get_center_position() -> Vector2:
 
 func set_occupied(occupied: bool) -> void:
 	is_occupied = occupied
+	if occupied:
+		_hide_ghost()
 	queue_redraw()
 
 
 func clear() -> void:
 	is_occupied = false
+	_hide_ghost()
 	queue_redraw()
 
 
@@ -66,11 +77,13 @@ func set_input_enabled(enabled: bool) -> void:
 func _on_mouse_entered() -> void:
 	hovering = true
 	_tween_hover(1.0)
+	_update_ghost()
 
 
 func _on_mouse_exited() -> void:
 	hovering = false
 	_tween_hover(0.0)
+	_hide_ghost()
 
 
 func _tween_hover(target: float) -> void:
@@ -83,3 +96,60 @@ func _tween_hover(target: float) -> void:
 func _set_hover_blend(val: float) -> void:
 	_hover_blend = val
 	queue_redraw()
+
+
+# ── Ghost piece preview ──
+
+func set_ghost(design: Resource, color: Color, enabled: bool) -> void:
+	ghost_design = design
+	ghost_color = color
+	ghost_enabled = enabled
+	if hovering:
+		_update_ghost()
+	elif _ghost_piece:
+		_hide_ghost()
+
+
+func _update_ghost() -> void:
+	if not ghost_enabled or is_occupied or not input_enabled or ghost_design == null:
+		_hide_ghost()
+		return
+	_show_ghost()
+
+
+func _show_ghost() -> void:
+	if _ghost_piece == null:
+		_ghost_piece = Control.new()
+		_ghost_piece.set_script(PieceScript)
+		_ghost_piece.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_ghost_piece.setup(ghost_design, "ghost", ghost_color)
+		_ghost_piece.modulate.a = 0.3
+		add_child(_ghost_piece)
+	else:
+		_ghost_piece.setup(ghost_design, "ghost", ghost_color)
+		_ghost_piece.modulate.a = 0.3
+		_ghost_piece.visible = true
+	# Size the ghost to match piece ratio within cell
+	var piece_ratio: float = ghost_piece_ratio
+	var piece_size: Vector2 = size * piece_ratio
+	var offset: Vector2 = (size - piece_size) / 2.0
+	_ghost_piece.position = offset
+	_ghost_piece.size = piece_size
+	_ghost_piece.pivot_offset = piece_size / 2.0
+	_ghost_piece.queue_redraw()
+
+
+func _hide_ghost() -> void:
+	if _ghost_piece and is_instance_valid(_ghost_piece):
+		_ghost_piece.visible = false
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		if _ghost_piece and is_instance_valid(_ghost_piece) and _ghost_piece.visible:
+			var piece_size: Vector2 = size * ghost_piece_ratio
+			var offset: Vector2 = (size - piece_size) / 2.0
+			_ghost_piece.position = offset
+			_ghost_piece.size = piece_size
+			_ghost_piece.pivot_offset = piece_size / 2.0
+			_ghost_piece.queue_redraw()

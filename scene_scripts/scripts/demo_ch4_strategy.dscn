@@ -1,11 +1,13 @@
 @scene demo_ch4_strategy
 
-[background res://backgrounds/background_4.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_chill.mp3]
-[title_card La Estrategia | Capitulo 4]
+[title_card La Estrategia | Capítulo 4]
 [wait 2.0]
 [camera_mode smooth]
 [fullscreen]
+
+[transition fade_black 0.6]
 
 [wait 0.5]
 
@@ -15,28 +17,24 @@
 [wait 0.5]
 
 [depth mei 1.1 0.3]
-Mei: Llegas temprano.
+Mei: Llegas temprano. Bien. Necesito hablar contigo. A solas.
 
 [depth mei 1.0 0.3]
 [wait 0.3]
-
-Mei: Bien. Necesito hablar contigo. A solas.
 
 [move mei center]
 [wait 0.3]
 
 [close_up mei 1.2 0.5]
 [expression mei analytical]
-Mei: He analizado todas tus partidas. Cada movimiento. Cada pausa.
+Mei: He analizado todas tus partidas. Cada movimiento. Cada pausa. El tiempo que tardas en decidir. Dónde miras antes de poner la ficha.
 
 [camera_reset 0.4]
 
 [if flag defeated_ryu]
-Mei: Contra Ryu elegiste la esquina superior derecha tres veces.
-Mei: Eso no es aleatorio. Es un patrón.
+Mei: Contra Ryu elegiste la esquina superior derecha tres veces. Eso no es aleatorio. Es un patrón. Probablemente ni siquiera lo sabes.
 [else]
-Mei: Contra Ryu perdiste en el sexto turno. Pero el error fue en el tercero.
-Mei: Elegiste reaccionar en vez de anticipar.
+Mei: Contra Ryu perdiste en el sexto turno. Pero el error fue en el tercero. Elegiste reaccionar en vez de anticipar. Jugaste su juego en lugar del tuyo.
 [end_if]
 
 [wait 0.3]
@@ -49,12 +47,12 @@ Mei: ¿Sabes cuál es la diferencia entre un buen jugador y uno excepcional?
 
 [close_up mei 1.3 0.4]
 [expression mei analytical]
-Mei: El bueno ve el tablero. El excepcional ve al {b}rival{/b}.
+Mei: El bueno ve el tablero. El excepcional ve al {b}rival{/b}. Lee su miedo, su confianza, su hambre. Y usa todo eso.
 
 [camera_reset 0.3]
 
 [pose mei thinking]
-Mei: No importa dónde pongas la ficha. Importa {b}por qué{/b} la pones ahí.
+Mei: No importa dónde pongas la ficha. Importa {b}por qué{/b} la pones ahí. Y qué dice eso de ti.
 
 [wait 0.4]
 
@@ -63,14 +61,14 @@ Mei: No importa dónde pongas la ficha. Importa {b}por qué{/b} la pones ahí.
 [pose sora idle]
 [depth sora 0.8 0.3]
 
-Sora: ¡Mei! No seas tan intensa con el nuevo.
+Sora: ¡Mei! No le agobies antes de la partida.
 
 [depth sora 1.0 0.3]
 [move sora center_left]
 
 [look_at mei sora]
 [expression mei neutral]
-Mei: No soy intensa. Soy precisa.
+Mei: No le agobio. Le preparo. Hay una diferencia.
 
 [look_at sora mei]
 [expression sora focused]
@@ -81,9 +79,9 @@ Sora: Bueno, sí. Eso es verdad.
 [expression sora serious]
 [pose sora leaning_forward]
 [look_at sora center]
-Sora → Tú: Mei juega diferente a todos nosotros.
+Sora → Tú: El tablero de Mei es... diferente.
 
-Sora "focused": Su tablero tiene {b}rotación{/b}. Solo tres fichas por jugador.
+Sora "focused": Tiene {b}rotación{/b}. Solo tres fichas por jugador.
 
 [expression sora nervous]
 Sora: Cuando pones la cuarta, la primera {b}desaparece{/b}.
@@ -97,7 +95,7 @@ Sora: Nada es permanente en su juego.
 [close_up mei 1.2 0.4]
 
 [expression mei analytical]
-Mei: Exacto. No hay empates. No puedes esconderte detrás de un tablero lleno.
+Mei: Exacto. No hay empates. No puedes esconderte detrás de un tablero lleno. Cada decisión tiene un coste. Poner algo nuevo significa perder algo viejo.
 
 [camera_reset 0.3]
 [depth mei 1.0 0.3]
@@ -105,11 +103,7 @@ Mei: Exacto. No hay empates. No puedes esconderte detrás de un tablero lleno.
 
 [expression mei thinking]
 [pose mei thinking]
-Mei: En mi juego, cada decisión tiene un coste. Poner una ficha nueva significa perder una vieja.
-
-[wait 0.3]
-
-Mei: Es como la vida. No puedes tenerlo todo. Eliges qué conservar y qué dejar ir.
+Mei: Es como todo en la vida, ¿no? No puedes tenerlo todo. Eliges qué conservar y qué dejar ir.
 
 [wait 0.6]
 
@@ -121,7 +115,7 @@ Mei: A veces me pregunto si alguien más lo ve.
 [camera_snap mei 1.3]
 [flash #112233 0.03]
 [expression mei analytical]
-Mei: Los ciclos. Cómo todo vuelve a empezar. Cómo siempre acabamos aquí.
+Mei: Los ciclos. Cómo todo vuelve a empezar. Cómo siempre acabamos... aquí.
 
 [camera_reset 0.3]
 [wait 0.4]
@@ -136,7 +130,7 @@ Mei: ...En el tablero, quiero decir.
 Sora: Mei...
 
 [expression mei neutral]
-Mei: No es filosofía, Sora. Son matemáticas.
+Mei: No es filosofía, Sora. Son matemáticas. Con un toque de algo que prefiero no nombrar.
 
 [wait 0.2]
 
@@ -144,13 +138,13 @@ Mei: No es filosofía, Sora. Son matemáticas.
 [look_at mei center]
 Mei → Tú: He visto cómo juegas. Atacas en línea recta. Buscas el camino más corto.
 
-Mei: En mi tablero eso no funciona. El camino más corto ya no existirá en tres turnos.
+Mei: En mi tablero eso no funciona. El camino más corto ya no existirá en tres turnos. Tienes que pensar en {b}ciclos{/b}. En lo que vendrá después de lo que vendrá.
 
 [wait 0.3]
 
 [close_up mei 1.2 0.4]
 [expression mei thinking]
-Mei: Tienes que pensar en {b}ciclos{/b}. En lo que vendrá después de lo que vendrá.
+Mei: El nerviosismo revela la duda. Y la duda es la información más valiosa que existe. Así que... intenta no temblar demasiado.
 
 [camera_reset 0.3]
 
@@ -158,18 +152,8 @@ Mei: Tienes que pensar en {b}ciclos{/b}. En lo que vendrá después de lo que ve
 
 [depth sora 0.8 0.3]
 [focus mei]
-[expression mei neutral]
-Mei: Mis fichas son {b}diamantes{/b}. Con efecto {b}humo{/b}. Colocación suave.
-
-Mei: Las tuyas son cuadrados. Estilo {b}nervioso{/b}.
-
-[expression mei analytical]
-Mei: El nerviosismo revela la duda. Y la duda es información.
-
 [clear_focus]
 [depth sora 1.0 0.3]
-
-[wait 0.3]
 
 [expression sora focused]
 [pose sora confident]
@@ -183,8 +167,12 @@ Sora → Tú: Puedes hacerlo. Solo... piensa diferente esta vez.
 [close_up mei 1.2 0.4]
 [expression mei analytical]
 
-Mei → Tú: Muéstrame cómo piensas cuando nada es seguro.
+Mei → Tú: Muéstrame cómo piensas cuando nada es seguro. Cuando el suelo se mueve bajo tus pies.
 
 [camera_reset 0.3]
+
+[expression mei thinking]
+Mei: Eso es lo que quiero ver de ti.
+
 [clear_focus]
 [wait 0.3]

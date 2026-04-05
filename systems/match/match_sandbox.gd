@@ -4,6 +4,8 @@ extends Control
 ## Shows match configuration, event types, and simulates a demo sequence log.
 
 const MatchConfigScript: GDScript = preload("res://systems/match/match_config.gd")
+const MatchResultOverlayScene = preload("res://systems/match/match_result_overlay.tscn")
+const ScreenFadeScript = preload("res://systems/match/screen_fade.gd")
 
 # UI references
 var log_label: RichTextLabel
@@ -32,6 +34,7 @@ var info_label: RichTextLabel
 # State
 var _events: Array[Dictionary] = []
 var _running: bool = false
+var _screen_fade: CanvasLayer = null
 
 const OPPONENTS := ["rival", "bully", "nerd", "coach", "shadow"]
 const STYLES := ["gentle", "slam", "spinning", "dramatic", "nervous"]
@@ -39,6 +42,9 @@ const BOARD_SIZES := [3, 4, 5]
 
 
 func _ready() -> void:
+	_screen_fade = CanvasLayer.new()
+	_screen_fade.set_script(ScreenFadeScript)
+	add_child(_screen_fade)
 	_build_ui()
 	_update_info()
 	_log("[color=cyan]Match Sandbox initialized[/color]")
@@ -441,6 +447,64 @@ func _build_left_panel(root: HBoxContainer) -> void:
 	demo_btn.pressed.connect(_run_demo_sequence)
 	_style_btn(demo_btn, Color(0.6, 0.5, 0.1))
 	left.add_child(demo_btn)
+
+	left.add_child(HSeparator.new())
+	_lbl(left, "Test Components", 13, Color(0.6, 0.6, 0.75))
+
+	var result_option := OptionButton.new()
+	result_option.add_theme_font_size_override("font_size", 12)
+	result_option.add_item("win")
+	result_option.add_item("lose")
+	result_option.add_item("draw")
+	left.add_child(result_option)
+
+	var overlay_btn := Button.new()
+	overlay_btn.text = "Test Result Overlay"
+	overlay_btn.pressed.connect(func():
+		var overlay = MatchResultOverlayScene.instantiate()
+		get_tree().root.add_child(overlay)
+		var result: String = result_option.get_item_text(result_option.selected)
+		var opp: String = OPPONENTS[opponent_option.selected]
+		_log("Showing overlay: %s vs %s" % [result, opp])
+		await overlay.show_result(result, opp)
+		_log("Overlay finished")
+	)
+	_style_btn(overlay_btn, Color(0.5, 0.3, 0.6))
+	left.add_child(overlay_btn)
+
+	var fade_out_btn := Button.new()
+	fade_out_btn.text = "Test Fade Out"
+	fade_out_btn.pressed.connect(func():
+		_log("Fade out...")
+		await _screen_fade.fade_out(0.4)
+		_log("Screen is black")
+	)
+	_style_btn(fade_out_btn, Color(0.3, 0.3, 0.5))
+	left.add_child(fade_out_btn)
+
+	var fade_in_btn := Button.new()
+	fade_in_btn.text = "Test Fade In"
+	fade_in_btn.pressed.connect(func():
+		_log("Fade in...")
+		await _screen_fade.fade_in(0.4)
+		_log("Screen is visible")
+	)
+	_style_btn(fade_in_btn, Color(0.3, 0.3, 0.5))
+	left.add_child(fade_in_btn)
+
+	var fade_cycle_btn := Button.new()
+	fade_cycle_btn.text = "Test Fade Out→In"
+	fade_cycle_btn.pressed.connect(func():
+		_log("Fade cycle...")
+		await _screen_fade.fade_out(0.3)
+		await get_tree().create_timer(0.3).timeout
+		await _screen_fade.fade_in(0.3)
+		_log("Fade cycle done")
+	)
+	_style_btn(fade_cycle_btn, Color(0.3, 0.3, 0.5))
+	left.add_child(fade_cycle_btn)
+
+	left.add_child(HSeparator.new())
 
 	# Status
 	status_label = Label.new()

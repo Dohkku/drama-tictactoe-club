@@ -46,8 +46,11 @@ func load_state(state: Dictionary) -> void:
 		var info = state.placed_pieces[cell_idx]
 		var piece_node: Control = null
 		var arr = pieces.player_pieces if info.is_player else pieces.opponent_pieces
+		var _occupied := {}
+		for _piece in pieces.cell_to_piece.values():
+			_occupied[_piece] = true
 		for p in arr:
-			if p not in pieces.cell_to_piece.values():
+			if not _occupied.has(p):
 				piece_node = p
 				break
 		if piece_node:

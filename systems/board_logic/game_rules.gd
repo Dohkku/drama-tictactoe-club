@@ -75,7 +75,7 @@ func get_pieces_for(player_id: int) -> int:
 	var playable: int = get_playable_cells()
 	var base: int = playable / num_players
 	var remainder: int = playable % num_players
-	return base + (1 if idx < remainder else 0)
+	return base + (1 if remainder > 0 else 0)
 
 
 ## Returns win patterns based on the current win_condition.

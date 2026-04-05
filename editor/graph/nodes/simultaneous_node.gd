@@ -59,6 +59,19 @@ func set_node_data(data: Dictionary) -> void:
 	_refresh_display()
 
 
+func validate() -> Dictionary:
+	var errors: Array[String] = []
+	var warnings: Array[String] = []
+	var ge := get_parent() as GraphEdit
+	if ge:
+		if not _has_flow_input_connection(ge, 0) and not _has_flow_output_connection(ge, 0):
+			errors.append("Flujo no conectado")
+		var opponent_count := _count_input_connections_from_port(ge, 3)
+		if opponent_count < 2:
+			warnings.append("Menos de 2 oponentes conectados (%d)" % opponent_count)
+	return {"valid": errors.is_empty(), "warnings": warnings, "errors": errors}
+
+
 func on_connection_changed(port: int, connected: bool, from_node: BaseGraphNode) -> void:
 	var opp_idx := port - _next_opponent_slot + _opponent_labels.size()
 	if port >= 3 and opp_idx >= 0 and opp_idx < _opponent_labels.size():
@@ -104,3 +117,4 @@ func _refresh_display() -> void:
 			_update_opponent_label(i, _connected_characters[i])
 		else:
 			_update_opponent_label(i, null)
+	_notify_validation_needed()

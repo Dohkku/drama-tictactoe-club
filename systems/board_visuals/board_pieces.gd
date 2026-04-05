@@ -93,13 +93,18 @@ func position_hand_pieces(animate: bool = true) -> void:
 	var piece_size = Vector2(hand_h, hand_h)
 	var gap = 4.0
 
+	# Pre-compute occupied pieces to avoid O(n²) lookup
+	var occupied := {}
+	for piece in cell_to_piece.values():
+		occupied[piece] = true
+
 	# Player hand: centered in PlayerHandArea below the grid
 	var player_y = player_hand_rect.position.y + (player_hand_rect.size.y - hand_h) / 2.0
 	var max_y = board.size.y - piece_size.y - 2.0
 	player_y = min(player_y, max_y)
 	var player_available: Array[Control] = []
 	for p in player_pieces:
-		if is_instance_valid(p) and p not in cell_to_piece.values():
+		if is_instance_valid(p) and not occupied.has(p):
 			player_available.append(p)
 	var player_start_x = grid_rect.position.x + (grid_rect.size.x - player_available.size() * (piece_size.x + gap)) / 2.0
 	for i in range(player_available.size()):
@@ -112,7 +117,7 @@ func position_hand_pieces(animate: bool = true) -> void:
 	opponent_y = max(opponent_y, 2.0)
 	var opponent_available: Array[Control] = []
 	for p in opponent_pieces:
-		if is_instance_valid(p) and p not in cell_to_piece.values():
+		if is_instance_valid(p) and not occupied.has(p):
 			opponent_available.append(p)
 	var opponent_start_x = grid_rect.position.x + (grid_rect.size.x - opponent_available.size() * (piece_size.x + gap)) / 2.0
 	for i in range(opponent_available.size()):
@@ -140,7 +145,9 @@ func snap_layout() -> void:
 			var target = get_cell_pos_in_layer(cell_idx)
 			var cell_size = get_cell_size()
 			var ps = cell_size * get_piece_ratio()
-			p.position = target + (cell_size - ps) / 2.0
+			var base_pos = target + (cell_size - ps) / 2.0
+			var offset = p.placement_offset if p.get("placement_offset") else Vector2.ZERO
+			p.position = base_pos + offset
 			p.size = ps
 			p.pivot_offset = ps / 2.0
 			p.queue_redraw()

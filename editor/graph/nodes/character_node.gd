@@ -68,6 +68,18 @@ func set_node_data(data: Dictionary) -> void:
 	_refresh_display()
 
 
+func validate() -> Dictionary:
+	var warnings: Array[String] = []
+	if character_data == null:
+		warnings.append("Sin datos de personaje")
+	else:
+		if character_data.character_id == "":
+			warnings.append("ID de personaje vacio")
+		if character_data.portrait_image == null:
+			warnings.append("Sin retrato asignado")
+	return {"valid": true, "warnings": warnings, "errors": [] as Array[String]}
+
+
 func set_character(data: Resource) -> void:
 	character_data = data
 	if is_inside_tree():
@@ -91,3 +103,5 @@ func _refresh_display() -> void:
 	if character_data.color != Color.BLACK and character_data.color != Color.WHITE:
 		accent_color = character_data.color
 		_apply_base_theme()
+
+	_notify_validation_needed()

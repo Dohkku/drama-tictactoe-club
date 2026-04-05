@@ -1,37 +1,31 @@
 @scene demo_ch4_match_intro
 
-[background res://backgrounds/background_4.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_tense.wav]
 [camera_mode smooth]
 [fullscreen]
+
+[transition fade_black 0.4]
 
 [enter mei center right]
 [expression mei neutral]
 [pose mei thinking]
 [wait 0.3]
 
-Mei: Tablero 3x3. Rotación. Máximo tres fichas.
+Mei: Tablero 3x3. Rotación. Máximo tres fichas. Sin empates. Alguien gana. Alguien pierde. No hay zona gris.
 
 [close_up mei 1.2 0.4]
 [expression mei analytical]
-Mei: Sin empates. Alguien gana. Alguien pierde.
+Mei: No pienses en dónde poner la ficha. Piensa en cuál vas a {b}perder{/b}.
 
 [camera_reset 0.3]
 
 [wait 0.2]
 
 [expression mei thinking]
-Mei: No pienses en dónde poner la ficha.
-
 [depth mei 1.1 0.3]
-Mei: Piensa en cuál vas a {b}perder{/b}.
-
+Mei → Tú: Empecemos. Llevo mucho tiempo esperando esto.
 [depth mei 1.0 0.3]
-
-[wait 0.3]
-
-[expression mei neutral]
-Mei → Tú: Empecemos.
 
 [split]
 [board_enable]

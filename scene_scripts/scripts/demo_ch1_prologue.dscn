@@ -1,63 +1,75 @@
 @scene demo_ch1_prologue
 
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music bgm_chill.mp3]
-[title_card La Invitacion | Capitulo 1]
-[title_card ]
+[title_card La Invitación | Capítulo 1]
 [focus]
 [fullscreen]
-[enter sora center_left right]
-[expression sora neutral]
-[title_card ]
+[wait 0.3]
+
+[enter sora center right]
 Sora "focused": ...Ah.
-Sora -> player: Oye. Tu.
-[expression sora happy]
-Sora: ¡Sabia que encontraria a alguien aqui!
+
+[wait 0.4]
+
+Sora → Tú: Sabía que habría alguien aquí.
+
 [expression sora neutral]
-Sora: Siempre hay alguien en esta aula despues de clase.
-Sora: Alguien que no tiene adonde ir. Que se queda mirando por la ventana.
+Sora: Siempre hay alguien en esta aula cuando todo el mundo se ha ido. Alguien que se queda mirando por la ventana como si esperara algo que no sabe nombrar.
+
 [expression sora nervous]
+[wait 1.0]
 [expression sora neutral]
-Sora: No... no lo digo como algo malo.
-[expression sora serious]
-Sora: Yo tambien era asi. Hace un ano.
-[focus sora]
-[focus sora]
-Sora "focused": Hasta que descubri algo que cambio todo.
-[focus]
-[focus]
-[expression sora happy]
-[expression sora neutral]
-[shake 0.3 0.08]
-Sora: {b}¡El Club de Tres en Raya!{/b}
-[expression sora neutral]
-Sora: Ya se lo que estas pensando. Tres en raya. Un juego de ninos.
-[expression sora serious]
-Sora: Pero aqui no jugamos para pasar el rato.
-Sora: Aqui cada partida es una {b}conversacion{/b}.
-[expression sora happy]
-Sora: Cada ficha que pones dice algo de ti.
-Sora: Como piensas. Como reaccionas bajo presion.
-[expression sora nervous]
-[expression sora neutral]
-Sora: Bueno... la verdad es que el club necesita miembros.
+Sora: No... no lo digo como algo malo. Yo hacía lo mismo. Todos los días, durante meses.
+
 [expression sora sad]
-Sora: Somos pocos. Eramos cinco, pero este ano...
+[focus sora]
+Sora: Hasta que un día dejé de mirar por la ventana y empecé a mirar un tablero.
+[focus]
+
 [expression sora happy]
+[shake 0.3 0.08]
+Sora: {b}El Club de Tres en Raya.{/b}
+
 [expression sora neutral]
-Sora: ¡Pero eso da igual! Lo que importa es que estas aqui.
+Sora: Ya sé. Suena ridículo. Tres en raya. Un juego que todo el mundo cree que domina porque lo jugaba de niño en la esquina de un cuaderno.
+
+[expression sora serious]
+Sora: Pero eso es como decir que sabes nadar porque una vez metiste los pies en una piscina.
+
+[expression sora focused]
+Sora: Aquí cada partida es una {b}conversación{/b}. Cada ficha que pones sobre el tablero dice algo de ti.
+
+Sora: De cómo piensas. De qué te asusta. De hasta dónde estás dispuesto a llegar.
+
+[focus sora]
+[expression sora serious]
+Sora: He visto a gente romperse ante un tablero de nueve casillas. He visto a gente descubrir cosas de sí mismos que no querían saber.
+[focus]
+
+[expression sora nervous]
+[wait 0.3]
+Sora: ...Bueno, la verdad es que el club necesita gente. Éramos cinco. Ahora soy prácticamente yo sola.
+
+[expression sora sad]
+Sora: Presidenta, fundadora, secretaria, y la que limpia los tableros al final del día.
+
+[expression sora happy]
+Sora: ¡Pero eso va a cambiar! Lo presiento.
+
 [focus sora]
 [expression sora focused]
-[expression sora neutral]
-Sora → Tu: Voy a ensenarte como funciona esto.
+Sora → Tú: Voy a enseñarte cómo funciona esto. Una partida. Tú y yo. Sin presión.
 [focus]
-Sora: Una partida. Tu y yo. Nada complicado.
-Sora: Solo quiero ver {b}como juegas{/b}.
+
+Sora: Solo quiero ver {b}cómo juegas{/b}. Eso me dirá todo lo que necesito saber.
+
 [expression sora happy]
-[expression sora neutral]
-Sora: Me llamo Sora, por cierto. Presidenta del club.
+Sora: Me llamo Sora, por cierto.
+
 [expression sora nervous]
-Sora: Bueno, presidenta y fundadora y... basicamente todo.
+[wait 0.4]
+Sora: Y... si te soy sincera, llevo días buscando el valor para hablar contigo. Te he visto aquí varias tardes.
+
 [expression sora happy]
-[expression sora neutral]
-Sora: ¡Pero eso esta a punto de cambiar!
-Sora: Ven. El tablero esta preparado.
+Sora: ¡P-Pero da igual! Lo importante es el tablero. Ven. Está preparado.

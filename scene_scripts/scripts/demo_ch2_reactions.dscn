@@ -16,18 +16,16 @@ Ryu: ¿Cómo?
 [wait 0.4]
 [expression ryu cold]
 [pose ryu arms_crossed]
-Ryu: No. No me voy a engañar. Ha sido limpio.
+Ryu: No. No me voy a engañar. Ha sido limpio. Brutalmente limpio.
 [wait 0.3]
 [close_up ryu 1.2 0.4]
 [expression ryu neutral]
-Ryu → Tú: Me has ganado. Sin trucos. Sin suerte.
+Ryu → Tú: Me has ganado. Sin trucos. Sin suerte. Y eso me jode más de lo que imaginas.
 [camera_reset 0.3]
 [wait 0.3]
 [expression ryu cold]
 [pose ryu confident]
-Ryu: Puede que Sora tenga razón sobre ti.
-[wait 0.2]
-Ryu: Puede.
+Ryu: Puede que Sora tenga razón sobre ti. Puede. No lo voy a admitir dos veces.
 [enter sora left left]
 [expression sora happy]
 [pose sora excited]
@@ -36,7 +34,7 @@ Sora: {shake}¡¡Lo has conseguido!!{/shake}
 Sora: ¡Le has ganado a Ryu! ¡A {b}Ryu{/b}!
 [look_at ryu sora]
 [expression ryu cold]
-Ryu: No grites, Sora.
+Ryu: No grites, Sora. Todavía me duelen los oídos. Y el orgullo.
 [look_at sora ryu]
 [expression sora happy]
 Sora: ¡Perdona, perdona! ¡Es que no me lo creo!
@@ -55,14 +53,14 @@ Ryu: {shake}Predecible.{/shake}
 [wait 0.4]
 [expression ryu neutral]
 [pose ryu arms_crossed]
-Ryu: Los diamantes no mienten. Cada movimiento tuyo... lo vi venir.
+Ryu: Cada movimiento tuyo... lo vi venir. Como leer un libro abierto. Un libro infantil.
 [wait 0.3]
 [close_up ryu 1.2 0.4]
-Ryu → Tú: Pero no huiste. Eso es algo.
+Ryu → Tú: Pero no huiste. Eso es algo. La mayoría se derrumba mucho antes.
 [camera_reset 0.3]
 [wait 0.2]
 [expression ryu cold]
-Ryu: No es suficiente. Pero es algo.
+Ryu: No es suficiente. Pero es algo. Y algo es más de lo que esperaba, si te soy sincero.
 [enter sora left left]
 [expression sora sad]
 [pose sora idle]
@@ -74,7 +72,7 @@ Sora: Ryu lleva años jugando. Nadie le gana a la primera.
 [expression ryu neutral]
 Ryu: Mentira. Tú me ganaste a la primera.
 [expression sora nervous]
-Sora: ...Eso fue diferente.
+Sora: ...Eso fue diferente. Y lo sabes.
 [exit sora left]
 @end
 
@@ -88,17 +86,17 @@ Sora: ...Eso fue diferente.
 [pose ryu thinking]
 Ryu: ...Empate.
 [wait 0.4]
-Ryu: Contra mí. Con shockwave. Con dificultad máxima.
+Ryu: Contra mí. A dificultad máxima. En tu segunda partida de club.
 [expression ryu neutral]
 [pose ryu arms_crossed]
-Ryu: Eso no es un empate. Es una declaración.
+Ryu: Eso no es un empate. Es una declaración de intenciones.
 [close_up ryu 1.2 0.4]
-Ryu → Tú: Que no pudiste ganar... pero te negaste a perder.
+Ryu → Tú: No pudiste ganar... pero te negaste a perder. Y eso dice más de ti que cualquier victoria.
 [camera_reset 0.3]
 [wait 0.2]
 [expression ryu cold]
 [pose ryu confident]
-Ryu: Volveremos a jugar.
+Ryu: Volveremos a jugar. Y la próxima vez no me pillarás con la guardia baja.
 [set_flag survived_ryu]
 @end
 

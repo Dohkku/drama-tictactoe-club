@@ -48,6 +48,8 @@ func _ready() -> void:
 	_default_stylebox = get_theme_stylebox("panel").duplicate() if has_theme_stylebox("panel") else null
 
 
+var _advance_cooldown: bool = false
+
 func _input(event: InputEvent) -> void:
 	if not is_active or _in_choice_mode:
 		return
@@ -59,7 +61,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if is_typing:
 			_finish_typing()
-		else:
+			# Brief cooldown so fast clicks don't skip the completed text
+			_advance_cooldown = true
+			get_tree().create_timer(0.15).timeout.connect(func(): _advance_cooldown = false)
+		elif not _advance_cooldown:
 			hide_dialogue()
 			EventBus.dialogue_finished.emit()
 
@@ -98,6 +103,30 @@ func hide_dialogue() -> void:
 	is_active = false
 	is_typing = false
 	_current_character_data = null
+
+
+# ── Snapshot for editor preview ────────────────────────────────────────
+
+func save_state() -> Dictionary:
+	return {
+		"visible": visible,
+		"speaker": name_label.text if name_label else "",
+		"text": _full_text,
+	}
+
+
+func load_state(state: Dictionary) -> void:
+	if not state.get("visible", false):
+		hide_dialogue()
+		return
+	if name_label:
+		name_label.text = state.get("speaker", "")
+	if text_label:
+		text_label.text = state.get("text", "")
+		text_label.visible_characters = -1
+	visible = true
+	is_active = true
+	is_typing = false
 
 
 func _type_text(my_id: int) -> void:

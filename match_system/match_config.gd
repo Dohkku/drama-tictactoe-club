@@ -24,5 +24,8 @@ extends Resource
 @export var player_piece_design: String = "x"
 @export var opponent_piece_design: String = "o"
 
+## Who plays first: "player", "opponent", "random"
+@export var starting_player: String = "player"
+
 ## Per-match board configuration (null = use project default).
 @export var board_config: Resource = null

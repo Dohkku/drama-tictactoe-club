@@ -1,38 +1,31 @@
 @scene demo_ch3_match_intro
 
-[background res://backgrounds/background_3.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_tense.wav]
 [camera_mode smooth]
 [fullscreen]
+
+[transition fade_black 0.4]
 
 [enter akira center left]
 [expression akira confident]
 [pose akira confident]
 [wait 0.3]
 
-Akira: Cinco por cinco. Cuatro en raya.
+Akira: Cinco por cinco. Cuatro en raya. En un tablero grande, cada error se amplifica. Cada acierto, también.
 
 [close_up akira 1.2 0.4]
 [expression akira angry]
-Akira: Mis fichas son {b}estrellas{/b}. Giran cuando las coloco. Efecto {b}destello{/b}.
+[speed_lines radial 0.3]
+Akira → Tú: Quiero que me muestres todo lo que tienes. {b}Todo.{/b} No te guardes nada.
 
 [camera_reset 0.3]
 
-[expression akira confident]
-Akira: Las tuyas son triángulos. Bonitos. Pero no te van a salvar.
-
-[wait 0.2]
-
-[camera_snap akira 1.3]
-[flash #ff4400 0.06]
-Akira → Tú: En un tablero grande hay más espacio para {b}equivocarse{/b}.
-
-[camera_reset 0.3]
 [wait 0.2]
 
 [expression akira confident]
 [pose akira idle]
-Akira: Prepárate.
+Akira: Porque yo no pienso guardarme nada contigo.
 
 [split]
 [board_enable]

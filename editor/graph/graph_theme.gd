@@ -26,6 +26,12 @@ const COLOR_SIMULTANEOUS := Color(0.65, 0.25, 0.85)
 const COLOR_CANVAS_INSTANCE := Color(0.9, 0.75, 0.2)
 const COLOR_COMMENT := Color(0.5, 0.5, 0.5)
 
+# ── Validation ──
+const COLOR_VALIDATION_ERROR := Color(0.9, 0.2, 0.2, 0.35)
+const COLOR_VALIDATION_WARNING := Color(0.95, 0.7, 0.15, 0.3)
+const COLOR_VALIDATION_OK := Color(0.3, 0.8, 0.4)
+const COLOR_VALIDATION_PROBLEM := Color(0.95, 0.7, 0.15)
+
 # ── Editor background ──
 const COLOR_BG := Color(0.1, 0.1, 0.14)
 const COLOR_PANEL_BG := Color(0.14, 0.15, 0.19)

@@ -42,10 +42,17 @@ var _speed_lines = null  # SpeedLinesEffect node
 
 
 func _ready() -> void:
+	# Transition overlay layer — sits above characters for wipes/flashes
+	var _transition_layer := Control.new()
+	_transition_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_transition_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_transition_layer.z_index = 100
+	add_child(_transition_layer)
+
 	camera_effects = Node.new()
 	camera_effects.set_script(CameraEffectsScript)
 	add_child(camera_effects)
-	camera_effects.setup(character_layer, self)
+	camera_effects.setup(character_layer, _transition_layer)
 
 	# Virtual camera system
 	_camera = CinematicCameraScript.new()
@@ -56,13 +63,15 @@ func _ready() -> void:
 
 	character_layer.resized.connect(_on_layer_resized)
 
+	# Initial default background. Set BEFORE the frame wait so callers that
+	# override it right after add_child (editor cinematic preview) don't get
+	# their image clobbered when this coroutine resumes after yielding.
+	background.set_background(Color(0.95, 0.91, 0.85))
+
 	# Capture base size on first frame for consistent character scaling
 	await get_tree().process_frame
 	if character_layer.size != Vector2.ZERO:
 		_base_stage_size = character_layer.size
-
-	# Initial default background
-	background.set_background(Color(0.95, 0.91, 0.85))
 
 
 func register_character(data: Resource) -> void:
@@ -325,6 +334,63 @@ func clear_stage() -> void:
 	if _camera:
 		_camera.reset()
 	_camera_active = false
+
+
+# ── Snapshot for editor preview ────────────────────────────────────────
+
+func save_state() -> Dictionary:
+	## Capture enough stage state to restore characters + expressions + poses.
+	## Background is tracked externally (SceneRunner) since the stage doesn't
+	## store the source string.
+	var chars: Array = []
+	for id in characters_on_stage.keys():
+		var slot = characters_on_stage[id]
+		chars.append({
+			"id": id,
+			"position": _character_positions.get(id, "center"),
+			"expression": slot.current_expression if slot else "neutral",
+			"body_state": slot.body_state if slot else "idle",
+			"look_target": slot.look_target if slot else "",
+			"depth": _character_depth.get(id, 1.0),
+		})
+	return {"characters": chars}
+
+
+func load_state(state: Dictionary) -> void:
+	## Restore characters to the configuration described by save_state().
+	## Characters not present in the snapshot are removed.
+	var target_ids: Dictionary = {}
+	var chars: Array = state.get("characters", [])
+	for entry in chars:
+		target_ids[entry.id] = true
+
+	# Remove characters that shouldn't be on stage.
+	for id in characters_on_stage.keys():
+		if not target_ids.has(id):
+			characters_on_stage[id].queue_free()
+			characters_on_stage.erase(id)
+			_character_positions.erase(id)
+			_character_depth.erase(id)
+
+	# Restore each character.
+	for entry in chars:
+		var id: String = entry.id
+		var data: Resource = _character_registry.get(id)
+		if data == null:
+			continue
+		if not characters_on_stage.has(id):
+			enter_character(id, entry.get("position", "center"), "")
+		var slot = characters_on_stage.get(id)
+		if slot == null:
+			continue
+		_character_positions[id] = entry.get("position", "center")
+		_apply_slot_position(slot, POSITIONS.get(_character_positions[id], 0.5))
+		slot.modulate.a = 1.0
+		slot.visible = true
+		slot.set_expression(entry.get("expression", "neutral"))
+		slot.set_body_state(entry.get("body_state", "idle"))
+		slot.set_look_direction(entry.get("look_target", ""))
+		_character_depth[id] = entry.get("depth", 1.0)
 
 
 func get_character_color(character_id: String) -> Color:

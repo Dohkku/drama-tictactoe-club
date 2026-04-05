@@ -142,6 +142,7 @@ func _init() -> void:
 func _ready() -> void:
 	title = "COMANDO"
 	custom_minimum_size.x = 200
+	resizable = false
 	super._ready()
 
 	# Slot 0: flow through
@@ -180,6 +181,10 @@ func _ready() -> void:
 		_select_command(command)
 	elif _category_btn.item_count > 0:
 		_on_category_selected(0)
+
+	# Ensure compact size after setup
+	size = Vector2.ZERO
+	reset_size()
 
 
 func _exit_tree() -> void:
@@ -272,8 +277,10 @@ func set_step(n: int) -> void:
 func _rebuild_params() -> void:
 	if _params_container == null:
 		return
+	# Remove old children immediately (not deferred) so size recalculates correctly
 	for child in _params_container.get_children():
-		child.queue_free()
+		_params_container.remove_child(child)
+		child.free()
 
 	var cat_data: Dictionary = CATEGORIES.get(category, {})
 	var cmd_params: Dictionary = cat_data.get("commands", {}).get(command, {})
@@ -282,7 +289,6 @@ func _rebuild_params() -> void:
 	if cmd_params.is_empty() and CMD_DESCRIPTIONS.has(command):
 		var desc_lbl := Label.new()
 		desc_lbl.text = CMD_DESCRIPTIONS[command]
-		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc_lbl.add_theme_font_size_override("font_size", 10)
 		desc_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
 		_params_container.add_child(desc_lbl)
@@ -291,6 +297,10 @@ func _rebuild_params() -> void:
 		var param_type: String = cmd_params[param_name]
 		var current_val = params.get(param_name, "")
 		_add_param_widget(param_name, param_type, current_val)
+
+	# Force GraphNode to shrink to fit content
+	size = Vector2.ZERO
+	reset_size()
 
 
 func _add_param_widget(param_name: String, param_type: String, current_val) -> void:
@@ -343,6 +353,7 @@ func _add_param_widget(param_name: String, param_type: String, current_val) -> v
 			edit.text = str(current_val)
 			edit.add_theme_font_size_override("font_size", 10)
 			edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			edit.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 			edit.custom_minimum_size = Vector2(140, 60)
 			edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 			var pname: String = param_name
@@ -351,12 +362,12 @@ func _add_param_widget(param_name: String, param_type: String, current_val) -> v
 
 			# Hint de tags disponibles
 			var hint := Label.new()
-			hint.text = "{b}negrita{/b}  {i}cursiva{/i}\n{shake}tiembla{/shake}  {wave}onda{/wave}  {rainbow}arco{/rainbow}"
+			hint.text = "{b} {i} {shake} {wave} {rainbow}"
 			hint.add_theme_font_size_override("font_size", 9)
 			hint.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
-			hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			vbox.add_child(hint)
 
+			vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 			_params_container.add_child(vbox)
 			return  # Para "text" no agregar hbox al final
 		else:
@@ -403,7 +414,7 @@ func _add_param_widget(param_name: String, param_type: String, current_val) -> v
 		slider.min_value = min_v
 		slider.max_value = max_v
 		slider.step = 0.05
-		slider.value = float(current_val) if current_val != "" else (min_v + max_v) / 2.0
+		slider.value = float(current_val) if str(current_val) != "" else (min_v + max_v) / 2.0
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.custom_minimum_size.x = 60
 		var pname: String = param_name

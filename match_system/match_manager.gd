@@ -7,6 +7,8 @@ const SceneParserScript = preload("res://systems/scene_runner/scene_parser.gd")
 const GameRulesScript = preload("res://systems/board_logic/game_rules.gd")
 const BoardConfigScript = preload("res://data/board_config.gd")
 const PlacementStyleScript = preload("res://systems/board_visuals/placement_style.gd")
+const MatchResultOverlayScene = preload("res://systems/match/match_result_overlay.tscn")
+const ScreenFadeScript = preload("res://systems/match/screen_fade.gd")
 
 var _runner: RefCounted   # SceneRunner
 var _board: Control       # Board
@@ -15,6 +17,7 @@ var _dialogue_box: Control # DialogueBox
 var _events: Array = []
 var _current: int = -1
 var _project_board_config: Resource = null  # Project-level default BoardConfig
+var _screen_fade: CanvasLayer = null
 
 # Simultaneous match state
 signal _sim_resolved()
@@ -28,6 +31,10 @@ func setup(runner: RefCounted, board: Control, stage: Control, project_board_con
 	_stage = stage
 	_dialogue_box = runner._dialogue_box
 	_project_board_config = project_board_config
+	# Create screen fade node
+	_screen_fade = CanvasLayer.new()
+	_screen_fade.set_script(ScreenFadeScript)
+	_stage.get_tree().root.add_child(_screen_fade)
 
 
 func add_match(config: Resource) -> void:
@@ -71,7 +78,6 @@ func _play_event(event: Dictionary) -> void:
 	_current += 1
 	if _current < _events.size():
 		_dialogue_box.hide_dialogue()
-		await _stage.get_tree().create_timer(0.8).timeout
 		await _play_event(_events[_current])
 	else:
 		EventBus.scene_script_finished.emit("tournament_complete")
@@ -88,6 +94,7 @@ func _play_cutscene(script_path: String) -> void:
 
 func _play_match(config: Resource) -> void:
 	await _configure_board(config)
+	_apply_starting_player(config)
 	await _stage.get_tree().create_timer(0.3).timeout
 
 	_runner.clear_reactions()
@@ -103,11 +110,17 @@ func _play_match(config: Resource) -> void:
 		var data = SceneParserScript.parse_file(config.intro_script)
 		await _runner.execute(data)
 
+	# If opponent starts, trigger their first move
+	if _board.logic.current_turn == _board.ai_piece:
+		await _board.trigger_ai_turn()
+
 	var result = await EventBus.match_ended
 
 	_board.pre_move_hook_enabled = false
 	if EventBus.before_ai_move.is_connected(_on_before_ai_move):
 		EventBus.before_ai_move.disconnect(_on_before_ai_move)
+
+	await _show_result_overlay(result, config.opponent_id)
 
 	match result:
 		"win":
@@ -144,6 +157,7 @@ func _play_simultaneous(configs: Array) -> void:
 	for i in range(boards.size()):
 		var config = boards[i].config
 		await _configure_board(config)
+		_apply_starting_player(config)
 		await _stage.get_tree().create_timer(0.3).timeout
 		await _stage.get_tree().process_frame
 
@@ -240,7 +254,7 @@ func _play_simultaneous(configs: Array) -> void:
 			if ai_ended:
 				entry.finished = true
 				entry.result = ai_end_result
-				await _run_end_reaction(ai_end_result)
+				await _run_end_reaction(ai_end_result, config.opponent_id)
 				GameState.record_match(config.opponent_id, ai_end_result)
 				await _wait_for_runner()
 				await _stage.exit_character(config.opponent_id)
@@ -269,7 +283,7 @@ func _play_simultaneous(configs: Array) -> void:
 			if player_result.game_over:
 				entry.finished = true
 				entry.result = player_result.result
-				await _run_end_reaction(player_result.result)
+				await _run_end_reaction(player_result.result, config.opponent_id)
 				GameState.record_match(config.opponent_id, player_result.result)
 				visit_done = true
 				break
@@ -291,7 +305,7 @@ func _play_simultaneous(configs: Array) -> void:
 				if ai_ended2:
 					entry.finished = true
 					entry.result = ai_result2
-					await _run_end_reaction(ai_result2)
+					await _run_end_reaction(ai_result2, config.opponent_id)
 					GameState.record_match(config.opponent_id, ai_result2)
 					visit_done = true
 					break
@@ -351,7 +365,18 @@ func _wait_for_runner() -> void:
 		await _stage.get_tree().process_frame
 
 
-func _run_end_reaction(result: String) -> void:
+func _show_result_overlay(result: String, opponent_id: String = "") -> void:
+	var tree := _stage.get_tree()
+	var overlay := MatchResultOverlayScene.instantiate()
+	tree.root.add_child(overlay)
+	var display_name := ""
+	if opponent_id != "" and _stage._character_registry.has(opponent_id):
+		display_name = _stage._character_registry[opponent_id].display_name
+	await overlay.show_result(result, display_name)
+
+
+func _run_end_reaction(result: String, opponent_id: String = "") -> void:
+	await _show_result_overlay(result, opponent_id)
 	match result:
 		"win": await _runner.trigger_reaction("player_wins")
 		"lose": await _runner.trigger_reaction("opponent_wins")
@@ -418,10 +443,11 @@ func _configure_board_visuals(config: Resource) -> void:
 
 func _configure_board(config: Resource) -> void:
 	var board_cfg: Resource = _resolve_board_config(config)
-	# full_reset now uses immediate free() — no stale state possible
+	# Set designs + colors BEFORE reset so pieces are created correctly
+	_configure_board_visuals(config)
 	_board.full_reset(board_cfg.get_rules())
 	_board.apply_board_config(board_cfg)
-	_configure_board_visuals(config)
+	_board._update_ghost_state()
 	_board.modulate.a = 1.0
 
 
@@ -452,6 +478,17 @@ func _resolve_rules_legacy(preset: String) -> Resource:
 			return GameRulesScript.big_board()
 		_:
 			return GameRulesScript.standard()
+
+
+func _apply_starting_player(config: Resource) -> void:
+	var starting: String = config.get("starting_player") if config.get("starting_player") else "player"
+	match starting:
+		"opponent":
+			_board.logic.current_turn = _board.ai_piece
+		"random":
+			_board.logic.current_turn = _board.player_piece if randi() % 2 == 0 else _board.ai_piece
+		_:
+			_board.logic.current_turn = _board.player_piece
 
 
 func _resolve_style(style_name: String) -> Resource:

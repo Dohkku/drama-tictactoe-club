@@ -364,6 +364,7 @@ func open_preview() -> void:
 
 	# Stage viewport
 	var viewport_container := SubViewportContainer.new()
+	viewport_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	viewport_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	viewport_container.stretch = true
 
@@ -401,7 +402,10 @@ func open_preview() -> void:
 	_preview_window.popup_centered()
 	_preview_window.position += Vector2i(50, 50)
 
-	# Wait a frame for nodes to initialize
+	# Wait two frames for the stage _ready coroutine (which awaits one frame
+	# itself) to fully finish. Without this, our set_background call below can
+	# race with the stage's default beige set-after-yield and get clobbered.
+	await _parent_ref.get_tree().process_frame
 	await _parent_ref.get_tree().process_frame
 
 	# Register characters on preview stage
@@ -418,8 +422,12 @@ func open_preview() -> void:
 
 	_refresh_preview_script()
 	_preview_step_index = 0
-	if scene_background != "":
-		_preview_stage.set_background(scene_background)
+	var initial_bg: String = _latest_background_in_commands(_preview_commands.size())
+	if initial_bg == "":
+		initial_bg = scene_background
+	print("[CineEditor.open_preview] initial_bg='%s' cmds=%d scene_bg='%s'" % [initial_bg, _preview_commands.size(), scene_background])
+	if initial_bg != "":
+		_preview_stage.set_background(initial_bg)
 
 	step_label.text = "Paso: 0 / %d" % _preview_commands.size()
 
@@ -534,6 +542,18 @@ func _set_active_preview_node(step_index: int) -> void:
 			break
 
 
+## Scan commands[0..limit] for the latest [background path] command.
+## Returns "" if no background command is found.
+func _latest_background_in_commands(limit: int) -> String:
+	var last_bg: String = ""
+	var end: int = mini(limit, _preview_commands.size())
+	for i in range(end):
+		var cmd = _preview_commands[i]
+		if cmd.get("type", "") == "background":
+			last_bg = cmd.get("source", "")
+	return last_bg
+
+
 func _refresh_preview_script() -> bool:
 	if graph_edit == null:
 		return false
@@ -544,9 +564,33 @@ func _refresh_preview_script() -> bool:
 	_preview_dscn_cache = dscn_text
 	var parsed: Dictionary = SceneParserScript.parse(dscn_text)
 	_preview_commands = parsed.get("commands", [])
-	scene_background = parsed.get("background", scene_background)
+	var meta_bg: String = parsed.get("background", "")
+	if meta_bg != "":
+		scene_background = meta_bg
 	_preview_step_index = mini(_preview_step_index, _preview_commands.size())
 	return changed
+
+
+func refresh_from_file() -> void:
+	## Called by PreviewManager after ScriptEditorWindow saves the source .dscn.
+	## Re-parses the file and rebuilds the preview up to the current step index.
+	if _preview_window == null or not is_instance_valid(_preview_window):
+		return
+	if cutscene_node == null or cutscene_node.script_path == "":
+		return
+	if not FileAccess.file_exists(cutscene_node.script_path):
+		return
+	var text: String = FileAccess.get_file_as_string(cutscene_node.script_path)
+	if text == _preview_dscn_cache:
+		return
+	_preview_dscn_cache = text
+	var parsed: Dictionary = SceneParserScript.parse(text)
+	_preview_commands = parsed.get("commands", [])
+	var meta_bg: String = parsed.get("background", "")
+	if meta_bg != "":
+		scene_background = meta_bg
+	var resume_at: int = mini(_preview_step_index, _preview_commands.size())
+	await _preview_rebuild_to(resume_at)
 
 
 func _preview_rebuild_to(step_count: int) -> void:
@@ -562,8 +606,11 @@ func _preview_rebuild_to(step_count: int) -> void:
 	_preview_step_index = 0
 	_update_step_label()
 
-	if scene_background != "":
-		_preview_stage.set_background(scene_background)
+	var rebuild_bg: String = _latest_background_in_commands(step_count)
+	if rebuild_bg == "":
+		rebuild_bg = scene_background
+	if rebuild_bg != "":
+		_preview_stage.set_background(rebuild_bg)
 	else:
 		_preview_stage.set_background(Color(0.95, 0.91, 0.85))
 

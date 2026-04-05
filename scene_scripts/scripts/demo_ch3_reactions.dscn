@@ -10,27 +10,29 @@
 [wait 0.4]
 Akira: ...No.
 [wait 0.3]
-Akira: No, no, no.
+Akira: No, no, no. Eso no puede ser.
 [expression akira neutral]
 [wait 0.3]
-Akira: El tablero grande era {b}mi{/b} ventaja. Mi territorio.
+Akira: El tablero grande era {b}mi{/b} ventaja. Mi territorio. Donde yo mando.
 [expression akira confident]
-Akira → Tú: ¿Cómo has leído mis movimientos en un 5x5?
+Akira → Tú: ¿Cómo has leído mis movimientos en un 5x5? Nadie hace eso.
 [wait 0.3]
+[close_up akira 1.2 0.4]
+Akira: ...Ahora entiendo por qué no podía dejar de pensar en ti.
+[camera_reset 0.3]
 [enter sora far_left left]
 [expression sora happy]
 [pose sora excited]
 Sora: ¡Increíble! ¡Has ganado en el tablero grande!
 [look_at akira sora]
 [expression akira angry]
-Akira: Cállate, Sora.
+Akira: Cállate, Sora. Déjame procesar esto.
 [expression sora nervous]
 Sora: ...Perdona.
 [look_at akira center]
-[expression akira neutral]
-Akira → Tú: La próxima vez elegiré yo las reglas.
 [expression akira confident]
-Akira: Y no seré tan amable.
+Akira → Tú: La próxima vez elegiré yo las reglas. Y el tablero. Y todo lo demás.
+Akira: Porque esto no ha terminado. Ni de lejos.
 [exit sora left]
 [set_flag defeated_akira]
 @end
@@ -43,19 +45,19 @@ Akira: Y no seré tan amable.
 [pose akira confident]
 Akira: {shake}¡Así se juega!{/shake}
 [wait 0.3]
-Akira: Estrellas giratorias contra triángulos. No hay competición.
+Akira: El tablero grande te tragó. Demasiadas opciones, demasiada duda. Te ahogaste en tus propias posibilidades.
 [expression akira neutral]
-Akira → Tú: El tablero grande te tragó. Demasiadas opciones, demasiada duda.
+Akira → Tú: Pero me has dado un buen rato. Eso no se lo doy a cualquiera.
 [wait 0.2]
 [expression akira confident]
-Akira: Vuelve cuando sepas pensar en grande.
+Akira: Vuelve cuando sepas pensar en grande. Te estaré esperando.
 [enter sora far_left left]
 [expression sora sad]
 [pose sora idle]
 Sora: Ha sido una buena partida...
 [expression akira angry]
 [look_at akira sora]
-Akira: No. Ha sido una partida corta.
+Akira: No. Ha sido una partida corta. Pero interesante.
 [exit sora left]
 @end
 
@@ -64,13 +66,13 @@ Akira: No. Ha sido una partida corta.
 [board_disable]
 [expression akira neutral]
 [pose akira idle]
-Akira: Empate. En un 5x5.
+Akira: Empate. En un 5x5. ¿Sabes lo raro que es eso?
 [wait 0.3]
 [expression akira confident]
-Akira: Eso significa que ninguno de los dos cometió un error fatal.
-Akira → Tú: Pero tampoco tuviste el valor de arriesgar.
-[expression akira neutral]
-Akira: En el ajedrez, un empate es respeto. Aquí... es frustración.
+Akira: Significa que ninguno de los dos cometió un error fatal. Pero tampoco tuviste el valor de arriesgar.
+Akira → Tú: En el ajedrez, un empate es respeto. Aquí... es frustración. Para los dos.
+[expression akira angry]
+Akira: Necesito una revancha. Esto no puede quedarse así.
 @end
 
 @on near_win

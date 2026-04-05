@@ -11,9 +11,10 @@ func set_background(source: Variant) -> void:
 	## - Color: solid color background
 	## - String (path): ".png", ".jpg", ".ogv" (video), etc.
 	## - Texture2D: direct texture assignment
-	
+
+	print("[BgMgr.set_background] source=%s in_tree=%s size=%s parent=%s" % [str(source), is_inside_tree(), size, get_parent()])
 	_clear_current()
-	
+
 	if source is Color:
 		_setup_color(source)
 	elif source is String:
@@ -57,6 +58,13 @@ func set_gradient(top_color: Color, bottom_color: Color) -> void:
 
 
 func _setup_from_path(path: String) -> void:
+	# Support "color(R, G, B)" syntax
+	if path.begins_with("color(") and path.ends_with(")"):
+		var inner: String = path.substr(6, path.length() - 7)
+		var parts: PackedStringArray = inner.split(",")
+		if parts.size() >= 3:
+			_setup_color(Color(float(parts[0].strip_edges()), float(parts[1].strip_edges()), float(parts[2].strip_edges())))
+			return
 	# Support "gradient:top_hex:bottom_hex" syntax
 	if path.begins_with("gradient:"):
 		var parts: PackedStringArray = path.split(":")
@@ -75,6 +83,7 @@ func _setup_from_path(path: String) -> void:
 	match ext:
 		"png", "jpg", "jpeg", "webp":
 			var tex = load(path)
+			print("[BgMgr._setup_from_path] loaded '%s' tex=%s" % [path, tex])
 			if tex: _setup_texture(tex)
 		"ogv": # Godot's native video format
 			_setup_video(path)

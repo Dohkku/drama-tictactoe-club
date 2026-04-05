@@ -350,3 +350,13 @@ func _update_input_state() -> void:
 func _on_input_toggle(enabled: bool) -> void:
 	input_enabled = enabled
 	game_controller.update_input_state()
+
+
+func _update_ghost_state() -> void:
+	## Update ghost piece preview on all cells based on current game state.
+	var show_ghost: bool = input_enabled and not _animating and not logic.game_over \
+		and logic.current_turn == player_piece
+	var ratio: float = pieces.get_piece_ratio() if pieces else 0.85
+	for cell in cells:
+		cell.ghost_piece_ratio = ratio
+		cell.set_ghost(player_design, player_color, show_ghost)

@@ -11,16 +11,19 @@ Sora: ...Vaya.
 [wait 0.4]
 [expression sora happy]
 [pose sora excited]
-Sora: {b}¡Lo sabía!{/b}
 [flash #ffcc00 0.1]
-Sora: ¡Sabía que tenías algo especial!
+Sora: {b}¡Lo sabía!{/b}
+Sora: Sabía que había algo detrás de esa mirada tranquila.
 [wait 0.3]
 [expression sora focused]
 [pose sora leaning_forward]
-Sora: Esa última jugada... no fue suerte. Fue {b}intención{/b}.
+Sora: Esa última jugada... no fue suerte. Fue {b}intención{/b}. Pura y limpia.
 [expression sora happy]
 [pose sora confident]
 Sora: Bienvenido al club. Oficialmente.
+[wait 0.2]
+[expression sora nervous]
+Sora: Y... gracias por no contenerte. Necesitaba ver eso.
 [set_flag beat_sora]
 @end
 
@@ -34,13 +37,13 @@ Sora: {shake}¡Sí!{/shake}
 [wait 0.3]
 [expression sora nervous]
 [pose sora idle]
-Sora: Perdón, perdón. Se supone que iba fácil...
-[expression sora happy]
-[pose sora leaning_forward]
-Sora: Pero oye, no estuvo mal. He visto cómo piensas.
-Sora: Hay algo ahí. Solo necesitas práctica.
+Sora: Perdón, perdón. Se suponía que iba a ir suave contigo...
 [expression sora focused]
-Sora: Y para eso... estás en el club.
+[pose sora leaning_forward]
+Sora: Pero oye, he visto cómo piensas. Hay algo ahí. Algo que la mayoría no tiene.
+Sora: Solo necesitas un poco de práctica. Y para eso... estás en el club.
+[expression sora happy]
+Sora: Además, así tengo excusa para que vuelvas.
 @end
 
 @on draw
@@ -50,21 +53,21 @@ Sora: Y para eso... estás en el club.
 [pose sora thinking]
 Sora: Empate...
 [wait 0.3]
-[expression sora happy]
-[pose sora leaning_forward]
-Sora: ¿Sabes qué significa un empate en tu primera partida?
 [expression sora serious]
-Sora: Que no cometiste ningún error. Que pensaste cada movimiento.
+Sora: ¿Sabes lo que significa un empate en tu primera partida? Que no cometiste ningún error. Que pensaste cada movimiento.
 [expression sora happy]
 [pose sora excited]
 Sora: Eso es exactamente lo que buscamos. ¡Estás dentro!
+[wait 0.2]
+[expression sora nervous]
+Sora: Aunque... la próxima vez, intenta ganarme. Necesito saber cómo se siente.
 [set_flag beat_sora]
 @end
 
 @on center_taken
 [expression sora focused]
 [pose sora leaning_forward]
-Sora: Oh. Interesante elección.
+Sora: Oh... Interesante.
 @end
 
 @on near_win

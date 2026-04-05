@@ -51,6 +51,20 @@ func set_node_data(data: Dictionary) -> void:
 	_refresh_display()
 
 
+func validate() -> Dictionary:
+	var errors: Array[String] = []
+	var warnings: Array[String] = []
+	var ge := get_parent() as GraphEdit
+	if ge:
+		if not _has_flow_input_connection(ge, 0) and not _has_flow_output_connection(ge, 0):
+			errors.append("Flujo no conectado")
+	if script_path == "":
+		warnings.append("Sin script asignado")
+	elif not ResourceLoader.exists(script_path) and not FileAccess.file_exists(script_path):
+		warnings.append("Archivo no encontrado: %s" % script_path)
+	return {"valid": errors.is_empty(), "warnings": warnings, "errors": errors}
+
+
 func get_resource_path() -> String:
 	return script_path
 
@@ -67,3 +81,4 @@ func _refresh_display() -> void:
 			_path_label.text = script_path.get_file().get_basename()
 		else:
 			_path_label.text = "(sin script)"
+	_notify_validation_needed()

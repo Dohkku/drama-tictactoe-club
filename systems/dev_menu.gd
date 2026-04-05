@@ -100,6 +100,29 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Main Menu button
+	var menu_exists: bool = ResourceLoader.exists("res://ui/main_menu.tscn")
+	if menu_exists:
+		var menu_btn := Button.new()
+		menu_btn.custom_minimum_size = Vector2(0, 40)
+		menu_btn.text = "  ☰  Main Menu"
+		menu_btn.add_theme_font_size_override("font_size", 13)
+		menu_btn.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
+		var menu_style := StyleBoxFlat.new()
+		menu_style.bg_color = Color(0.2, 0.2, 0.3)
+		menu_style.set_corner_radius_all(6)
+		menu_style.content_margin_left = 16
+		menu_btn.add_theme_stylebox_override("normal", menu_style)
+		var menu_hover := StyleBoxFlat.new()
+		menu_hover.bg_color = Color(0.3, 0.3, 0.4)
+		menu_hover.set_corner_radius_all(6)
+		menu_hover.content_margin_left = 16
+		menu_btn.add_theme_stylebox_override("hover", menu_hover)
+		menu_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://ui/main_menu.tscn"))
+		vbox.add_child(menu_btn)
+
+	vbox.add_child(HSeparator.new())
+
 	# Demo Story button — 5 chapters, full narrative
 	var story_btn := Button.new()
 	story_btn.custom_minimum_size = Vector2(0, 58)
@@ -120,27 +143,6 @@ func _build_ui() -> void:
 		# Load demo story directly, bypassing user save
 		_launch_project("res://data/resources/demo_story_project.tres"))
 	vbox.add_child(story_btn)
-
-	# Custom project button (from editor saves)
-	var custom_btn := Button.new()
-	custom_btn.custom_minimum_size = Vector2(0, 40)
-	custom_btn.text = "  ▶  Proyecto guardado (del editor)"
-	custom_btn.add_theme_font_size_override("font_size", 13)
-	custom_btn.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
-	var custom_style := StyleBoxFlat.new()
-	custom_style.bg_color = Color(0.3, 0.15, 0.1)
-	custom_style.set_corner_radius_all(6)
-	custom_style.content_margin_left = 16
-	custom_btn.add_theme_stylebox_override("normal", custom_style)
-	var custom_hover := StyleBoxFlat.new()
-	custom_hover.bg_color = Color(0.4, 0.2, 0.12)
-	custom_hover.set_corner_radius_all(6)
-	custom_hover.content_margin_left = 16
-	custom_btn.add_theme_stylebox_override("hover", custom_hover)
-	var has_save: bool = ResourceLoader.exists("user://current_project.tres")
-	custom_btn.disabled = not has_save
-	custom_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
-	vbox.add_child(custom_btn)
 
 	# Editor 2.0 (Canvas) — PRIMARY editor button
 	var canvas_btn := Button.new()
