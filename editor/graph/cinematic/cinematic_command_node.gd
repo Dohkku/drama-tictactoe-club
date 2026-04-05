@@ -111,11 +111,26 @@ var category: String = ""
 var command: String = ""
 var params: Dictionary = {}
 var available_characters: Array = []  # Array[CharacterData]
+var step_number: int = -1  # Set by cinematic editor for display
 
 var _category_btn: OptionButton = null
 var _command_btn: OptionButton = null
 var _params_container: VBoxContainer = null
 var _command_keys: Array = []  # Maps command_btn index → command key
+
+# Descriptions for parameterless commands so they don't look empty
+const CMD_DESCRIPTIONS := {
+	"clear_focus": "Restaura brillo de todos los personajes",
+	"clear_stage": "Elimina todos los personajes del escenario",
+	"board_enable": "Permite al jugador interactuar con el tablero",
+	"board_disable": "Bloquea la interaccion con el tablero",
+	"stop_music": "Detiene la musica de fondo",
+	"layout_fullscreen": "Cinematica a pantalla completa",
+	"layout_split": "Divide pantalla: cinematica + tablero",
+	"layout_board_only": "Solo tablero visible",
+	"else": "Rama alternativa (si el flag NO esta activo)",
+	"end_if": "Cierra el bloque condicional",
+}
 
 
 func _init() -> void:
@@ -241,6 +256,14 @@ func _select_command(cmd: String) -> void:
 
 # ── Dynamic parameter widgets ──
 
+func set_step(n: int) -> void:
+	step_number = n
+	if step_number >= 0:
+		title = "#%d %s" % [step_number, CATEGORIES.get(category, {}).get("label", "")]
+	else:
+		title = CATEGORIES.get(category, {}).get("label", "COMANDO")
+
+
 func _rebuild_params() -> void:
 	if _params_container == null:
 		return
@@ -249,6 +272,15 @@ func _rebuild_params() -> void:
 
 	var cat_data: Dictionary = CATEGORIES.get(category, {})
 	var cmd_params: Dictionary = cat_data.get("commands", {}).get(command, {})
+
+	# Show description for parameterless commands
+	if cmd_params.is_empty() and CMD_DESCRIPTIONS.has(command):
+		var desc_lbl := Label.new()
+		desc_lbl.text = CMD_DESCRIPTIONS[command]
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_font_size_override("font_size", 10)
+		desc_lbl.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+		_params_container.add_child(desc_lbl)
 
 	for param_name in cmd_params:
 		var param_type: String = cmd_params[param_name]

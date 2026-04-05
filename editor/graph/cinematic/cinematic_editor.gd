@@ -87,6 +87,8 @@ func open(p_cutscene_node, p_characters: Array, parent: Control) -> void:
 		graph_edit.connect_node(start.name, 0, end_node.name, 0)
 		scene_name = "new_scene"
 
+	_renumber_steps()
+
 
 func close() -> void:
 	if graph_edit == null:
@@ -146,10 +148,12 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 			return
 
 	graph_edit.connect_node(from_node, from_port, to_node, to_port)
+	_renumber_steps()
 
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
+	_renumber_steps()
 
 
 func _on_delete_nodes_request(nodes: Array[StringName]) -> void:
@@ -175,6 +179,49 @@ func _on_popup_selected(id: int) -> void:
 	var keys: Array = CmdNodeScript.CATEGORIES.keys()
 	if id >= 0 and id < keys.size():
 		_create_command_node(keys[id], _popup_pos)
+		_renumber_steps()
+
+
+## Walk flow from start and assign step numbers to each command node.
+func _renumber_steps() -> void:
+	# Reset all
+	for child in graph_edit.get_children():
+		if child is CmdNodeScript:
+			child.set_step(-1)
+
+	# Walk flow
+	var start_node: GraphNode = null
+	for child in graph_edit.get_children():
+		if child is StartNodeScript:
+			start_node = child
+			break
+	if start_node == null:
+		return
+
+	var current_name: StringName = start_node.name
+	var visited: Dictionary = {}
+	var step := 1
+
+	while current_name != StringName(""):
+		if visited.has(current_name):
+			break
+		visited[current_name] = true
+
+		var next_name: StringName = StringName("")
+		for conn in graph_edit.get_connection_list():
+			if conn.from_node == current_name:
+				next_name = conn.to_node
+				break
+
+		if next_name == StringName(""):
+			break
+
+		var node := graph_edit.get_node_or_null(String(next_name))
+		if node is CmdNodeScript:
+			node.set_step(step)
+			step += 1
+
+		current_name = next_name
 
 
 # ── Preview Window ──
@@ -184,11 +231,14 @@ func open_preview() -> void:
 		_preview_window.grab_focus()
 		return
 
-	# Create Window
+	# Create Window — independent (not transient) so it works on other monitors
 	_preview_window = Window.new()
 	_preview_window.title = "Preview — %s" % (cutscene_node.script_path.get_file() if cutscene_node.script_path != "" else "nueva escena")
 	_preview_window.size = Vector2i(800, 500)
 	_preview_window.unresizable = false
+	_preview_window.transient = false
+	_preview_window.exclusive = false
+	_preview_window.always_on_top = false
 	_preview_window.close_requested.connect(_close_preview)
 
 	# Main layout inside window
