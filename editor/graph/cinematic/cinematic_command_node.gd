@@ -16,6 +16,7 @@ const CATEGORIES := {
 		"label": "DIALOGO", "color": Color(0.3, 0.65, 0.9),
 		"commands": {
 			"dialogue": {"character": "char", "expression": "expr", "text": "text", "target": "char_opt"},
+			"choose": {"options_text": "text"},
 		}
 	},
 	"char_action": {
@@ -54,6 +55,9 @@ const CATEGORIES := {
 			"shake": {"intensity": "float:0.1:1.0", "duration": "float:0.1:1.0"},
 			"flash": {"color": "text_short", "duration": "float:0.05:0.5"},
 			"transition": {"style": "option:fade_black,fade_white,flash_red,flash_blue", "duration": "float:0.2:2.0"},
+			"speed_lines": {"direction": "option:right,left,up,down,radial", "duration": "float:0.1:1.0"},
+			"wipe": {"direction": "option:right,left,up,down", "duration": "float:0.2:1.0"},
+			"wipe_out": {"direction": "option:right,left,up,down", "duration": "float:0.2:1.0"},
 		}
 	},
 	"layout": {
@@ -62,6 +66,7 @@ const CATEGORIES := {
 			"layout_fullscreen": {},
 			"layout_split": {},
 			"layout_board_only": {},
+			"layout_instant": {"mode": "option:fullscreen,split,board_only"},
 		}
 	},
 	"audio": {
@@ -96,6 +101,7 @@ const CATEGORIES := {
 		"commands": {
 			"title_card": {"title": "text_short", "subtitle": "text_short"},
 			"background": {"source": "text_short"},
+			"background_gradient": {"top_color": "text_short", "bottom_color": "text_short"},
 			"wait": {"duration": "float:0.1:5.0"},
 		}
 	},

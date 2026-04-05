@@ -187,6 +187,13 @@ func _build_toolbar() -> PanelContainer:
 
 	hbox.add_child(VSeparator.new())
 
+	# Preview (cinematic sub-editor only)
+	var preview_btn := _make_toolbar_button("Preview", Color(0.7, 0.4, 0.2))
+	preview_btn.pressed.connect(func():
+		if _cinematic_editor:
+			_cinematic_editor.open_preview())
+	hbox.add_child(preview_btn)
+
 	# Settings
 	var settings_btn := _make_toolbar_button("Ajustes", Color(0.5, 0.4, 0.6))
 	settings_btn.pressed.connect(_show_stage_settings)
@@ -1464,6 +1471,7 @@ func _open_cinematic_editor(cutscene_node) -> void:
 func _close_cinematic_editor() -> void:
 	if _cinematic_editor == null:
 		return
+	_cinematic_editor._close_preview()
 	_cinematic_editor.close()
 	_cinematic_editor = null
 	graph_edit.visible = true

@@ -166,6 +166,20 @@ func _run(commands: Array) -> void:
 				await _cmd_transition(cmd)
 			"clear_stage":
 				_stage.clear_stage()
+			"speed_lines":
+				_stage.camera_effects.speed_lines(cmd.get("direction", "right"), cmd.get("duration", 0.3))
+				await _stage.get_tree().create_timer(cmd.get("duration", 0.3)).timeout
+			"wipe":
+				_stage.camera_effects.wipe(cmd.get("direction", "right"), cmd.get("duration", 0.4))
+				await _stage.get_tree().create_timer(cmd.get("duration", 0.4)).timeout
+			"wipe_out":
+				_stage.camera_effects.wipe_out(cmd.get("direction", "right"), cmd.get("duration", 0.4))
+				await _stage.get_tree().create_timer(cmd.get("duration", 0.4)).timeout
+			"layout_instant":
+				if _board:
+					var layout_mgr = _board.get_parent().get_parent()
+					if layout_mgr and layout_mgr.has_method("set_instant"):
+						layout_mgr.set_instant(cmd.get("mode", "fullscreen"))
 
 	_running = false
 

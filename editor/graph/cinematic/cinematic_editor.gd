@@ -12,17 +12,29 @@ const SerializerScript = preload("res://editor/graph/cinematic/cinematic_seriali
 const StartNodeScript = preload("res://editor/graph/nodes/start_node.gd")
 const EndNodeScript = preload("res://editor/graph/nodes/end_node.gd")
 
+const SceneParserScript = preload("res://systems/scene_runner/scene_parser.gd")
+const SceneRunnerScript = preload("res://systems/scene_runner/scene_runner.gd")
+
 var graph_edit: GraphEdit = null
 var cutscene_node = null  # The CutsceneNode being edited
 var characters: Array = []  # Array[CharacterData] from root canvas
 var scene_name: String = ""
 var scene_background: String = ""
 var _popup_menu: PopupMenu = null
+var _preview_window: Window = null
+var _preview_stage = null
+var _preview_dialogue = null
+var _preview_runner: RefCounted = null
+var _preview_playing: bool = false
+var _preview_step_index: int = 0
+var _preview_commands: Array = []
+var _parent_ref: Control = null
 
 
 func open(p_cutscene_node, p_characters: Array, parent: Control) -> void:
 	cutscene_node = p_cutscene_node
 	characters = p_characters
+	_parent_ref = parent
 
 	# Create the cinematic GraphEdit
 	graph_edit = GraphEdit.new()
@@ -163,3 +175,172 @@ func _on_popup_selected(id: int) -> void:
 	var keys: Array = CmdNodeScript.CATEGORIES.keys()
 	if id >= 0 and id < keys.size():
 		_create_command_node(keys[id], _popup_pos)
+
+
+# ── Preview Window ──
+
+func open_preview() -> void:
+	if _preview_window != null and is_instance_valid(_preview_window):
+		_preview_window.grab_focus()
+		return
+
+	# Create Window
+	_preview_window = Window.new()
+	_preview_window.title = "Preview — %s" % (cutscene_node.script_path.get_file() if cutscene_node.script_path != "" else "nueva escena")
+	_preview_window.size = Vector2i(800, 500)
+	_preview_window.unresizable = false
+	_preview_window.close_requested.connect(_close_preview)
+
+	# Main layout inside window
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+
+	# Controls bar
+	var controls := HBoxContainer.new()
+	controls.add_theme_constant_override("separation", 8)
+	var ctrl_bg := PanelContainer.new()
+	var ctrl_style := StyleBoxFlat.new()
+	ctrl_style.bg_color = Color(0.12, 0.13, 0.17)
+	ctrl_style.content_margin_left = 10
+	ctrl_style.content_margin_right = 10
+	ctrl_style.content_margin_top = 6
+	ctrl_style.content_margin_bottom = 6
+	ctrl_bg.add_theme_stylebox_override("panel", ctrl_style)
+
+	var play_btn := Button.new()
+	play_btn.text = "Reproducir"
+	play_btn.add_theme_font_size_override("font_size", 14)
+	play_btn.pressed.connect(_preview_play_all)
+	controls.add_child(play_btn)
+
+	var step_btn := Button.new()
+	step_btn.text = "Paso >"
+	step_btn.add_theme_font_size_override("font_size", 14)
+	step_btn.pressed.connect(_preview_step)
+	controls.add_child(step_btn)
+
+	var reset_btn := Button.new()
+	reset_btn.text = "Reiniciar"
+	reset_btn.add_theme_font_size_override("font_size", 14)
+	reset_btn.pressed.connect(_preview_reset)
+	controls.add_child(reset_btn)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.add_child(spacer)
+
+	var step_label := Label.new()
+	step_label.text = "Paso: 0 / 0"
+	step_label.add_theme_font_size_override("font_size", 13)
+	step_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75))
+	controls.add_child(step_label)
+
+	ctrl_bg.add_child(controls)
+	vbox.add_child(ctrl_bg)
+
+	# Stage viewport
+	var viewport_container := SubViewportContainer.new()
+	viewport_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	viewport_container.stretch = true
+
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(800, 440)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport_container.add_child(viewport)
+
+	# CinematicStage
+	var stage_scene = load("res://systems/cinematic/cinematic_stage.tscn")
+	_preview_stage = stage_scene.instantiate()
+	_preview_stage.set_anchors_preset(Control.PRESET_FULL_RECT)
+	viewport.add_child(_preview_stage)
+
+	# DialogueBox
+	var dialogue_scene = load("res://systems/cinematic/dialogue_box.tscn")
+	_preview_dialogue = dialogue_scene.instantiate()
+	_preview_dialogue.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_preview_dialogue.offset_top = -120
+	viewport.add_child(_preview_dialogue)
+
+	vbox.add_child(viewport_container)
+	_preview_window.add_child(vbox)
+
+	# Register characters on preview stage
+	for ch in characters:
+		_preview_stage.register_character(ch)
+
+	# Setup runner
+	_preview_runner = SceneRunnerScript.new()
+	_preview_runner.setup(_preview_stage, null, _preview_dialogue)
+
+	# Serialize current graph to commands
+	var dscn_text: String = SerializerScript.graph_to_dscn(graph_edit, scene_name, scene_background)
+	var parsed: Dictionary = SceneParserScript.parse(dscn_text)
+	_preview_commands = parsed.get("commands", [])
+	_preview_step_index = 0
+
+	step_label.text = "Paso: 0 / %d" % _preview_commands.size()
+
+	# Store ref for updating
+	_preview_window.set_meta("step_label", step_label)
+
+	# Add window to scene tree
+	_parent_ref.get_tree().root.add_child(_preview_window)
+	_preview_window.popup_centered()
+
+
+func _close_preview() -> void:
+	if _preview_window and is_instance_valid(_preview_window):
+		_preview_window.queue_free()
+		_preview_window = null
+	_preview_stage = null
+	_preview_dialogue = null
+	_preview_runner = null
+	_preview_playing = false
+
+
+func _preview_reset() -> void:
+	_preview_step_index = 0
+	_preview_playing = false
+	if _preview_stage:
+		_preview_stage.clear_stage()
+		# Re-register characters
+		for ch in characters:
+			_preview_stage.register_character(ch)
+	if _preview_dialogue:
+		_preview_dialogue.hide_dialogue()
+	_update_step_label()
+
+
+func _preview_step() -> void:
+	if _preview_runner == null or _preview_commands.is_empty():
+		return
+	if _preview_step_index >= _preview_commands.size():
+		return
+
+	var cmd: Dictionary = _preview_commands[_preview_step_index]
+	_preview_step_index += 1
+	_update_step_label()
+
+	# Execute single command
+	var data := {"commands": [cmd], "background": ""}
+	await _preview_runner.execute(data)
+
+
+func _preview_play_all() -> void:
+	if _preview_playing:
+		_preview_playing = false
+		return
+
+	_preview_playing = true
+	while _preview_playing and _preview_step_index < _preview_commands.size():
+		await _preview_step()
+		if _preview_playing:
+			await _parent_ref.get_tree().create_timer(0.1).timeout
+	_preview_playing = false
+
+
+func _update_step_label() -> void:
+	if _preview_window and is_instance_valid(_preview_window) and _preview_window.has_meta("step_label"):
+		var label: Label = _preview_window.get_meta("step_label")
+		if label and is_instance_valid(label):
+			label.text = "Paso: %d / %d" % [_preview_step_index, _preview_commands.size()]

@@ -47,6 +47,10 @@ const CMD_MAP := {
 	"wait": ["ui", "wait"],
 	"transition": ["effect", "transition"],
 	"clear_stage": ["char_action", "clear_stage"],
+	"speed_lines": ["effect", "speed_lines"],
+	"wipe": ["effect", "wipe"],
+	"wipe_out": ["effect", "wipe_out"],
+	"layout_instant": ["layout", "layout_instant"],
 }
 
 
@@ -228,5 +232,13 @@ static func _node_to_dscn_line(node) -> String:
 		"wait": return "[wait %s]" % p.get("duration", 1.0)
 		"transition": return "[transition %s %s]" % [p.get("style", "fade_black"), p.get("duration", 0.5)]
 		"clear_stage": return "[clear_stage]"
+		"speed_lines": return "[speed_lines %s %s]" % [p.get("direction", "right"), p.get("duration", 0.3)]
+		"wipe": return "[wipe %s %s]" % [p.get("direction", "right"), p.get("duration", 0.4)]
+		"wipe_out": return "[wipe_out %s %s]" % [p.get("direction", "right"), p.get("duration", 0.4)]
+		"layout_instant": return "[layout_instant %s]" % p.get("mode", "fullscreen")
+		"background_gradient": return "[background gradient:%s:%s]" % [p.get("top_color", "#000000"), p.get("bottom_color", "#ffffff")]
+		"choose":
+			var opts_text: String = p.get("options_text", "> Opcion 1 -> flag1")
+			return "[choose]\n%s\n[end_choose]" % opts_text
 
 	return ""
