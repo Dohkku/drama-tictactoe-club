@@ -231,14 +231,12 @@ func open_preview() -> void:
 		_preview_window.grab_focus()
 		return
 
-	# Create Window — independent (not transient) so it works on other monitors
+	# Create Window — fully independent so it can move to any monitor
 	_preview_window = Window.new()
 	_preview_window.title = "Preview — %s" % (cutscene_node.script_path.get_file() if cutscene_node.script_path != "" else "nueva escena")
 	_preview_window.size = Vector2i(800, 500)
 	_preview_window.unresizable = false
-	_preview_window.transient = false
-	_preview_window.exclusive = false
-	_preview_window.always_on_top = false
+	_preview_window.wrap_controls = true
 	_preview_window.close_requested.connect(_close_preview)
 
 	# Main layout inside window
@@ -333,9 +331,9 @@ func open_preview() -> void:
 	# Store ref for updating
 	_preview_window.set_meta("step_label", step_label)
 
-	# Add window to scene tree
-	_parent_ref.get_tree().root.add_child(_preview_window)
-	_preview_window.popup_centered()
+	# Add as sibling of root window — makes it a separate native OS window
+	_parent_ref.get_tree().root.get_parent().call_deferred("add_child", _preview_window)
+	_preview_window.call_deferred("popup_centered")
 
 
 func _close_preview() -> void:
