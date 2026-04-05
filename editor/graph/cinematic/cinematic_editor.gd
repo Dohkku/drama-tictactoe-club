@@ -22,6 +22,7 @@ var characters: Array = []  # Array[CharacterData] from root canvas
 var scene_name: String = ""
 var scene_background: String = ""
 var _popup_menu: PopupMenu = null
+var _clipboard: Array = []
 var _preview_window: Window = null
 var _preview_stage = null
 var _preview_dialogue = null
@@ -62,6 +63,9 @@ func open(p_cutscene_node, p_characters: Array, parent: Control) -> void:
 	graph_edit.disconnection_request.connect(_on_disconnection_request)
 	graph_edit.delete_nodes_request.connect(_on_delete_nodes_request)
 	graph_edit.popup_request.connect(_on_popup_request)
+	graph_edit.copy_nodes_request.connect(_on_copy_nodes)
+	graph_edit.paste_nodes_request.connect(_on_paste_nodes)
+	graph_edit.duplicate_nodes_request.connect(_on_duplicate_nodes)
 
 	# Context menu
 	_popup_menu = PopupMenu.new()
@@ -194,6 +198,39 @@ func _on_popup_selected(id: int) -> void:
 	if id >= 0 and id < keys.size():
 		_create_command_node(keys[id], _popup_pos)
 		_renumber_steps()
+
+
+func _on_copy_nodes() -> void:
+	_clipboard.clear()
+	for child in graph_edit.get_children():
+		if child is CmdNodeScript and child.selected:
+			_clipboard.append({
+				"data": child.get_node_data(),
+				"pos": child.position_offset,
+			})
+
+
+func _on_paste_nodes() -> void:
+	if _clipboard.is_empty():
+		return
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			child.selected = false
+	var offset := Vector2(40, 40)
+	for entry in _clipboard:
+		var node := CmdNodeScript.new()
+		node.available_characters = characters
+		node.position_offset = entry.pos + offset
+		node.name = StringName(node.node_id)
+		graph_edit.add_child(node)
+		node.set_node_data(entry.data)
+		node.selected = true
+	_renumber_steps()
+
+
+func _on_duplicate_nodes() -> void:
+	_on_copy_nodes()
+	_on_paste_nodes()
 
 
 ## Walk flow from start and assign step numbers to each command node.

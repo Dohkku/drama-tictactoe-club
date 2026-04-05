@@ -43,6 +43,7 @@ var _cinematic_editor: RefCounted = null
 var _graph_parent: Control = null  # Parent container for graph_edit (to add sub-editors)
 var _breadcrumb_label: Label = null
 var _preview_temp_cinematic_editor: RefCounted = null
+var _clipboard: Array = []  # Array[Dictionary] for copy/paste
 
 
 func _ready() -> void:
@@ -276,6 +277,9 @@ func _setup_graph_edit() -> void:
 	graph_edit.node_deselected.connect(_on_node_deselected)
 	graph_edit.delete_nodes_request.connect(_on_delete_nodes_request)
 	graph_edit.popup_request.connect(_on_popup_request)
+	graph_edit.copy_nodes_request.connect(_on_copy_nodes)
+	graph_edit.paste_nodes_request.connect(_on_paste_nodes)
+	graph_edit.duplicate_nodes_request.connect(_on_duplicate_nodes)
 
 	# Set valid connection types
 	graph_edit.add_valid_connection_type(GraphThemeC.PORT_FLOW, GraphThemeC.PORT_FLOW)
@@ -509,6 +513,40 @@ func _undo_delete_node(type: String, pos: Vector2, data: Dictionary, connections
 		var tn: StringName = conn.to_node
 		if graph_edit.get_node_or_null(String(fn)) and graph_edit.get_node_or_null(String(tn)):
 			graph_edit.connect_node(fn, conn.from_port, tn, conn.to_port)
+
+
+# ── Copy / Paste / Duplicate ──
+
+func _on_copy_nodes() -> void:
+	_clipboard.clear()
+	for child in graph_edit.get_children():
+		if child is BaseGraphNode and child.selected and not child is StartNodeScript:
+			_clipboard.append({
+				"type": child.get_node_type(),
+				"data": child.get_node_data(),
+				"pos": child.position_offset,
+			})
+
+
+func _on_paste_nodes() -> void:
+	if _clipboard.is_empty():
+		return
+	# Deselect all
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			child.selected = false
+	# Paste with offset
+	var offset := Vector2(40, 40)
+	for entry in _clipboard:
+		var node := _create_node(entry.type, entry.pos + offset)
+		if node and node is BaseGraphNode:
+			node.set_node_data(entry.data)
+			node.selected = true
+
+
+func _on_duplicate_nodes() -> void:
+	_on_copy_nodes()
+	_on_paste_nodes()
 
 
 func _on_popup_request(at_position: Vector2) -> void:
@@ -1457,13 +1495,8 @@ func _on_preview_toolbar_pressed() -> void:
 	if _cinematic_editor:
 		_cinematic_editor.open_preview()
 		return
-
-	var cutscene_nodes: Array = _get_all_cutscenes_in_flow()
-	if cutscene_nodes.is_empty():
-		push_warning("Editor2: No hay nodos de cinematica para previsualizar.")
-		return
-
-	_open_preview_from_main(cutscene_nodes)
+	# From main canvas: save and play (runtime handles all node types)
+	_on_play_pressed()
 
 
 ## Collect all CutsceneNodes following the flow from Start to End.
