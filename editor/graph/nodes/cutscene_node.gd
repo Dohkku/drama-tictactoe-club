@@ -27,18 +27,27 @@ func _ready() -> void:
 	add_child(_path_label)
 	add_flow_through(0)
 
-	# Row 1: open editor button
+	# Row 1: open editor button — prominent
 	var btn := Button.new()
-	btn.text = "Abrir editor"
-	btn.add_theme_font_size_override("font_size", 10)
-	var s := StyleBoxFlat.new()
-	s.bg_color = GraphThemeC.COLOR_CUTSCENE.darkened(0.3)
-	s.set_corner_radius_all(3)
-	s.content_margin_left = 6
-	s.content_margin_right = 6
-	s.content_margin_top = 2
-	s.content_margin_bottom = 2
-	btn.add_theme_stylebox_override("normal", s)
+	btn.text = ">> Editar escena <<"
+	btn.add_theme_font_size_override("font_size", 12)
+	btn.custom_minimum_size = Vector2(0, 28)
+	var s_normal := StyleBoxFlat.new()
+	s_normal.bg_color = Color(0.25, 0.45, 0.85)
+	s_normal.set_corner_radius_all(4)
+	s_normal.content_margin_left = 8
+	s_normal.content_margin_right = 8
+	s_normal.content_margin_top = 4
+	s_normal.content_margin_bottom = 4
+	btn.add_theme_stylebox_override("normal", s_normal)
+	var s_hover := StyleBoxFlat.new()
+	s_hover.bg_color = Color(0.35, 0.55, 0.95)
+	s_hover.set_corner_radius_all(4)
+	s_hover.content_margin_left = 8
+	s_hover.content_margin_right = 8
+	s_hover.content_margin_top = 4
+	s_hover.content_margin_bottom = 4
+	btn.add_theme_stylebox_override("hover", s_hover)
 	btn.add_theme_color_override("font_color", Color.WHITE)
 	btn.pressed.connect(func(): editor_requested.emit(self))
 	add_child(btn)
