@@ -140,6 +140,18 @@ Mei: He estado observando. Desde lejos.
 Mei: He visto tus dos partidas anteriores. Las dos.
 
 [depth mei 1.0 0.3]
+
+[wait 0.3]
+[expression mei thinking]
+Mei: ...Y las de antes de esas.
+
+[wait 0.6]
+
+[expression mei analytical]
+[depth mei 1.1 0.3]
+Mei: No importa. Olvida eso.
+[depth mei 1.0 0.3]
+
 [clear_focus]
 
 [look_at mei center]

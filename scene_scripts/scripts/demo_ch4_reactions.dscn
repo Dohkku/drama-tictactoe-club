@@ -61,10 +61,20 @@ Sora: Lo que importa es que lo intentaste. Eso ya es valiente.
 [fullscreen]
 [board_disable]
 [expression mei thinking]
+[wait 0.5]
 Mei: Imposible. Las reglas no permiten empate.
-Mei: ...A menos que haya un error en el sistema.
+[wait 0.6]
+[camera_snap mei 1.4]
+[flash #ffffff 0.03]
 [expression mei analytical]
-Mei: Interesante.
+Mei: ...A menos que haya un error en el sistema.
+[wait 0.8]
+[camera_reset 0.3]
+[expression mei thinking]
+Mei: Pero no hay errores. Yo lo revisé. Yo reviso {b}todo{/b}.
+[wait 0.4]
+[expression mei neutral]
+Mei: ...Interesante.
 @end
 
 @on near_win

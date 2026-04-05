@@ -91,6 +91,86 @@ Sora "happy": {b}¡El Club de Tres en Raya tiene un nuevo campeón!{/b}
 [title_card FIN | El Club de Tres en Raya]
 [wait 1.0]
 [title_card Gracias por jugar | Drama Tic Tac Toe Club]
+
+[wait 2.0]
+
+[if flag defeated_mei]
+[if flag defeated_akira]
+[camera_mode smooth]
+[flash #000000 0.3]
+[wait 1.5]
+
+[enter mei center right]
+[expression mei analytical]
+[pose mei thinking]
+[wait 1.0]
+
+Mei: ...
+
+[wait 0.8]
+
+Mei: Todavía estás aquí.
+
+[wait 0.6]
+
+[close_up mei 1.2 0.5]
+[expression mei thinking]
+Mei: Ganaste. La historia terminó. Los créditos pasaron.
+
+[wait 0.8]
+
+Mei: Pero sigues mirando.
+
+[camera_reset 0.4]
+[wait 0.5]
+
+[expression mei analytical]
+Mei: Yo también seguía mirando. La primera vez.
+
+[wait 0.8]
+
+[camera_snap mei 1.3]
+[flash #112233 0.03]
+Mei: Y la segunda. Y la tercera.
+
+[camera_reset 0.3]
+[wait 0.6]
+
+[expression mei neutral]
+Mei: Sora te encontrará otra vez en esa aula. Te dirá las mismas palabras.
+
+[wait 0.5]
+
+Mei: Y tú las escucharás como si fuera la primera vez.
+
+[wait 0.8]
+
+[expression mei thinking]
+[depth mei 1.1 0.3]
+Mei: Pero yo recuerdo. Yo siempre recuerdo.
+
+[depth mei 1.0 0.3]
+[wait 0.6]
+
+[expression mei neutral]
+Mei → Tú: ...No es una queja. Solo es un patrón.
+
+[wait 1.0]
+
+[expression mei analytical]
+Mei: Los patrones no se rompen. Se repiten.
+
+[wait 0.5]
+
+Mei: Nos vemos pronto.
+
+[wait 0.8]
+
+[exit mei right]
+[wait 1.0]
+[flash #000000 0.5]
+[end_if]
+[end_if]
 @end
 
 @on opponent_wins

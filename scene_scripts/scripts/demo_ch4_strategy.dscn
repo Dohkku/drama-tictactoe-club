@@ -111,6 +111,24 @@ Mei: En mi juego, cada decisión tiene un coste. Poner una ficha nueva significa
 
 Mei: Es como la vida. No puedes tenerlo todo. Eliges qué conservar y qué dejar ir.
 
+[wait 0.6]
+
+[expression mei thinking]
+Mei: A veces me pregunto si alguien más lo ve.
+
+[wait 0.3]
+
+[camera_snap mei 1.3]
+[flash #112233 0.03]
+[expression mei analytical]
+Mei: Los ciclos. Cómo todo vuelve a empezar. Cómo siempre acabamos aquí.
+
+[camera_reset 0.3]
+[wait 0.4]
+
+[expression mei neutral]
+Mei: ...En el tablero, quiero decir.
+
 [wait 0.4]
 
 [expression sora sad]
