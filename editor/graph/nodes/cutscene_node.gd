@@ -23,7 +23,7 @@ func _ready() -> void:
 	# Row 0: flow through + script filename
 	_path_label = _make_label("(sin script)", GraphThemeC.FONT_SIZE_NORMAL, GraphThemeC.COLOR_TEXT)
 	_path_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_path_label.custom_maximum_size.x = 150
+	_path_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(_path_label)
 	add_flow_through(0)
 

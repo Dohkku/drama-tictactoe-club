@@ -1,15 +1,15 @@
 @scene demo_ch1_prologue
 
-[music res://audio/music/bgm_chill.mp3]
+[music bgm_chill.mp3]
 [title_card La Invitacion | Capitulo 1]
 [title_card ]
 [focus]
 [fullscreen]
-[enter sora center right]
+[enter sora center_left right]
 [expression sora neutral]
 [title_card ]
 Sora "focused": ...Ah.
-Sora: Oye. Tu.
+Sora -> player: Oye. Tu.
 [expression sora happy]
 Sora: ¡Sabia que encontraria a alguien aqui!
 [expression sora neutral]

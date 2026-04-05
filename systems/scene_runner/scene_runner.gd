@@ -14,6 +14,11 @@ var _reactions: Dictionary = {}  # event_name -> Array[Dictionary]
 var _running: bool = false
 var _music_player: AudioStreamPlayer = null
 var _sfx_player: AudioStreamPlayer = null
+var auto_advance_dialogue: bool = false
+var auto_advance_dialogue_delay: float = 1.0
+var auto_choose_first: bool = false
+var time_scale: float = 1.0
+var _dialogue_auto_token: int = 0
 
 
 func setup(stage: Control, board: Control, dialogue_box: Control) -> void:
@@ -86,7 +91,7 @@ func _run(commands: Array) -> void:
 			"flash":
 				_stage.camera_effects.flash(_resolve_color(cmd.get("color", "white")), cmd.get("duration", 0.3))
 			"wait":
-				await _stage.get_tree().create_timer(cmd.duration).timeout
+				await _wait_seconds(cmd.duration)
 			"if_flag":
 				if not GameState.get_flag(cmd.flag):
 					skip_depth = 1
@@ -126,32 +131,35 @@ func _run(commands: Array) -> void:
 				_stage.clear_focus()
 			# --- Layout / Camera ---
 			"layout":
-				EventBus.layout_transition_requested.emit(cmd.mode)
-				await EventBus.layout_transition_finished
+				if _board != null:
+					EventBus.layout_transition_requested.emit(cmd.mode)
+					await EventBus.layout_transition_finished
+				else:
+					await _wait_seconds(0.01)
 			"depth":
 				var depth_dur = cmd.get("duration", 0.4)
 				_stage.set_character_depth(cmd.character, cmd.get("depth", 1.0), depth_dur)
-				await _stage.get_tree().create_timer(depth_dur).timeout
+				await _wait_seconds(depth_dur)
 			"close_up":
 				_stage.camera_close_up(cmd.character, cmd.get("zoom", 1.4), cmd.get("duration", 0.5))
 				var close_cam = _stage.get_camera()
 				var close_dur = CinematicCameraScript.SNAPPY_DURATION if close_cam and close_cam.get_mode() == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
-				await _stage.get_tree().create_timer(close_dur).timeout
+				await _wait_seconds(close_dur)
 			"pull_back":
 				_stage.camera_pull_back(cmd.character, cmd.get("zoom", 0.8), cmd.get("duration", 0.5))
 				var pull_cam = _stage.get_camera()
 				var pull_dur = CinematicCameraScript.SNAPPY_DURATION if pull_cam and pull_cam.get_mode() == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
-				await _stage.get_tree().create_timer(pull_dur).timeout
+				await _wait_seconds(pull_dur)
 			"camera_reset":
 				_stage.camera_reset(cmd.get("duration", 0.4))
 				var reset_cam = _stage.get_camera()
 				var reset_dur = CinematicCameraScript.SNAPPY_DURATION if reset_cam and reset_cam.get_mode() == CinematicCameraScript.Mode.SNAPPY else CinematicCameraScript.SMOOTH_DURATION
-				await _stage.get_tree().create_timer(reset_dur).timeout
+				await _wait_seconds(reset_dur)
 			"camera_mode":
 				_stage.set_camera_mode(cmd.mode)
 			"camera_snap":
 				_stage.camera_snap_to(cmd.character, cmd.get("zoom", 1.4))
-				await _stage.get_tree().create_timer(CinematicCameraScript.SNAPPY_DURATION).timeout
+				await _wait_seconds(CinematicCameraScript.SNAPPY_DURATION)
 			"background":
 				_stage.set_background(cmd.source)
 			"music":
@@ -168,13 +176,13 @@ func _run(commands: Array) -> void:
 				_stage.clear_stage()
 			"speed_lines":
 				_stage.camera_effects.speed_lines(cmd.get("direction", "right"), cmd.get("duration", 0.3))
-				await _stage.get_tree().create_timer(cmd.get("duration", 0.3)).timeout
+				await _wait_seconds(cmd.get("duration", 0.3))
 			"wipe":
 				_stage.camera_effects.wipe(cmd.get("direction", "right"), cmd.get("duration", 0.4))
-				await _stage.get_tree().create_timer(cmd.get("duration", 0.4)).timeout
+				await _wait_seconds(cmd.get("duration", 0.4))
 			"wipe_out":
 				_stage.camera_effects.wipe_out(cmd.get("direction", "right"), cmd.get("duration", 0.4))
-				await _stage.get_tree().create_timer(cmd.get("duration", 0.4)).timeout
+				await _wait_seconds(cmd.get("duration", 0.4))
 			"layout_instant":
 				if _board:
 					var layout_mgr = _board.get_parent().get_parent()
@@ -219,6 +227,21 @@ func _cmd_dialogue(cmd: Dictionary) -> void:
 	else:
 		_dialogue_box.show_dialogue(display_name, text, color, char_data)
 
+	if auto_advance_dialogue:
+		_dialogue_auto_token += 1
+		var my_token: int = _dialogue_auto_token
+		var raw_delay := auto_advance_dialogue_delay
+		var dynamic_delay := 0.45 + float(text.length()) * 0.02
+		var delay := maxf(raw_delay, dynamic_delay)
+		var tree = _stage.get_tree()
+		var timer = tree.create_timer(_scaled_duration(delay))
+		timer.timeout.connect(func():
+			if my_token != _dialogue_auto_token:
+				return
+			if _dialogue_box and is_instance_valid(_dialogue_box) and _dialogue_box.is_active:
+				_dialogue_box.hide_dialogue()
+				EventBus.dialogue_finished.emit())
+
 	await EventBus.dialogue_finished
 
 	if not is_player:
@@ -230,6 +253,17 @@ func _cmd_dialogue(cmd: Dictionary) -> void:
 func _cmd_choose(cmd: Dictionary) -> void:
 	var color = _stage.get_character_color("player")
 	_dialogue_box.show_choices(cmd.options, color)
+	if auto_choose_first:
+		await _wait_seconds(0.12)
+		var options: Array = cmd.get("options", [])
+		var chosen_flag: String = ""
+		if not options.is_empty():
+			chosen_flag = str(options[0].get("flag", ""))
+		if chosen_flag != "":
+			if _dialogue_box and is_instance_valid(_dialogue_box) and _dialogue_box.has_method("_select_choice"):
+				_dialogue_box.call("_select_choice", chosen_flag)
+			GameState.set_flag(chosen_flag, true)
+		return
 	var chosen_flag = await EventBus.choice_made
 	GameState.set_flag(chosen_flag, true)
 
@@ -303,6 +337,7 @@ func _cmd_stop_music() -> void:
 func _cmd_transition(cmd: Dictionary) -> void:
 	var style: String = cmd.get("style", "fade_black")
 	var duration: float = cmd.get("duration", 0.5)
+	var half: float = _scaled_duration(duration / 2.0)
 	var color := Color.BLACK
 	match style:
 		"fade_black": color = Color.BLACK
@@ -319,15 +354,15 @@ func _cmd_transition(cmd: Dictionary) -> void:
 
 	# Fade to color
 	var tween := _stage.create_tween()
-	tween.tween_property(overlay, "color:a", 1.0, duration / 2.0)
+	tween.tween_property(overlay, "color:a", 1.0, half)
 	await tween.finished
 
 	# Hold briefly
-	await _stage.get_tree().create_timer(0.15).timeout
+	await _wait_seconds(0.15)
 
 	# Fade back
 	var tween2 := _stage.create_tween()
-	tween2.tween_property(overlay, "color:a", 0.0, duration / 2.0)
+	tween2.tween_property(overlay, "color:a", 0.0, half)
 	await tween2.finished
 
 	overlay.queue_free()
@@ -430,3 +465,19 @@ func _handle_dialogue_trigger(trigger_name: String) -> void:
 		"ai_move":
 			if _board:
 				_board.trigger_ai_turn()  # Fire and forget, don't await
+
+
+func _scaled_duration(seconds: float) -> float:
+	var scale := maxf(time_scale, 0.0)
+	return maxf(0.0, seconds * scale)
+
+
+func _wait_seconds(seconds: float) -> void:
+	var tree = _stage.get_tree() if _stage else null
+	if tree == null:
+		return
+	var d := _scaled_duration(seconds)
+	if d <= 0.0:
+		await tree.process_frame
+	else:
+		await tree.create_timer(d).timeout
