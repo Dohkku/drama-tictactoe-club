@@ -40,9 +40,6 @@ var _speed_lines = null  # SpeedLinesEffect node
 
 
 func _ready() -> void:
-	# Clip the stage so camera zoom doesn't overflow into other panels
-	clip_children = CanvasItem.CLIP_CHILDREN_ONLY
-
 	camera_effects = Node.new()
 	camera_effects.set_script(CameraEffectsScript)
 	add_child(camera_effects)
@@ -447,7 +444,7 @@ func _on_layer_resized() -> void:
 	# Re-focus if camera was active (layout changed size)
 	if _camera_active and _focused_character_id != "" and characters_on_stage.has(_focused_character_id):
 		var slot: Control = characters_on_stage[_focused_character_id]
-		_camera.focus_character(slot.position, slot.size, _layer_zoom(), _camera.SMOOTH)
+		_camera.focus_character(slot.position, slot.size, _layer_zoom(), CinematicCameraScript.Mode.SMOOTH)
 	if show_position_markers:
 		_update_markers()
 

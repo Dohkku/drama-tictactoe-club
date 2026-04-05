@@ -9,7 +9,7 @@
 
 [wait 1.0]
 
-[enter sora far_right right]
+[enter sora far_right far_left]
 [expression sora happy]
 [pose sora idle]
 [wait 0.5]

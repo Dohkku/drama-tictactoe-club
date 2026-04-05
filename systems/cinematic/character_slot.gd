@@ -17,6 +17,7 @@ const ENTER_DURATION := 0.5
 const EXIT_DURATION := 0.4
 const EXPRESSION_FADE_DURATION := 0.15
 
+@onready var portrait_mask: Control = %PortraitMask
 @onready var portrait_rect: TextureRect = %PortraitRect
 @onready var name_label: Label = %NameLabel
 @onready var expression_label: Label = %ExpressionLabel
@@ -314,7 +315,7 @@ func _apply_expression(expr_name: String) -> void:
 
 
 func _apply_portrait_crop() -> void:
-	if character_data == null:
+	if character_data == null or portrait_mask == null:
 		return
 
 	var zoom: float = 1.0
@@ -324,21 +325,19 @@ func _apply_portrait_crop() -> void:
 	if "portrait_offset" in character_data:
 		offset = character_data.portrait_offset
 
-	zoom = clampf(zoom, 0.5, 2.0)
+	zoom = clampf(zoom, 0.5, 3.0)
 	offset = Vector2(clampf(offset.x, -0.5, 0.5), clampf(offset.y, -0.5, 0.5))
 
 	_crop_base_scale = Vector2(zoom, zoom)
-	_crop_base_position = offset * portrait_rect.size
 
-	portrait_rect.pivot_offset = portrait_rect.size / 2.0
+	# The mask (PortraitMask) clips the portrait. We scale and offset
+	# the portrait INSIDE the mask so only the visible area renders.
+	var mask_size: Vector2 = portrait_mask.size
+	_crop_base_position = offset * mask_size
+
+	portrait_rect.pivot_offset = mask_size / 2.0
 	portrait_rect.scale = _crop_base_scale
-
-	# Only apply position offset if non-zero (VBoxContainer manages position otherwise)
-	if offset != Vector2.ZERO:
-		portrait_rect.position += _crop_base_position
-
-	# Never clip at slot level — the stage handles overflow clipping
-	clip_children = CanvasItem.CLIP_CHILDREN_DISABLED
+	portrait_rect.position = _crop_base_position
 
 
 func _set_solid_color_fallback(color: Color) -> void:
