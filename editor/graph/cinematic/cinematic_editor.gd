@@ -331,9 +331,11 @@ func open_preview() -> void:
 	# Store ref for updating
 	_preview_window.set_meta("step_label", step_label)
 
-	# Add as sibling of root window — makes it a separate native OS window
-	_parent_ref.get_tree().root.get_parent().call_deferred("add_child", _preview_window)
-	_preview_window.call_deferred("popup_centered")
+	# Add to scene tree and show
+	_parent_ref.get_tree().root.add_child(_preview_window)
+	_preview_window.popup_centered()
+	# Move to a slightly offset position so it doesn't overlap exactly
+	_preview_window.position += Vector2i(50, 50)
 
 
 func _close_preview() -> void:

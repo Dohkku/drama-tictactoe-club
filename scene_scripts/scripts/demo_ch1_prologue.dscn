@@ -1,84 +1,82 @@
 @scene demo_ch1_prologue
 
-[title_card ]
 [music res://audio/music/bgm_chill.mp3]
 [title_card La Invitacion | Capitulo 1]
-[title_card ]
-[focus]
+[wait 1.5]
+[camera_mode smooth]
 [fullscreen]
-[title_card ]
-[enter sora far_right far_left]
-[expression sora happy]
+
+[enter sora center right]
 [expression sora neutral]
-[title_card ]
-[enter sora center_right ]
-[title_card ]
+[wait 0.3]
+
 Sora "focused": ...Ah.
-[expression sora neutral]
-[expression sora neutral]
-Sora: Oye. Tú.
-[title_card ]
-[expression sora neutral]
+Sora: Oye. Tu.
+
 [expression sora happy]
-[expression sora neutral]
-Sora: ¡Sabía que encontraría a alguien aquí!
-[enter sora center ]
-[title_card ]
-Sora: Siempre hay alguien en esta aula después de clase.
-Sora: Alguien que no tiene adónde ir. Que se queda mirando por la ventana.
+Sora: ¡Sabia que encontraria a alguien aqui!
+
+[pose sora leaning_forward]
+Sora: Siempre hay alguien en esta aula despues de clase.
+Sora: Alguien que no tiene adonde ir. Que se queda mirando por la ventana.
+
 [expression sora nervous]
-[expression sora neutral]
+[pose sora idle]
 Sora: No... no lo digo como algo malo.
-[title_card ]
+
 [expression sora serious]
-[expression sora neutral]
-Sora: Yo también era así. Hace un año.
+Sora: Yo tambien era asi. Hace un ano.
+
 [focus sora]
-Sora "focused": Hasta que descubrí algo que cambió todo.
-[focus]
-[title_card ]
+[close_up sora 1.2 0.4]
+Sora "focused": Hasta que descubri algo que cambio todo.
+[camera_reset 0.3]
+[clear_focus]
+
 [expression sora happy]
-[expression sora neutral]
-[shake 0.5 0.08]
+[pose sora excited]
+[shake 0.3 0.08]
 Sora: {b}¡El Club de Tres en Raya!{/b}
-[title_card ]
-Sora: Ya sé lo que estás pensando. Tres en raya. Un juego de niños.
+
+[pose sora idle]
+Sora: Ya se lo que estas pensando. Tres en raya. Un juego de ninos.
+
 [expression sora serious]
-[expression sora neutral]
-Sora: Pero aquí no jugamos para pasar el rato.
-[expression sora neutral]
-Sora: Aquí cada partida es una {b}conversación{/b}.
-[expression sora neutral]
+Sora: Pero aqui no jugamos para pasar el rato.
+Sora: Aqui cada partida es una {b}conversacion{/b}.
+
 [expression sora happy]
-[expression sora neutral]
 Sora: Cada ficha que pones dice algo de ti.
-Sora: Cómo piensas. Cómo reaccionas bajo presión.
-[title_card ]
+Sora: Como piensas. Como reaccionas bajo presion.
+
 [expression sora nervous]
-[expression sora neutral]
+[pose sora arms_crossed]
 Sora: Bueno... la verdad es que el club necesita miembros.
+
 [expression sora sad]
-Sora: Somos pocos. Éramos cinco, pero este año...
-[title_card ]
+Sora: Somos pocos. Eramos cinco, pero este ano...
+
 [expression sora happy]
-[expression sora neutral]
-Sora: ¡Pero eso da igual! Lo que importa es que estás aquí.
+[pose sora excited]
+Sora: ¡Pero eso da igual! Lo que importa es que estas aqui.
+
 [focus sora]
 [expression sora focused]
-[expression sora neutral]
-Sora → Tú: Voy a enseñarte cómo funciona esto.
-[focus]
-[title_card ]
-Sora: Una partida. Tú y yo. Nada complicado.
-Sora: Solo quiero ver {b}cómo juegas{/b}.
+[pose sora confident]
+Sora → Tu: Voy a ensenarte como funciona esto.
+[clear_focus]
+
+Sora: Una partida. Tu y yo. Nada complicado.
+Sora: Solo quiero ver {b}como juegas{/b}.
+
 [expression sora happy]
-[expression sora neutral]
+[pose sora idle]
 Sora: Me llamo Sora, por cierto. Presidenta del club.
-[title_card ]
+
 [expression sora nervous]
-Sora: Bueno, presidenta y fundadora y... básicamente todo.
+Sora: Bueno, presidenta y fundadora y... basicamente todo.
+
 [expression sora happy]
-[expression sora neutral]
-Sora: ¡Pero eso está a punto de cambiar!
-[title_card ]
-Sora: Ven. El tablero está preparado.
+[pose sora excited]
+Sora: ¡Pero eso esta a punto de cambiar!
+Sora: Ven. El tablero esta preparado.
