@@ -117,6 +117,7 @@ var _category_btn: OptionButton = null
 var _command_btn: OptionButton = null
 var _params_container: VBoxContainer = null
 var _command_keys: Array = []  # Maps command_btn index → command key
+var _audio_preview_player: AudioStreamPlayer = null
 
 # Descriptions for parameterless commands so they don't look empty
 const CMD_DESCRIPTIONS := {
@@ -179,6 +180,10 @@ func _ready() -> void:
 		_select_command(command)
 	elif _category_btn.item_count > 0:
 		_on_category_selected(0)
+
+
+func _exit_tree() -> void:
+	_stop_audio_preview()
 
 
 func get_node_type() -> String:
@@ -324,15 +329,45 @@ func _add_param_widget(param_name: String, param_type: String, current_val) -> v
 		hbox.add_child(opt)
 
 	elif param_type == "text" or param_type == "text_short":
-		var edit := LineEdit.new()
-		edit.text = str(current_val)
-		edit.add_theme_font_size_override("font_size", 10)
-		edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if param_type == "text":
-			edit.custom_minimum_size.x = 120
-		var pname: String = param_name
-		edit.text_changed.connect(func(val: String): params[pname] = val)
-		hbox.add_child(edit)
+			# Multilínea para diálogos
+			var vbox := VBoxContainer.new()
+			vbox.add_theme_constant_override("separation", 2)
+			var lbl2 := Label.new()
+			lbl2.text = param_name
+			lbl2.add_theme_font_size_override("font_size", 10)
+			lbl2.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+			vbox.add_child(lbl2)
+
+			var edit := TextEdit.new()
+			edit.text = str(current_val)
+			edit.add_theme_font_size_override("font_size", 10)
+			edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			edit.custom_minimum_size = Vector2(140, 60)
+			edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+			var pname: String = param_name
+			edit.text_changed.connect(func(): params[pname] = edit.text)
+			vbox.add_child(edit)
+
+			# Hint de tags disponibles
+			var hint := Label.new()
+			hint.text = "{b}negrita{/b}  {i}cursiva{/i}\n{shake}tiembla{/shake}  {wave}onda{/wave}  {rainbow}arco{/rainbow}"
+			hint.add_theme_font_size_override("font_size", 9)
+			hint.add_theme_color_override("font_color", GraphThemeC.COLOR_TEXT_DIM)
+			hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			vbox.add_child(hint)
+
+			_params_container.add_child(vbox)
+			return  # Para "text" no agregar hbox al final
+		else:
+			# Texto corto: una línea
+			var edit := LineEdit.new()
+			edit.text = str(current_val)
+			edit.add_theme_font_size_override("font_size", 10)
+			edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var pname: String = param_name
+			edit.text_changed.connect(func(val: String): params[pname] = val)
+			hbox.add_child(edit)
 
 	elif param_type == "position":
 		var opt := OptionButton.new()
@@ -473,13 +508,34 @@ func _add_param_widget(param_name: String, param_type: String, current_val) -> v
 				if ResourceLoader.exists(full_path):
 					var stream = load(full_path)
 					if stream:
+						_stop_audio_preview()
 						var player := AudioStreamPlayer.new()
 						player.stream = stream
 						player.bus = "Master"
 						add_child(player)
-						player.play()
-						player.finished.connect(func(): player.queue_free()))
+						_audio_preview_player = player
+						player.finished.connect(func():
+							if player == _audio_preview_player:
+								_audio_preview_player = null
+							if is_instance_valid(player):
+								player.queue_free())
+						player.play())
 		audio_hbox.add_child(play_btn)
+		var stop_btn := Button.new()
+		stop_btn.text = "■"
+		stop_btn.add_theme_font_size_override("font_size", 10)
+		stop_btn.custom_minimum_size = Vector2(24, 0)
+		stop_btn.pressed.connect(_stop_audio_preview)
+		audio_hbox.add_child(stop_btn)
 		hbox.add_child(audio_hbox)
 
 	_params_container.add_child(hbox)
+
+
+func _stop_audio_preview() -> void:
+	if _audio_preview_player == null or not is_instance_valid(_audio_preview_player):
+		_audio_preview_player = null
+		return
+	_audio_preview_player.stop()
+	_audio_preview_player.queue_free()
+	_audio_preview_player = null

@@ -8,6 +8,7 @@ const GraphThemeC = preload("res://editor/graph/graph_theme.gd")
 
 var node_id: String = ""
 var accent_color: Color = Color.WHITE
+var _preview_active_color_saved: Color = Color.WHITE
 
 
 func _init() -> void:
@@ -110,6 +111,15 @@ func _apply_base_theme() -> void:
 	add_theme_stylebox_override("titlebar_selected", titlebar)
 	add_theme_color_override("title_color", GraphThemeC.COLOR_TEXT_HEADER)
 	add_theme_font_size_override("title_font_size", GraphThemeC.FONT_SIZE_HEADER)
+
+
+func set_preview_active(active: bool) -> void:
+	if active:
+		_preview_active_color_saved = accent_color
+		accent_color = Color(1.0, 0.92, 0.3)  # Amarillo cálido para highlight
+	else:
+		accent_color = _preview_active_color_saved
+	_apply_base_theme()
 
 
 func _make_label(text: String, font_size: int = GraphThemeC.FONT_SIZE_NORMAL, color: Color = GraphThemeC.COLOR_TEXT) -> Label:

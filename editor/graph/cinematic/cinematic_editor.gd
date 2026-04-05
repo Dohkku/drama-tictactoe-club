@@ -4,6 +4,7 @@ extends RefCounted
 ## Sub-canvas editor for cinematic scripts.
 ## Creates a second GraphEdit that replaces the main view.
 ## Each DSL command is a visual node.
+signal preview_closed
 
 const GraphThemeC = preload("res://editor/graph/graph_theme.gd")
 const ConnectionRulesC = preload("res://editor/graph/connection_rules.gd")
@@ -29,6 +30,11 @@ var _preview_playing: bool = false
 var _preview_step_index: int = 0
 var _preview_commands: Array = []
 var _parent_ref: Control = null
+var _preview_enable_auto: bool = true
+var _preview_time_scale: float = 0.25
+var _preview_dscn_cache: String = ""
+var _preview_resyncing: bool = false
+var _preview_active_node_name: StringName = StringName("")
 
 
 func open(p_cutscene_node, p_characters: Array, parent: Control) -> void:
@@ -107,6 +113,13 @@ func close() -> void:
 
 	# Cleanup
 	graph_edit.queue_free()
+	graph_edit = null
+
+
+func dispose_without_save() -> void:
+	_close_preview(false)
+	if graph_edit:
+		graph_edit.queue_free()
 	graph_edit = null
 
 
@@ -228,6 +241,8 @@ func _renumber_steps() -> void:
 
 func open_preview() -> void:
 	if _preview_window != null and is_instance_valid(_preview_window):
+		_refresh_preview_script()
+		_update_step_label()
 		_preview_window.grab_focus()
 		return
 
@@ -261,6 +276,12 @@ func open_preview() -> void:
 	play_btn.pressed.connect(_preview_play_all)
 	controls.add_child(play_btn)
 
+	var step_back_btn := Button.new()
+	step_back_btn.text = "< Paso"
+	step_back_btn.add_theme_font_size_override("font_size", 14)
+	step_back_btn.pressed.connect(_preview_step_back)
+	controls.add_child(step_back_btn)
+
 	var step_btn := Button.new()
 	step_btn.text = "Paso >"
 	step_btn.add_theme_font_size_override("font_size", 14)
@@ -276,6 +297,16 @@ func open_preview() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	controls.add_child(spacer)
+
+	var auto_btn := CheckButton.new()
+	auto_btn.text = "Auto"
+	auto_btn.button_pressed = _preview_enable_auto
+	auto_btn.toggled.connect(func(v: bool):
+		_preview_enable_auto = v
+		if _preview_runner:
+			_preview_runner.auto_advance_dialogue = v
+			_preview_runner.auto_choose_first = v)
+	controls.add_child(auto_btn)
 
 	var step_label := Label.new()
 	step_label.text = "Paso: 0 / 0"
@@ -295,6 +326,9 @@ func open_preview() -> void:
 	viewport.size = Vector2i(800, 440)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport_container.add_child(viewport)
+	viewport_container.resized.connect(func():
+		var s := viewport_container.size
+		viewport.size = Vector2i(maxi(1, int(s.x)), maxi(1, int(s.y))))
 
 	# CinematicStage
 	var stage_scene = load("res://systems/cinematic/cinematic_stage.tscn")
@@ -332,18 +366,30 @@ func open_preview() -> void:
 	# Setup runner
 	_preview_runner = SceneRunnerScript.new()
 	_preview_runner.setup(_preview_stage, null, _preview_dialogue)
+	_preview_runner.auto_advance_dialogue = _preview_enable_auto
+	_preview_runner.auto_choose_first = _preview_enable_auto
+	_preview_runner.auto_advance_dialogue_delay = 1.1
+	_preview_runner.time_scale = _preview_time_scale
 
-	# Serialize current graph to commands
-	var dscn_text: String = SerializerScript.graph_to_dscn(graph_edit, scene_name, scene_background)
-	var parsed: Dictionary = SceneParserScript.parse(dscn_text)
-	_preview_commands = parsed.get("commands", [])
+	_refresh_preview_script()
 	_preview_step_index = 0
+	if scene_background != "":
+		_preview_stage.set_background(scene_background)
 
 	step_label.text = "Paso: 0 / %d" % _preview_commands.size()
 
+	var sync_timer := Timer.new()
+	sync_timer.wait_time = 0.35
+	sync_timer.autostart = true
+	sync_timer.one_shot = false
+	_preview_window.add_child(sync_timer)
+	sync_timer.timeout.connect(_on_preview_sync_tick)
 
-func _close_preview() -> void:
-	if _preview_window and is_instance_valid(_preview_window):
+
+func _close_preview(emit_signal: bool = true) -> void:
+	_set_active_preview_node(0)  # Limpiar highlight
+	var had_open := _preview_window != null and is_instance_valid(_preview_window)
+	if had_open:
 		_preview_window.queue_free()
 	# Restore embedding
 	if _parent_ref and is_instance_valid(_parent_ref):
@@ -353,23 +399,24 @@ func _close_preview() -> void:
 	_preview_dialogue = null
 	_preview_runner = null
 	_preview_playing = false
+	_preview_resyncing = false
+	if emit_signal and had_open:
+		preview_closed.emit()
 
 
 func _preview_reset() -> void:
-	_preview_step_index = 0
+	_refresh_preview_script()
 	_preview_playing = false
-	if _preview_stage:
-		_preview_stage.clear_stage()
-		# Re-register characters
-		for ch in characters:
-			_preview_stage.register_character(ch)
-	if _preview_dialogue:
-		_preview_dialogue.hide_dialogue()
-	_update_step_label()
+	await _preview_rebuild_to(0)
 
 
 func _preview_step() -> void:
-	if _preview_runner == null or _preview_commands.is_empty():
+	if _preview_runner == null:
+		return
+	var changed := _refresh_preview_script()
+	if changed and _preview_step_index > 0:
+		await _preview_rebuild_to(_preview_step_index)
+	if _preview_commands.is_empty():
 		return
 	if _preview_step_index >= _preview_commands.size():
 		return
@@ -383,11 +430,26 @@ func _preview_step() -> void:
 	await _preview_runner.execute(data)
 
 
+func _preview_step_back() -> void:
+	if _preview_runner == null:
+		return
+	_refresh_preview_script()
+	if _preview_commands.is_empty():
+		return
+	if _preview_step_index <= 0:
+		return
+	await _preview_rebuild_to(_preview_step_index - 1)
+
+
 func _preview_play_all() -> void:
 	if _preview_playing:
 		_preview_playing = false
 		return
 
+	_refresh_preview_script()
+	if _preview_step_index > 0:
+		await _preview_rebuild_to(_preview_step_index)
+	_preview_resyncing = false
 	_preview_playing = true
 	while _preview_playing and _preview_step_index < _preview_commands.size():
 		await _preview_step()
@@ -401,3 +463,85 @@ func _update_step_label() -> void:
 		var label: Label = _preview_window.get_meta("step_label")
 		if label and is_instance_valid(label):
 			label.text = "Paso: %d / %d" % [_preview_step_index, _preview_commands.size()]
+	_set_active_preview_node(_preview_step_index)
+
+
+func _set_active_preview_node(step_index: int) -> void:
+	# Desactivar nodo anterior
+	if _preview_active_node_name != StringName(""):
+		var prev := graph_edit.get_node_or_null(String(_preview_active_node_name))
+		if prev and prev.has_method("set_preview_active"):
+			prev.set_preview_active(false)
+		_preview_active_node_name = StringName("")
+
+	# Activar el nodo correspondiente al step actual
+	if step_index <= 0 or graph_edit == null:
+		return
+	for child in graph_edit.get_children():
+		if child is CmdNodeScript and child.step_number == step_index:
+			child.set_preview_active(true)
+			_preview_active_node_name = child.name
+			break
+
+
+func _refresh_preview_script() -> bool:
+	if graph_edit == null:
+		return false
+	var dscn_text: String = SerializerScript.graph_to_dscn(graph_edit, scene_name, scene_background)
+	var changed := dscn_text != _preview_dscn_cache
+	_preview_dscn_cache = dscn_text
+	var parsed: Dictionary = SceneParserScript.parse(dscn_text)
+	_preview_commands = parsed.get("commands", [])
+	scene_background = parsed.get("background", scene_background)
+	_preview_step_index = mini(_preview_step_index, _preview_commands.size())
+	return changed
+
+
+func _preview_rebuild_to(step_count: int) -> void:
+	if _preview_stage == null or _preview_runner == null:
+		return
+	_preview_playing = false
+	_preview_resyncing = true
+	_preview_stage.clear_stage()
+	for ch in characters:
+		_preview_stage.register_character(ch)
+	if _preview_dialogue:
+		_preview_dialogue.hide_dialogue()
+	_preview_step_index = 0
+	_update_step_label()
+
+	if scene_background != "":
+		_preview_stage.set_background(scene_background)
+	else:
+		_preview_stage.set_background(Color(0.95, 0.91, 0.85))
+
+	# Salvar time_scale y usar 0 para rebuild instantáneo
+	var saved_scale := _preview_runner.time_scale
+	_preview_runner.time_scale = 0.0
+
+	var target := clampi(step_count, 0, _preview_commands.size())
+	for i in range(target):
+		var cmd: Dictionary = _preview_commands[i]
+		var data := {"commands": [cmd], "background": ""}
+		await _preview_runner.execute(data)
+		_preview_step_index = i + 1
+
+	# Restaurar time_scale
+	_preview_runner.time_scale = saved_scale
+	_update_step_label()
+	_preview_resyncing = false
+
+
+func _on_preview_sync_tick() -> void:
+	if _preview_runner == null or _preview_window == null or not is_instance_valid(_preview_window):
+		return
+	if _preview_playing or _preview_resyncing:
+		return
+	var resume_at := _preview_step_index
+	if not _refresh_preview_script():
+		return
+	await _preview_rebuild_to(resume_at)
+
+
+func is_preview_open() -> bool:
+	return _preview_window != null and is_instance_valid(_preview_window)
