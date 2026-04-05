@@ -333,10 +333,16 @@ func _apply_portrait_crop() -> void:
 
 	portrait_rect.pivot_offset = portrait_rect.size / 2.0
 	portrait_rect.scale = _crop_base_scale
-	portrait_rect.position = _crop_base_position
 
-	# Enable clipping so zoomed portrait doesn't overflow the slot
-	clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	# Only apply position offset if non-zero (VBoxContainer manages position otherwise)
+	if offset != Vector2.ZERO:
+		portrait_rect.position += _crop_base_position
+
+	# Only clip when zoomed in (to prevent overflow); disable otherwise
+	if zoom > 1.01:
+		clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	else:
+		clip_children = CanvasItem.CLIP_CHILDREN_DISABLED
 
 
 func _set_solid_color_fallback(color: Color) -> void:
