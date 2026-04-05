@@ -1,0 +1,279 @@
+[gd_resource type="Resource" script_class="ProjectData" format=3]
+
+[ext_resource type="Resource" path="res://characters/data/sora.tres" id="chr_sora"]
+[ext_resource type="Resource" path="res://characters/data/ryu.tres" id="chr_ryu"]
+[ext_resource type="Resource" path="res://characters/data/akira.tres" id="chr_akira"]
+[ext_resource type="Resource" path="res://characters/data/mei.tres" id="chr_mei"]
+[ext_resource type="Resource" path="res://characters/data/player.tres" id="chr_player"]
+[ext_resource type="Script" path="res://data/tournament_event.gd" id="te"]
+[ext_resource type="Script" path="res://match_system/match_config.gd" id="mc"]
+[ext_resource type="Script" path="res://data/project_data.gd" id="pd"]
+[ext_resource type="Script" path="res://data/board_config.gd" id="bc"]
+[ext_resource type="Script" path="res://systems/board_logic/game_rules.gd" id="gr"]
+
+; ══════════════════════════════════════════════════════════
+;  DRAMA TIC TAC TOE CLUB — DEMO STORY (5 Chapters)
+; ══════════════════════════════════════════════════════════
+
+; ── Default board config (3x3 standard) ──
+[sub_resource type="Resource" id="rules_default"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+
+[sub_resource type="Resource" id="board_cfg"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_default")
+max_board_size = 400
+cell_color_empty = Color(0.88, 0.85, 0.78, 1)
+cell_color_alt = Color(0.22, 0.25, 0.3, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.78, 0.75, 0.68, 1)
+cell_line_color = Color(0.4, 0.35, 0.3, 1)
+cell_line_width = 1.5
+board_border_enabled = true
+board_border_color = Color(0.45, 0.35, 0.25, 1)
+board_border_width = 10.0
+hand_area_height = 80
+piece_cell_ratio = 0.85
+default_player_color = Color(0.2, 0.5, 1, 1)
+default_opponent_color = Color(1.0, 0.4, 0.1, 1)
+board_bg_color = Color(0.3, 0.28, 0.24, 1)
+
+; ══════════════════════════════════════════════════════════
+;  CHAPTER 1: LA INVITACION
+; ══════════════════════════════════════════════════════════
+
+; ── Event 0: Chapter 1 Prologue (cinematic) ──
+[sub_resource type="Resource" id="evt_ch1_prologue"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Cap 1: La Invitacion"
+cutscene_script_path = "res://scene_scripts/scripts/demo_ch1_prologue.dscn"
+order_index = 0
+
+; ── Event 1: Match vs Sora (standard 3x3, easy, fire vs sparkle) ──
+[sub_resource type="Resource" id="mc_sora"]
+script = ExtResource("mc")
+match_id = "demo_sora"
+opponent_id = "sora"
+ai_difficulty = 0.2
+intro_script = "res://scene_scripts/scripts/demo_ch1_match_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/demo_ch1_reactions.dscn"
+player_style = "slam"
+opponent_style = "gentle"
+player_effect_name = "fire"
+opponent_effect_name = "sparkle"
+player_piece_design = "x"
+opponent_piece_design = "o"
+
+[sub_resource type="Resource" id="evt_ch1_match"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Sora"
+match_config = SubResource("mc_sora")
+order_index = 1
+
+; ══════════════════════════════════════════════════════════
+;  CHAPTER 2: LA PRUEBA
+; ══════════════════════════════════════════════════════════
+
+; ── Event 2: Ryu arrival (cinematic) ──
+[sub_resource type="Resource" id="evt_ch2_arrival"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Cap 2: La Prueba"
+cutscene_script_path = "res://scene_scripts/scripts/demo_ch2_arrival.dscn"
+order_index = 2
+
+; ── Event 3: Match vs Ryu (3x3, max difficulty, slam/shockwave, diamond) ──
+[sub_resource type="Resource" id="mc_ryu"]
+script = ExtResource("mc")
+match_id = "demo_ryu"
+opponent_id = "ryu"
+ai_difficulty = 0.9
+intro_script = "res://scene_scripts/scripts/demo_ch2_match_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/demo_ch2_reactions.dscn"
+player_style = "slam"
+opponent_style = "slam"
+player_effect_name = "none"
+opponent_effect_name = "shockwave"
+placement_offset = 0.3
+player_piece_design = "x"
+opponent_piece_design = "diamond"
+
+[sub_resource type="Resource" id="evt_ch2_match"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Ryu"
+match_config = SubResource("mc_ryu")
+order_index = 3
+
+; ══════════════════════════════════════════════════════════
+;  CHAPTER 3: EL TORNEO
+; ══════════════════════════════════════════════════════════
+
+; ── Event 4: Tournament announcement + Akira/Mei intro (cinematic) ──
+[sub_resource type="Resource" id="evt_ch3_tournament"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Cap 3: El Torneo"
+cutscene_script_path = "res://scene_scripts/scripts/demo_ch3_tournament.dscn"
+order_index = 4
+
+; ── Event 5: Match vs Akira (5x5, win=4, spinning/dramatic, fire/sparkle, triangle/star) ──
+[sub_resource type="Resource" id="rules_big"]
+script = ExtResource("gr")
+board_size = 5
+win_length = 4
+
+[sub_resource type="Resource" id="board_big"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_big")
+max_board_size = 450
+cell_color_empty = Color(0.85, 0.82, 0.75, 1)
+cell_color_alt = Color(0.28, 0.25, 0.22, 1)
+checkerboard_enabled = true
+cell_color_hover = Color(0.75, 0.72, 0.65, 1)
+cell_line_color = Color(0.5, 0.4, 0.35, 1)
+cell_line_width = 1.0
+board_border_enabled = true
+board_border_color = Color(0.5, 0.3, 0.2, 1)
+board_border_width = 8.0
+hand_area_height = 60
+piece_cell_ratio = 0.8
+default_player_color = Color(0.9, 0.3, 0.2, 1)
+default_opponent_color = Color(0.9, 0.7, 0.1, 1)
+board_bg_color = Color(0.25, 0.22, 0.2, 1)
+
+[sub_resource type="Resource" id="mc_akira"]
+script = ExtResource("mc")
+match_id = "demo_akira"
+opponent_id = "akira"
+ai_difficulty = 0.6
+intro_script = "res://scene_scripts/scripts/demo_ch3_match_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/demo_ch3_reactions.dscn"
+player_style = "spinning"
+opponent_style = "dramatic"
+player_effect_name = "fire"
+opponent_effect_name = "sparkle"
+placement_offset = 0.1
+player_piece_design = "triangle"
+opponent_piece_design = "star"
+board_config = SubResource("board_big")
+
+[sub_resource type="Resource" id="evt_ch3_match"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Akira"
+match_config = SubResource("mc_akira")
+order_index = 5
+
+; ══════════════════════════════════════════════════════════
+;  CHAPTER 4: LA ESTRATEGIA
+; ══════════════════════════════════════════════════════════
+
+; ── Event 6: Strategy scene — Mei's analysis (cinematic) ──
+[sub_resource type="Resource" id="evt_ch4_strategy"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Cap 4: La Estrategia"
+cutscene_script_path = "res://scene_scripts/scripts/demo_ch4_strategy.dscn"
+order_index = 6
+
+; ── Event 7: Match vs Mei (3x3 rotation, max 3 pieces, no draw, nervous/gentle, smoke, square/diamond) ──
+[sub_resource type="Resource" id="rules_rotation"]
+script = ExtResource("gr")
+board_size = 3
+win_length = 3
+max_pieces_per_player = 3
+overflow_mode = "rotate"
+allow_draw = false
+
+[sub_resource type="Resource" id="board_rotation"]
+script = ExtResource("bc")
+game_rules = SubResource("rules_rotation")
+max_board_size = 380
+cell_color_empty = Color(0.82, 0.78, 0.88, 1)
+cell_color_alt = Color(0.3, 0.28, 0.35, 1)
+checkerboard_enabled = false
+cell_color_hover = Color(0.72, 0.68, 0.78, 1)
+cell_line_color = Color(0.45, 0.4, 0.5, 1)
+cell_line_width = 2.0
+board_border_enabled = true
+board_border_color = Color(0.5, 0.35, 0.6, 1)
+board_border_width = 8.0
+hand_area_height = 80
+piece_cell_ratio = 0.8
+default_player_color = Color(0.3, 0.7, 0.9, 1)
+default_opponent_color = Color(0.7, 0.3, 0.9, 1)
+board_bg_color = Color(0.2, 0.18, 0.25, 1)
+
+[sub_resource type="Resource" id="mc_mei"]
+script = ExtResource("mc")
+match_id = "demo_mei"
+opponent_id = "mei"
+ai_difficulty = 0.75
+intro_script = "res://scene_scripts/scripts/demo_ch4_match_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/demo_ch4_reactions.dscn"
+player_style = "nervous"
+opponent_style = "gentle"
+player_effect_name = "smoke"
+opponent_effect_name = "none"
+placement_offset = 0.05
+player_piece_design = "square"
+opponent_piece_design = "diamond"
+board_config = SubResource("board_rotation")
+
+[sub_resource type="Resource" id="evt_ch4_match"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Mei"
+match_config = SubResource("mc_mei")
+order_index = 7
+
+; ══════════════════════════════════════════════════════════
+;  CHAPTER 5: LA FINAL
+; ══════════════════════════════════════════════════════════
+
+; ── Event 8: Grand finale buildup (cinematic) ──
+[sub_resource type="Resource" id="evt_ch5_finale"]
+script = ExtResource("te")
+event_type = "cutscene"
+event_name = "Cap 5: La Final"
+cutscene_script_path = "res://scene_scripts/scripts/demo_ch5_finale.dscn"
+order_index = 8
+
+; ── Event 9: Final match vs Ryu (3x3 standard, max difficulty, dramatic/slam, fire/shockwave, star/diamond) ──
+[sub_resource type="Resource" id="mc_ryu_final"]
+script = ExtResource("mc")
+match_id = "demo_ryu_final"
+opponent_id = "ryu"
+ai_difficulty = 1.0
+intro_script = "res://scene_scripts/scripts/demo_ch5_match_intro.dscn"
+reactions_script = "res://scene_scripts/scripts/demo_ch5_reactions.dscn"
+player_style = "dramatic"
+opponent_style = "slam"
+player_effect_name = "fire"
+opponent_effect_name = "shockwave"
+placement_offset = 0.2
+player_piece_design = "star"
+opponent_piece_design = "diamond"
+
+[sub_resource type="Resource" id="evt_ch5_match"]
+script = ExtResource("te")
+event_type = "match"
+event_name = "vs Ryu (Final)"
+match_config = SubResource("mc_ryu_final")
+order_index = 9
+
+; ══════════════════════════════════════════════════════════
+;  ROOT RESOURCE
+; ══════════════════════════════════════════════════════════
+
+[resource]
+script = ExtResource("pd")
+project_name = "Demo Story — 5 Capitulos"
+characters = Array[Resource]([ExtResource("chr_sora"), ExtResource("chr_ryu"), ExtResource("chr_akira"), ExtResource("chr_mei"), ExtResource("chr_player")])
+events = Array[Resource]([SubResource("evt_ch1_prologue"), SubResource("evt_ch1_match"), SubResource("evt_ch2_arrival"), SubResource("evt_ch2_match"), SubResource("evt_ch3_tournament"), SubResource("evt_ch3_match"), SubResource("evt_ch4_strategy"), SubResource("evt_ch4_match"), SubResource("evt_ch5_finale"), SubResource("evt_ch5_match")])
+board_config = SubResource("board_cfg")

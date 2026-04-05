@@ -1,0 +1,246 @@
+@reactions demo_ch5_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[shake 0.8 0.5]
+[flash #ffffff 0.2]
+[wait 0.5]
+[music res://audio/music/bgm_victory.wav]
+[expression ryu surprised]
+[pose ryu leaning_back]
+[wait 0.8]
+Ryu: ...
+[wait 0.6]
+[expression ryu neutral]
+[pose ryu thinking]
+Ryu: Así que esto es perder.
+[wait 0.5]
+[close_up ryu 1.2 0.5]
+[expression ryu cold]
+[pose ryu arms_crossed]
+Ryu: No. Esto es ser superado.
+[camera_reset 0.4]
+[wait 0.3]
+[enter sora far_left left]
+[enter akira center_left left]
+[enter mei center_right right]
+[expression sora happy]
+[pose sora excited]
+[expression akira confident]
+[pose akira confident]
+[expression mei neutral]
+[pose mei thinking]
+[wait 0.3]
+[flash #ffcc00 0.15]
+Sora: {shake}¡¡LO HAS CONSEGUIDO!!{/shake}
+[shake 0.3 0.2]
+Sora: ¡Le has ganado a Ryu! ¡En la final! ¡Con dificultad máxima!
+[wait 0.3]
+[focus akira]
+[expression akira confident]
+Akira: Hmph. Nada mal.
+[expression akira neutral]
+Akira: ...De acuerdo. Ha sido impresionante.
+[clear_focus]
+[focus mei]
+[expression mei analytical]
+Mei: Fascinante. Tu patrón cambió por completo desde la primera partida.
+[expression mei thinking]
+Mei: Has evolucionado.
+[clear_focus]
+[wait 0.3]
+[focus ryu]
+[move ryu center]
+[close_up ryu 1.3 0.5]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+[wait 0.4]
+Ryu → Tú: Has demostrado algo hoy.
+[expression ryu cold]
+Ryu: No que eres mejor que yo. Eso habrá que verlo.
+[wait 0.3]
+[expression ryu neutral]
+Ryu: Pero que mereces estar aquí. Eso... ya no tengo duda.
+[camera_reset 0.4]
+[clear_focus]
+[wait 0.3]
+[focus sora]
+[close_up sora 1.3 0.5]
+[expression sora happy]
+[pose sora excited]
+Sora: Cuando te encontré en esa aula vacía...
+[expression sora focused]
+Sora: ...supe que había algo. No sabía qué. Pero lo supe.
+[expression sora happy]
+[pose sora confident]
+Sora → Tú: Bienvenido al club. De verdad. Para siempre.
+[camera_reset 0.4]
+[clear_focus]
+[wait 0.3]
+[camera_mode snappy]
+[camera_snap sora 1.4]
+[flash #ffffff 0.08]
+[shake 0.2 0.15]
+Sora "happy": {b}¡El Club de Tres en Raya tiene un nuevo campeón!{/b}
+[camera_reset 0.3]
+[camera_mode smooth]
+[wait 0.5]
+[set_flag champion]
+[set_flag defeated_ryu_final]
+[title_card FIN | El Club de Tres en Raya]
+[wait 1.0]
+[title_card Gracias por jugar | Drama Tic Tac Toe Club]
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[flash #ff2200 0.15]
+[expression ryu cold]
+[pose ryu confident]
+[wait 0.5]
+Ryu: {shake}Terminó.{/shake}
+[wait 0.4]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu → Tú: No fue suficiente. Pero...
+[close_up ryu 1.2 0.4]
+[expression ryu cold]
+Ryu: ...estuvo cerca. Más cerca de lo que nadie ha estado.
+[camera_reset 0.3]
+[wait 0.3]
+[enter sora far_left left]
+[enter akira center_left left]
+[enter mei center_right right]
+[expression sora sad]
+[pose sora idle]
+[expression akira neutral]
+[pose akira idle]
+[expression mei thinking]
+[pose mei thinking]
+[wait 0.3]
+[focus sora]
+[expression sora sad]
+Sora: Oye...
+[wait 0.3]
+[expression sora serious]
+[pose sora confident]
+Sora → Tú: Escúchame. Perder en la final no es fracasar.
+Sora: Fracasar es no intentarlo. Y tú has llegado hasta aquí.
+[clear_focus]
+[focus akira]
+[expression akira confident]
+Akira → Tú: Has jugado mejor que yo. Eso te lo reconozco.
+[expression akira neutral]
+Akira: Ryu es... Ryu. No se le gana fácil.
+[clear_focus]
+[focus mei]
+[expression mei analytical]
+Mei → Tú: He visto progresión en cada partida. Eso es más valioso que una victoria.
+[expression mei thinking]
+Mei: La derrota de hoy es la semilla de la victoria de mañana.
+[clear_focus]
+[wait 0.3]
+[focus ryu]
+[close_up ryu 1.2 0.4]
+[expression ryu neutral]
+[pose ryu thinking]
+Ryu → Tú: Quiero una revancha. Cuando estés listo.
+[wait 0.3]
+[expression ryu cold]
+[pose ryu arms_crossed]
+Ryu: Porque hoy me has hecho {b}dudar{/b}. Y nadie me hace dudar.
+[camera_reset 0.3]
+[clear_focus]
+[wait 0.3]
+[focus sora]
+[close_up sora 1.3 0.5]
+[expression sora happy]
+[pose sora excited]
+Sora: El torneo ha terminado. Pero el club no.
+[expression sora focused]
+[pose sora confident]
+Sora → Tú: Seguiremos jugando. Seguiremos creciendo. Juntos.
+[camera_reset 0.4]
+[clear_focus]
+[wait 0.5]
+[title_card FIN | El Club de Tres en Raya]
+[wait 1.0]
+[title_card Gracias por jugar | Drama Tic Tac Toe Club]
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression ryu surprised]
+[pose ryu leaning_back]
+[wait 0.4]
+[expression ryu thinking]
+[pose ryu thinking]
+Ryu: ...Empate. En la final.
+[wait 0.5]
+[expression ryu neutral]
+[pose ryu arms_crossed]
+Ryu → Tú: Ni tú pudiste ganar. Ni yo pude ganarte.
+[wait 0.3]
+[enter sora far_left left]
+[enter akira center_left left]
+[enter mei center_right right]
+[expression sora focused]
+[pose sora confident]
+[expression akira neutral]
+[pose akira idle]
+[expression mei analytical]
+[pose mei thinking]
+[wait 0.3]
+[focus mei]
+[expression mei analytical]
+Mei: Un empate contra Ryu en dificultad máxima. Las probabilidades de eso son...
+[expression mei thinking]
+Mei: ...muy bajas.
+[clear_focus]
+[focus akira]
+[expression akira confident]
+Akira: Básicamente le has ganado sin ganarle.
+[clear_focus]
+[focus ryu]
+[close_up ryu 1.2 0.4]
+[expression ryu cold]
+Ryu: No es victoria. No es derrota.
+[expression ryu intense]
+Ryu → Tú: Es una promesa. De que volveremos a jugar.
+[camera_reset 0.3]
+[clear_focus]
+[wait 0.3]
+[focus sora]
+[close_up sora 1.3 0.5]
+[expression sora happy]
+[pose sora excited]
+Sora: El torneo termina en empate. Pero la historia no.
+[expression sora focused]
+[pose sora confident]
+Sora → Tú: Esto solo es el principio.
+[camera_reset 0.4]
+[clear_focus]
+[wait 0.5]
+[set_flag survived_ryu_final]
+[title_card FIN | El Club de Tres en Raya]
+[wait 1.0]
+[title_card Gracias por jugar | Drama Tic Tac Toe Club]
+@end
+
+@on near_win
+[expression ryu intense]
+[pose ryu leaning_forward]
+[shake 0.25 0.15]
+[flash #223366 0.04]
+@end
+
+@on center_taken
+[expression ryu thinking]
+[pose ryu thinking]
+[wait 0.2]
+[expression ryu cold]
+[pose ryu arms_crossed]
+@end

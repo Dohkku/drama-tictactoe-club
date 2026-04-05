@@ -1,0 +1,38 @@
+@scene demo_ch5_match_intro
+
+[background res://backgrounds/background_5.png]
+[music res://audio/music/bgm_tense.wav]
+[camera_mode snappy]
+[fullscreen]
+
+[enter ryu center right]
+[expression ryu cold]
+[pose ryu arms_crossed]
+[wait 0.3]
+
+[camera_snap ryu 1.4]
+[flash #ffffff 0.04]
+[shake 0.2 0.15]
+
+Ryu: Dificultad máxima. Tablero estándar. Sin excusas.
+
+[camera_reset 0.3]
+
+[expression ryu intense]
+[pose ryu leaning_forward]
+Ryu: Diamantes contra estrellas. Shockwave contra fuego.
+
+[wait 0.2]
+
+[close_up ryu 1.3 0.3]
+[expression ryu cold]
+[pose ryu confident]
+
+Ryu → Tú: {shake}La última partida.{/shake}
+
+[camera_reset 0.3]
+[camera_mode smooth]
+[wait 0.2]
+
+[split]
+[board_enable]

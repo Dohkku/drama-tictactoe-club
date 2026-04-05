@@ -1,0 +1,79 @@
+@reactions demo_ch4_reactions
+
+@on player_wins
+[fullscreen]
+[board_disable]
+[expression mei thinking]
+[pose mei thinking]
+[wait 0.5]
+Mei: ...Fascinante.
+[wait 0.4]
+[expression mei analytical]
+Mei: No seguiste un patrón. Cambiaste de estrategia a mitad de partida.
+[close_up mei 1.2 0.4]
+Mei: Eso es exactamente lo que la rotación exige.
+[camera_reset 0.3]
+[wait 0.3]
+[expression mei neutral]
+Mei → Tú: Adaptación. Eso es lo que vi en ti desde el principio.
+[wait 0.2]
+Mei: Los demás juegan con fuerza. Tú juegas con {b}flexibilidad{/b}.
+[enter sora left left]
+[expression sora happy]
+[pose sora excited]
+Sora: ¡Has ganado contra Mei! ¡Con rotación!
+[look_at mei sora]
+Mei: Sora. Baja la voz.
+[expression sora nervous]
+Sora: Perdona, perdona...
+[exit sora left]
+[expression mei thinking]
+Mei: Bien jugado. De verdad.
+[set_flag defeated_mei]
+@end
+
+@on opponent_wins
+[fullscreen]
+[board_disable]
+[expression mei neutral]
+[pose mei idle]
+Mei: El humo se disipa. La victoria queda.
+[wait 0.4]
+[expression mei analytical]
+Mei: Intentaste mantener tus fichas en diagonal. Pero la rotación te las quitó.
+[close_up mei 1.2 0.4]
+Mei → Tú: No puedes aferrarte a un plan en un tablero que cambia.
+[camera_reset 0.3]
+[wait 0.3]
+[expression mei thinking]
+Mei: Aprende de esto. La derrota es el mejor maestro.
+[enter sora left left]
+[expression sora sad]
+[pose sora idle]
+Sora: La rotación es brutal. No te preocupes.
+[expression sora serious]
+[pose sora confident]
+Sora: Lo que importa es que lo intentaste. Eso ya es valiente.
+[exit sora left]
+@end
+
+@on draw
+[fullscreen]
+[board_disable]
+[expression mei thinking]
+Mei: Imposible. Las reglas no permiten empate.
+Mei: ...A menos que haya un error en el sistema.
+[expression mei analytical]
+Mei: Interesante.
+@end
+
+@on near_win
+[expression mei analytical]
+[pose mei thinking]
+Mei: Mmm...
+@end
+
+@on center_taken
+[expression mei thinking]
+[pose mei idle]
+@end

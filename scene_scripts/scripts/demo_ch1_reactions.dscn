@@ -3,7 +3,7 @@
 @on player_wins
 [fullscreen]
 [board_disable]
-[expression sora surprised]
+[expression sora nervous]
 [pose sora defeated]
 [shake 0.3 0.2]
 [wait 0.3]
@@ -39,7 +39,7 @@ Sora: Perdón, perdón. Se supone que iba fácil...
 [pose sora leaning_forward]
 Sora: Pero oye, no estuvo mal. He visto cómo piensas.
 Sora: Hay algo ahí. Solo necesitas práctica.
-[expression sora confident]
+[expression sora focused]
 Sora: Y para eso... estás en el club.
 @end
 
