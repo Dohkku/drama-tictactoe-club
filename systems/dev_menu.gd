@@ -16,6 +16,15 @@ func _ready() -> void:
 	_build_ui()
 
 
+func _launch_project(resource_path: String) -> void:
+	var project = ResourceLoader.load(resource_path)
+	if project:
+		ResourceSaver.save(project, "user://current_project.tres")
+		get_tree().change_scene_to_file("res://main.tscn")
+	else:
+		push_error("DevMenu: can't load %s" % resource_path)
+
+
 func _build_ui() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.08, 0.12)
@@ -85,24 +94,47 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
-	# Tech Demo button — runs the full integrated game
-	var demo_btn := Button.new()
-	demo_btn.custom_minimum_size = Vector2(0, 58)
-	demo_btn.text = "  ▶  TECH DEMO  —  Historia completa con todos los sistemas"
-	demo_btn.add_theme_font_size_override("font_size", 17)
-	demo_btn.add_theme_color_override("font_color", Color.WHITE)
-	var demo_style := StyleBoxFlat.new()
-	demo_style.bg_color = Color(0.6, 0.2, 0.1)
-	demo_style.set_corner_radius_all(8)
-	demo_style.content_margin_left = 16
-	demo_btn.add_theme_stylebox_override("normal", demo_style)
-	var demo_hover := StyleBoxFlat.new()
-	demo_hover.bg_color = Color(0.8, 0.3, 0.15)
-	demo_hover.set_corner_radius_all(8)
-	demo_hover.content_margin_left = 16
-	demo_btn.add_theme_stylebox_override("hover", demo_hover)
-	demo_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
-	vbox.add_child(demo_btn)
+	# Demo Story button — 5 chapters, full narrative
+	var story_btn := Button.new()
+	story_btn.custom_minimum_size = Vector2(0, 58)
+	story_btn.text = "  ▶  HISTORIA DEMO  —  5 capitulos, narrativa completa"
+	story_btn.add_theme_font_size_override("font_size", 17)
+	story_btn.add_theme_color_override("font_color", Color.WHITE)
+	var story_style := StyleBoxFlat.new()
+	story_style.bg_color = Color(0.6, 0.2, 0.1)
+	story_style.set_corner_radius_all(8)
+	story_style.content_margin_left = 16
+	story_btn.add_theme_stylebox_override("normal", story_style)
+	var story_hover := StyleBoxFlat.new()
+	story_hover.bg_color = Color(0.8, 0.3, 0.15)
+	story_hover.set_corner_radius_all(8)
+	story_hover.content_margin_left = 16
+	story_btn.add_theme_stylebox_override("hover", story_hover)
+	story_btn.pressed.connect(func():
+		# Load demo story directly, bypassing user save
+		_launch_project("res://data/resources/demo_story_project.tres"))
+	vbox.add_child(story_btn)
+
+	# Custom project button (from editor saves)
+	var custom_btn := Button.new()
+	custom_btn.custom_minimum_size = Vector2(0, 40)
+	custom_btn.text = "  ▶  Proyecto guardado (del editor)"
+	custom_btn.add_theme_font_size_override("font_size", 13)
+	custom_btn.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
+	var custom_style := StyleBoxFlat.new()
+	custom_style.bg_color = Color(0.3, 0.15, 0.1)
+	custom_style.set_corner_radius_all(6)
+	custom_style.content_margin_left = 16
+	custom_btn.add_theme_stylebox_override("normal", custom_style)
+	var custom_hover := StyleBoxFlat.new()
+	custom_hover.bg_color = Color(0.4, 0.2, 0.12)
+	custom_hover.set_corner_radius_all(6)
+	custom_hover.content_margin_left = 16
+	custom_btn.add_theme_stylebox_override("hover", custom_hover)
+	var has_save: bool = ResourceLoader.exists("user://current_project.tres")
+	custom_btn.disabled = not has_save
+	custom_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
+	vbox.add_child(custom_btn)
 
 	# Editor 2.0 (Canvas) — PRIMARY editor button
 	var canvas_btn := Button.new()
