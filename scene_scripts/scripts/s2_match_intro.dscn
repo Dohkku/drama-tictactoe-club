@@ -1,6 +1,6 @@
 @scene s2_match_intro
 
-[background res://backgrounds/background_2.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [enter ryu center right]
 [expression ryu neutral]
 [pose ryu arms_crossed]

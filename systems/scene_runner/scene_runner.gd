@@ -284,7 +284,7 @@ func _cmd_dialogue(cmd: Dictionary) -> void:
 	# Add target indicator to dialogue if directed
 	if target != "":
 		var target_name = _get_display_name(target)
-		_dialogue_box.show_dialogue("%s → %s" % [display_name, target_name], text, color, char_data)
+		_dialogue_box.show_dialogue("%s a %s" % [display_name, target_name], text, color, char_data)
 	else:
 		_dialogue_box.show_dialogue(display_name, text, color, char_data)
 
@@ -362,14 +362,22 @@ func _cmd_music(cmd: Dictionary) -> void:
 		push_warning("SceneRunner: [music] requires a track path")
 		return
 
+	# Don't restart if the same track is already playing (e.g. next scene
+	# re-issues the same [music] tag).
+	if track == _last_music and _music_player.playing:
+		return
+
 	var stream: AudioStream = _load_audio_stream(track)
 	if stream == null:
 		push_warning("SceneRunner: music track not found or unsupported: %s" % track)
 		return
 
+	# Loop is configured in the .import files for every music track, so we
+	# don't need to mutate the stream at runtime.
 	_music_player.stream = stream
 	_music_player.play()
 	_last_music = track
+	print("[SceneRunner] music play: %s (playing=%s)" % [track, _music_player.playing])
 
 
 func _cmd_sfx(cmd: Dictionary) -> void:
@@ -538,26 +546,75 @@ static func _resolve_color(name: String) -> Color:
 func _cmd_board_cheat(cmd: Dictionary) -> void:
 	## Manipulate the board so the opponent has an immediate winning move.
 	## Clears board, places opponent pieces in a near-win configuration,
+	## keeps the same amount of already-placed player pieces,
 	## plays placement SFX, and applies imprecision.
 	var logic = _board.logic
-	var size: int = logic.rules.board_size  # 3 for 3x3
+	var rules = logic.rules
+	var width: int = rules.get_width()
+	var height: int = rules.get_height()
+	var total_cells: int = logic.cells.size()
 	var ai = _board.ai_piece
 	var player = _board.player_piece
+
+	# Keep how many player pieces were already on the board before cheating.
+	var previous_player_count := 0
+	for cell_value in logic.cells:
+		if cell_value == player:
+			previous_player_count += 1
+
+	# Build deterministic layout where AI is one move away from winning.
+	var ai_cells: Array[int] = []
+	if total_cells > 0:
+		ai_cells.append(0)
+	if total_cells > 1:
+		ai_cells.append(1)
+	var ai_winning_cell := 2 if total_cells > 2 else -1
+
+	var reserved := {}
+	for cell_idx in ai_cells:
+		reserved[cell_idx] = true
+	if ai_winning_cell >= 0:
+		reserved[ai_winning_cell] = true
+
+	var player_candidates: Array[int] = []
+	var center_idx := (height / 2) * width + (width / 2)
+	if width % 2 == 1 and height % 2 == 1:
+		if center_idx >= 0 and center_idx < total_cells and not reserved.has(center_idx):
+			player_candidates.append(center_idx)
+	var bottom_left := (height - 1) * width
+	if bottom_left >= 0 and bottom_left < total_cells and not reserved.has(bottom_left):
+		if not player_candidates.has(bottom_left):
+			player_candidates.append(bottom_left)
+	var bottom_right := bottom_left + width - 1
+	if bottom_right >= 0 and bottom_right < total_cells and not reserved.has(bottom_right):
+		if not player_candidates.has(bottom_right):
+			player_candidates.append(bottom_right)
+	for idx in range(total_cells):
+		if reserved.has(idx):
+			continue
+		if player_candidates.has(idx):
+			continue
+		player_candidates.append(idx)
+
+	var max_player_on_board: int = mini(_board.pieces.player_pieces.size(), player_candidates.size())
+	var target_player_count: int = mini(previous_player_count, max_player_on_board)
 
 	# Clear the board state completely
 	for i in range(logic.cells.size()):
 		logic.cells[i] = 0
 
-	# Set up near-win: opponent has 2 in top row, player has 1 elsewhere
-	# [AI, AI, 0]  ← AI wins by placing at index 2
-	# [0,  P,  0]
-	# [0,  0,  0]
-	logic.cells[0] = ai
-	logic.cells[1] = ai
-	logic.cells[size + 1] = player  # center
+	for cell_idx in ai_cells:
+		logic.cells[cell_idx] = ai
+
+	var player_cells: Array[int] = []
+	for i in range(target_player_count):
+		var p_cell: int = player_candidates[i]
+		player_cells.append(p_cell)
+		logic.cells[p_cell] = player
 
 	# Update move history for rotation mode
-	logic.move_history = {player: [size + 1], ai: [0, 1]}
+	logic.move_history = {player: player_cells.duplicate(), ai: ai_cells.duplicate()}
+	logic.move_count = ai_cells.size() + player_cells.size()
 
 	# Clear visual pieces and rebuild with imprecision + SFX
 	_board.pieces.cell_to_piece.clear()
@@ -574,7 +631,7 @@ func _cmd_board_cheat(cmd: Dictionary) -> void:
 	var offset_max: float = cell_size.x * 0.25  # Strong imprecision
 
 	var opp_idx := 0
-	for cell_idx in [0, 1]:
+	for cell_idx in ai_cells:
 		if opp_idx >= _board.pieces.opponent_pieces.size():
 			break
 		var piece = _board.pieces.opponent_pieces[opp_idx]
@@ -594,20 +651,22 @@ func _cmd_board_cheat(cmd: Dictionary) -> void:
 			_board.board_audio.play_sfx("impact_light")
 		await _wait_seconds(0.15)
 
-	# Place player visual piece
+	# Place player visual pieces
 	var player_used := 0
-	if not _board.pieces.player_pieces.is_empty():
-		var pp = _board.pieces.player_pieces[0]
-		var p_cell = size + 1
+	for p_cell in player_cells:
+		if player_used >= _board.pieces.player_pieces.size():
+			break
+		var pp = _board.pieces.player_pieces[player_used]
 		var p_target = _board.pieces.get_cell_pos_in_layer(p_cell)
 		var p_off = (cell_size - piece_size) / 2.0
 		pp.position = p_target + p_off
+		pp.placement_offset = Vector2.ZERO
 		pp.size = piece_size
 		pp.pivot_offset = piece_size / 2.0
 		pp.modulate.a = 1.0
 		_board.pieces.cell_to_piece[p_cell] = pp
 		_board.cells[p_cell].set_occupied(true)
-		player_used = 1
+		player_used += 1
 
 	# Sync piece counters with the visual pieces we consumed. Without this the
 	# next AI move reuses an already-placed piece, making it look like Mei

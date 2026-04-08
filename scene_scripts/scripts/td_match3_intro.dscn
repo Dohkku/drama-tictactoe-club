@@ -1,6 +1,6 @@
 @scene td_match3_intro
 
-[background res://backgrounds/background_3.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [enter akira center left]
 [expression akira confident]
 [pose akira confident]

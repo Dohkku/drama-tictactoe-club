@@ -39,24 +39,37 @@ mei: Esta vez sin... interferencias teatrales.
 @on opponent_wins
 [fullscreen]
 [board_disable]
-[expression mei composed]
+[expression mei playful]
 [pose mei idle]
-mei: La rotación te obligó a elegir, y elegiste tarde.
-[wait 0.3]
-[expression mei analytical]
-mei: Te aferraste a una forma del tablero que ya no existía.
+mei: Tenia un poco de esperanza en que no fueses como el resto...
+[wait 1.0]
+[expression mei direct]
+[wait 1.0]
+[expression mei teasing]
+mei: pero a ti tambien te dominan las distracciones
 
 [close_up mei 1.2 0.4]
-mei -> player: Aquí gana quien suelta primero lo que ya no sirve.
+mei -> player: Podrias llegar a mucho mas, ser mucho mas
+[wait 1.0]
+mei -> player: Pero vives distraido...
+[wait 1.0]
+mei -> player: 
 [camera_reset 0.3]
-[expression mei playful]
-mei: Vuelve cuando quieras. No me molesta entrenarte.
-
+[expression mei thinking]
+mei: Me pregunto de que maneras de autojustificas no estar haciendo lo que sabes que deberias estar haciendo
+[wait 1.0]
 [enter sora left left]
-[expression sora sad]
+[wait 0.5]
+[expression mei neutral]
+[stop_music]
+[expression sora neutral]
 [pose sora idle]
-sora: Es normal perder aquí al principio.
-[expression sora serious]
+sora: ¿De verdad perdiste ?
+[wait 1.0]
+sora: Bueno...
+[pose sora nervous]
+sora :Es normal perder aquí al principio...
+[expression sora blush]
 [pose sora confident]
 sora -> player: Lo importante es que ya entendiste la lógica.
 sora: La próxima cambia.
@@ -104,19 +117,16 @@ mei: A veces la partida se decide por una distracción... mínima...
 [wait 0.8]
 mei: Y a mi...
 [wait 0.8]
-mei: Se me da bien distraer a las mentes de chicos como tu ´
+mei: Se me da bien distraer a las mentes de chicos como tu...
 [music res://audio/music/bgm_mei_mindgame.wav]
 [expression mei private_payoff]
 [shake 0.18 0.08]
-mei: Ups.
-[wait 0.25]
-mei: ...Creo que se me cayó la peluca.
-[wait 0.45]
-mei: Dame un segundo.
-
+mei: ...
+[wait 2.0]
+[expression mei private_payoff]
 [camera_reset 0.3]
 [wait 0.3]
-
+[expression mei guilty_micro]
 [board_cheat opponent_wins]
 [set_difficulty 1.0]
 
@@ -125,7 +135,7 @@ mei: Dame un segundo.
 [expression mei private_denial]
 [pose mei confident]
 
-mei: ...Y en ese segundo, el tablero cambia.
+mei: ...
 
 [wait 0.5]
 
@@ -134,11 +144,9 @@ mei: ...Y en ese segundo, el tablero cambia.
 
 [expression mei neutral]
 [pose mei idle]
-mei: ¿Hmm? ¿Qué pasa? ¿Era tu turno?
+mei: ¿Hmm? ¿Qué pasa? ¿Era mi turno no?
 
 [expression mei thinking]
-mei: ...Parece que ya no.
-
 [else]
 [set_flag mei_first_move_seen]
 [end_if]

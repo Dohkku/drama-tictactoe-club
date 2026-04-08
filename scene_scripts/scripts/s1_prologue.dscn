@@ -1,6 +1,6 @@
 @scene s1_prologue
 
-[background res://backgrounds/background_1.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_chill.mp3]
 [title_card "EL CLUB" "Capítulo 1: La invitación"]
 [wait 1.5]

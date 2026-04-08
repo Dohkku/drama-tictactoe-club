@@ -1,6 +1,6 @@
 @scene td_match4_intro
 
-[background res://backgrounds/background_3.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [enter mei center right]
 [expression mei neutral]
 [pose mei thinking]

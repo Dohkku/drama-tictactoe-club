@@ -24,6 +24,37 @@ var _code_font_size: int = 12
 var _help_font_size: int = 11
 const MIN_FONT_SIZE: int = 8
 const MAX_FONT_SIZE: int = 32
+var _autocomplete_tokens: Array[String] = []
+
+const DSL_COLOR_DIRECTIVE := Color(0.31, 0.76, 0.97, 1.0)  # cyan
+const DSL_COLOR_FLOW := Color(0.45, 0.86, 0.39, 1.0)       # green
+const DSL_COLOR_BOARD := Color(0.78, 0.60, 1.0, 1.0)       # violet
+const DSL_COLOR_COMMAND := Color(1.0, 0.72, 0.35, 1.0)     # orange
+const DSL_COLOR_STRING := Color(0.93, 0.82, 0.52, 1.0)     # yellow
+const DSL_COLOR_NUMBER := Color(1.0, 0.66, 0.66, 1.0)      # salmon
+const DSL_COLOR_SYMBOL := Color(0.62, 0.66, 0.76, 1.0)     # gray-blue
+const DSL_COLOR_COMMENT := Color(0.48, 0.52, 0.56, 1.0)    # gray
+
+const DSL_DIRECTIVE_KEYWORDS := [
+	"@scene", "@reactions", "@background", "@on", "@end_on", "@end"
+]
+
+const DSL_FLOW_KEYWORDS := [
+	"if", "flag", "else", "end_if", "choose", "end_choose", "set_flag", "clear_flag"
+]
+
+const DSL_BOARD_KEYWORDS := [
+	"board_enable", "board_disable", "set_style", "set_emotion",
+	"override_next_style", "set_difficulty", "board_cheat"
+]
+
+const DSL_COMMAND_KEYWORDS := [
+	"dialogue", "enter", "exit", "move", "clear_stage", "expression", "pose", "look_at", "depth",
+	"focus", "clear_focus", "close_up", "pull_back", "camera_reset", "camera_mode", "camera_snap",
+	"shake", "flash", "transition", "speed_lines", "wipe", "wipe_out",
+	"fullscreen", "split", "board_only", "layout_instant",
+	"music", "sfx", "stop_music", "title_card", "background", "background_gradient", "wait"
+]
 
 
 func _init(main: Control, path: String) -> void:
@@ -120,9 +151,16 @@ func _build_body() -> Control:
 	_code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_code.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_code.add_theme_font_size_override("font_size", _code_font_size)
-	_code.gutters_draw_line_numbers = true
 	_code.draw_tabs = true
+	_code.set_syntax_highlighter(_build_dsl_highlighter())
 	_code.text_changed.connect(_on_text_changed)
+	_code.gui_input.connect(_on_code_gui_input)
+	_autocomplete_tokens = _build_autocomplete_tokens()
+	if _code is CodeEdit:
+		var code_ref: CodeEdit = _code as CodeEdit
+		code_ref.gutters_draw_line_numbers = true
+		code_ref.set_code_completion_enabled(true)
+		code_ref.set_code_completion_prefixes(PackedStringArray(_autocomplete_tokens))
 	hbox.add_child(_code)
 
 	var tabs := TabContainer.new()
@@ -355,6 +393,13 @@ func _help_bbcode() -> String:
 		"[code][board_enable][/code] [code][board_disable][/code]\n" + \
 		"[code][set_difficulty 1.0][/code]  — dificultad IA en vivo\n" + \
 		"[code][board_cheat opponent_wins][/code]\n\n" + \
+		"[b]Color code del DSL[/b]\n" + \
+		"[color=#4FC3F7]Directivas[/color]: @scene @reactions @on @end\n" + \
+		"[color=#72DB63]Flow[/color]: if/else/end_if, choose/end_choose, set_flag\n" + \
+		"[color=#C799FF]Tablero/estado[/color]: board_enable, set_style, board_cheat\n" + \
+		"[color=#FFB85A]Comandos[/color]: enter, expression, transition, music, title_card\n\n" + \
+		"[b]Autocompletar[/b]\n" + \
+		"[code]Tab[/code] completa palabras reservadas cuando el prefijo es único.\n\n" + \
 		"[b]Ver DSL Reference.md[/b] para lista completa."
 
 
@@ -411,6 +456,159 @@ func _insert_at_caret(text: String) -> void:
 		return
 	_code.insert_text_at_caret(text)
 	_code.grab_focus()
+
+
+func _build_dsl_highlighter() -> CodeHighlighter:
+	var highlighter := CodeHighlighter.new()
+	highlighter.set_symbol_color(DSL_COLOR_SYMBOL)
+	highlighter.set_number_color(DSL_COLOR_NUMBER)
+	highlighter.set_function_color(DSL_COLOR_COMMAND)
+	highlighter.set_member_variable_color(DSL_COLOR_BOARD)
+	highlighter.add_color_region("\"", "\"", DSL_COLOR_STRING, false)
+	highlighter.add_color_region("#", "", DSL_COLOR_COMMENT, true)
+
+	for kw in DSL_DIRECTIVE_KEYWORDS:
+		highlighter.add_keyword_color(kw, DSL_COLOR_DIRECTIVE)
+		if kw.begins_with("@") and kw.length() > 1:
+			highlighter.add_keyword_color(kw.substr(1), DSL_COLOR_DIRECTIVE)
+	for kw in DSL_FLOW_KEYWORDS:
+		highlighter.add_keyword_color(kw, DSL_COLOR_FLOW)
+	for kw in DSL_BOARD_KEYWORDS:
+		highlighter.add_keyword_color(kw, DSL_COLOR_BOARD)
+	for kw in DSL_COMMAND_KEYWORDS:
+		highlighter.add_keyword_color(kw, DSL_COLOR_COMMAND)
+
+	return highlighter
+
+
+func _build_autocomplete_tokens() -> Array[String]:
+	var tokens: Dictionary = {}
+	for kw in DSL_DIRECTIVE_KEYWORDS:
+		tokens[kw.to_lower()] = true
+	for kw in DSL_FLOW_KEYWORDS:
+		tokens[kw.to_lower()] = true
+	for kw in DSL_BOARD_KEYWORDS:
+		tokens[kw.to_lower()] = true
+	for kw in DSL_COMMAND_KEYWORDS:
+		tokens[kw.to_lower()] = true
+	tokens["if_flag"] = true
+	tokens["player"] = true
+	tokens["opponent"] = true
+	tokens["random"] = true
+	tokens["smooth"] = true
+	tokens["snappy"] = true
+	tokens["fade_black"] = true
+	tokens["fade_white"] = true
+	tokens["flash_red"] = true
+	tokens["flash_blue"] = true
+	tokens["right"] = true
+	tokens["left"] = true
+	tokens["up"] = true
+	tokens["down"] = true
+	tokens["radial"] = true
+	tokens["center"] = true
+
+	for cat_key in CmdNodeScript.CATEGORIES:
+		var cat: Dictionary = CmdNodeScript.CATEGORIES[cat_key]
+		for raw_cmd in cat.commands.keys():
+			var cmd_key: String = _normalize_command_keyword(str(raw_cmd))
+			tokens[cmd_key.to_lower()] = true
+
+	var sorted_tokens: Array[String] = []
+	for kw in tokens.keys():
+		sorted_tokens.append(str(kw))
+	sorted_tokens.sort()
+	return sorted_tokens
+
+
+func _normalize_command_keyword(raw_cmd: String) -> String:
+	match raw_cmd:
+		"layout_fullscreen": return "fullscreen"
+		"layout_split": return "split"
+		"layout_board_only": return "board_only"
+		"if_flag": return "if"
+		_: return raw_cmd
+
+
+func _on_code_gui_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+
+	if key_event.keycode == KEY_TAB and not key_event.ctrl_pressed and not key_event.alt_pressed and not key_event.meta_pressed:
+		if _try_tab_completion():
+			_code.accept_event()
+
+
+func _try_tab_completion() -> bool:
+	if _code == null:
+		return false
+	if _autocomplete_tokens.is_empty():
+		return false
+	if _code.has_selection():
+		return false
+
+	var line_idx: int = _code.get_caret_line()
+	var col: int = _code.get_caret_column()
+	var line_text: String = _code.get_line(line_idx)
+	if col <= 0 or col > line_text.length():
+		return false
+
+	var start: int = col
+	while start > 0 and _is_token_char(line_text.substr(start - 1, 1)):
+		start -= 1
+	if start == col:
+		return false
+
+	var prefix: String = line_text.substr(start, col - start).to_lower()
+	var matches: Array[String] = []
+	for token in _autocomplete_tokens:
+		if token.begins_with(prefix):
+			matches.append(token)
+
+	if matches.is_empty():
+		return false
+	matches.sort()
+
+	var replacement: String = matches[0]
+	if matches.size() > 1:
+		var common: String = _common_prefix(matches)
+		if common.length() <= prefix.length():
+			return false
+		replacement = common
+	if replacement == prefix:
+		return false
+
+	_code.select(line_idx, start, line_idx, col)
+	_code.insert_text_at_caret(replacement)
+	_code.deselect()
+	return true
+
+
+func _common_prefix(values: Array[String]) -> String:
+	if values.is_empty():
+		return ""
+	var prefix: String = values[0]
+	for i in range(1, values.size()):
+		var other: String = values[i]
+		var max_len: int = mini(prefix.length(), other.length())
+		var j := 0
+		while j < max_len and prefix.substr(j, 1) == other.substr(j, 1):
+			j += 1
+		prefix = prefix.substr(0, j)
+		if prefix == "":
+			break
+	return prefix
+
+
+func _is_token_char(ch: String) -> bool:
+	return \
+		(ch >= "a" and ch <= "z") or \
+		(ch >= "A" and ch <= "Z") or \
+		(ch >= "0" and ch <= "9") or \
+		ch == "_" or ch == "@"
 
 
 # ── Load / Save / Dirty ────────────────────────────────────────────────

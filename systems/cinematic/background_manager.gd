@@ -12,7 +12,6 @@ func set_background(source: Variant) -> void:
 	## - String (path): ".png", ".jpg", ".ogv" (video), etc.
 	## - Texture2D: direct texture assignment
 
-	print("[BgMgr.set_background] source=%s in_tree=%s size=%s parent=%s" % [str(source), is_inside_tree(), size, get_parent()])
 	_clear_current()
 
 	if source is Color:
@@ -75,15 +74,17 @@ func _setup_from_path(path: String) -> void:
 		_setup_color(Color.html(path))
 		return
 		
-	if not FileAccess.file_exists(path):
-		push_warning("BackgroundManager: file not found at %s" % path)
+	# Use ResourceLoader instead of FileAccess: FileAccess.file_exists()
+	# returns false for files packed inside an exported .pck, which would
+	# make backgrounds silently disappear in the web/desktop builds.
+	if not ResourceLoader.exists(path):
+		push_warning("BackgroundManager: resource not found at %s" % path)
 		return
-		
+
 	var ext = path.get_extension().to_lower()
 	match ext:
 		"png", "jpg", "jpeg", "webp":
 			var tex = load(path)
-			print("[BgMgr._setup_from_path] loaded '%s' tex=%s" % [path, tex])
 			if tex: _setup_texture(tex)
 		"ogv": # Godot's native video format
 			_setup_video(path)

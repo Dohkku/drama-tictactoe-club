@@ -13,6 +13,9 @@ const SYSTEMS := [
 
 
 func _ready() -> void:
+	if OS.get_name() == "Web":
+		get_tree().change_scene_to_file("res://ui/main_menu.tscn")
+		return
 	_build_ui()
 
 

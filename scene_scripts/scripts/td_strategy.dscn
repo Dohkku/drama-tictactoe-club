@@ -1,6 +1,6 @@
 @scene td_strategy
 
-[background res://backgrounds/background_3.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [camera_mode smooth]
 [fullscreen]
 

@@ -77,7 +77,11 @@ func _build_ui() -> void:
 	vbox.add_child(btn_box)
 
 	# Build menu buttons
+	var is_web := OS.get_name() == "Web"
+	var web_hidden := ["Editor", "Sandbox"]
 	for item in MENU_ITEMS:
+		if is_web and item[0] in web_hidden:
+			continue
 		var btn := _create_menu_button(item[0])
 		var scene_path: String = item[1]
 

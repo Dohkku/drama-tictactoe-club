@@ -30,3 +30,9 @@ test_output.txt
 # Linux dev files
 bin/
 *.log
+
+# Local tooling
+.venv-rembg/
+.claude/worktrees/
+build/*.zip
+characters/portraits/_backup_*/

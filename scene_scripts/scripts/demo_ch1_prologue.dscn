@@ -8,8 +8,6 @@
 [wait 0.4]
 
 [enter sora center right]
-[enter mei left left]
-[expression mei private_denial]
 [expression sora focused]
 [pose sora thinking]
 sora: ...Ah. Llegaste.

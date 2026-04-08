@@ -1,6 +1,6 @@
 @scene td_finale
 
-[background res://backgrounds/background_3.png]
+[background res://assets/backgrounds/classroom_afternoon.png]
 [music res://audio/music/bgm_chill.mp3]
 [title_card Demo Completa | Resumen de funcionalidades]
 [wait 1.2]

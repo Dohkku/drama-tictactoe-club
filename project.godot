@@ -5,6 +5,7 @@
 config/name="Drama Tic Tac Toe Club"
 config/features=PackedStringArray("4.6")
 run/main_scene="res://systems/dev_menu.tscn"
+run/max_fps=60
 
 [autoload]
 
